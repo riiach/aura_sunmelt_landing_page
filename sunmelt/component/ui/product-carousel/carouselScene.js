@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import { gsap } from "gsap";
 import { createCanAssets, flavors, frontRotation } from "./createCan";
-import { wrap, mod, getLayout, getSnap, rightTilt, isSelected, introPoseAt } from "./carouselMath.mjs";
+import { wrap, mod, getLayout, getSnap, rightTilt, isSelected, introPoseAt, introSpreadAt } from "./carouselMath.mjs";
 import { createStudio, createContactShadows } from "./studio";
 
 export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase }) => {
@@ -46,7 +46,7 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase 
     const motionPreference = window.matchMedia("(prefers-reduced-motion: reduce)");
     const cans = [];
     let assets, snapTween, spinTween, spinningCan, introTween;
-    const intro = { progress: 0 };
+    const intro = { spread: 0, progress: 0 };
     let introComplete = false;
     let ready = false, disposed = false, dirty = true, inView = true;
     let worldWidth = 4.92, pixelsPerUnit = 1, spacing = 1;
@@ -99,10 +99,16 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase 
             const otherDistance = distance + (distance < 0 ? count : -count);
             [[primary, primaryShadow, distance], [copy, copyShadow, otherDistance]].forEach(([can, shadow, x]) => {
                 const pose = introPoseAt(x, intro.progress);
-                can.position.set(x * spacing, pose.y, pose.z);
+                const spread = introComplete ? 1 : introSpreadAt(x, intro.spread);
+                const spreadX = x * spread;
+                // The center stays in front while the other cans emerge from behind it.
+                const overlap = introComplete ? 0 : (1 - spread) * (Math.abs(x) > .01 ? .11 + Math.abs(x) * .06 : 0);
+                can.position.set(spreadX * spacing, pose.y, pose.z - overlap);
                 can.scale.setScalar(pose.scale);
-                can.visible = (introComplete || can === primary) && Math.abs(x) < worldWidth / 2 + .9;
-                shadow.position.x = x * spacing;
+                can.visible = (introComplete || can === primary) &&
+                    (introComplete || Math.abs(x) < .01 || spread > .001) &&
+                    Math.abs(spreadX) < worldWidth / 2 + .9;
+                shadow.position.x = spreadX * spacing;
                 shadow.position.z = can.position.z;
                 shadow.visible = can.visible;
             });
@@ -303,6 +309,7 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase 
         if (disposed || introComplete) return;
         introTween?.kill();
         introTween = undefined;
+        intro.spread = 1;
         intro.progress = 1;
         introComplete = true;
         elapsed = 0;
@@ -321,17 +328,24 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase 
             return;
         }
 
-        // Start only after the textures are ready and the straight lineup has rendered.
+        // One shared timeline: hold the single hero, fan out, then lift and tilt.
         stage.style.cursor = "default";
-        introTween = gsap.to(intro, {
-            progress: 1,
-            delay: .55,
-            duration: 1.15,
-            ease: "power3.inOut",
-            onStart: () => onIntroPhase?.("reveal"),
+        introTween = gsap.timeline({
             onUpdate: updateLayout,
             onComplete: finishIntro,
         });
+        introTween.to(intro, {
+            spread: 1,
+            duration: .84,
+            ease: "power3.inOut",
+            onStart: () => onIntroPhase?.("spread"),
+        }, .26);
+        introTween.to(intro, {
+            progress: 1,
+            duration: .92,
+            ease: "power3.inOut",
+            onStart: () => onIntroPhase?.("reveal"),
+        }, 1.15);
     };
 
     const onMotionChange = () => {

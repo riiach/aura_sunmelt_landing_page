@@ -29,3 +29,11 @@ export const introPoseAt = (distance, progress) => {
         scale: .86 + (scaleAt(distance) - .86) * t,
     };
 };
+
+// The adjacent pair leads the outer pair slightly, but both settle together.
+export const introSpreadAt = (distance, progress) => {
+    if (Math.abs(distance) < .01) return 1;
+    const lag = Math.abs(distance) > 1.01 ? .13 : 0;
+    const t = Math.max(0, Math.min(1, (progress - lag) / (1 - lag)));
+    return t;
+};

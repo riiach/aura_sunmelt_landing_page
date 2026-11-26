@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { wrap, mod, scaleAt, getLayout, getSnap, centerWeight, depthAt, rightTilt, isSelected, introPoseAt } from "./carouselMath.mjs";
+import { wrap, mod, scaleAt, getLayout, getSnap, centerWeight, depthAt, rightTilt, isSelected, introPoseAt, introSpreadAt } from "./carouselMath.mjs";
 
 test("desktop shows five whole cans, tablet shows three, mobile peeks on both sides", () => {
     const sideRadius = 0.314 * scaleAt(1);
@@ -76,4 +76,14 @@ test("intro moves the center forward and ends exactly at the carousel pose", () 
         assert.equal(introPoseAt(x, 1).z, depthAt(x));
         assert.ok(Math.abs(introPoseAt(x, 1).scale - scaleAt(x)) < 1e-9);
     }
+});
+
+test("opening starts with one visible center and spreads symmetrically to five", () => {
+    assert.equal(introSpreadAt(0, 0), 1);
+    for (const x of [-2, -1, 1, 2]) {
+        assert.equal(introSpreadAt(x, 0), 0);
+        assert.equal(introSpreadAt(x, 1), 1);
+        assert.equal(introSpreadAt(x, .5), introSpreadAt(-x, .5));
+    }
+    assert.ok(introSpreadAt(1, .5) > introSpreadAt(2, .5));
 });
