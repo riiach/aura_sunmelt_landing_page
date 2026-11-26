@@ -14,6 +14,8 @@ const WaterText = ({ children }: WaterTextProps) => {
     const settings = {
         firstWaveDuration: 1800,
         secondWaveDuration: 1950,
+        firstWaveExitDuration: 600,
+        secondWaveExitDuration: 700,
 
         firstColor: "#F89862",
         secondColor: "#D2C6D4",
@@ -44,7 +46,7 @@ const WaterText = ({ children }: WaterTextProps) => {
                 className="absolute inset-0 z-10 pointer-events-none"
                 style={{
                     color: settings.firstColor,
-                    transition: `clip-path ${settings.firstWaveDuration}ms ease-in-out`,
+                    transition: `clip-path ${hovered ? settings.firstWaveDuration : settings.firstWaveExitDuration}ms ease-in-out`,
                     clipPath: hovered
                         ? `polygon(
                             0 -10%,
@@ -75,7 +77,7 @@ const WaterText = ({ children }: WaterTextProps) => {
                 className="absolute inset-0 z-20 pointer-events-none"
                 style={{
                     color: settings.secondColor,
-                    transition: `clip-path ${settings.secondWaveDuration}ms ease-in-out`,
+                    transition: `clip-path ${hovered ? settings.secondWaveDuration : settings.secondWaveExitDuration}ms ease-in-out`,
                     clipPath: hovered
                         ? `polygon(
                             0 -20%,
