@@ -4,7 +4,7 @@
     isolation: isolate;
     width: 100%;
     min-height: 100svh;
-    background: linear-gradient(to bottom, #843f48, #f7b8aa 42%, #ffffff 100%);
+    background: linear-gradient(to bottom, transparent 74%, #ffffff 100%), radial-gradient(circle max(105vw, 136svh) at 50% -38%, #a04542 0%, #a04542 49%, #e48d82 76%, #ffffff 100%);
     display: flex;
     flex-direction: column;
 }

@@ -7,11 +7,11 @@ import type { IntroPhase } from "./ProductCarousel";
 import styles from "./ProductCarousel.module.css";
 
 const palettes = [
-    { name: "Mango Glow", colors: ["#fff2ce", "#ffce76", "#90501b"] },
-    { name: "Peach Glow", colors: ["#fff3e9", "#f6c7ad", "#95534f"] },
-    { name: "Grapefruit Fizz", colors: ["#fff1e8", "#f7b8aa", "#a04542"] },
-    { name: "Pomegranate Aura", colors: ["#faedf1", "#eebacb", "#8b3658"] },
-    { name: "Grape Aura", colors: ["#f5effa", "#d9c9e9", "#6d4b89"] },
+    { name: "Mango Glow", colors: ["#e5a048", "#98531b"] },
+    { name: "Peach Glow", colors: ["#e69c84", "#95534f"] },
+    { name: "Grapefruit Fizz", colors: ["#e48d82", "#a04542"] },
+    { name: "Pomegranate Aura", colors: ["#dc8eae", "#8b3658"] },
+    { name: "Grape Aura", colors: ["#bca1d6", "#6d4b89"] },
 ];
 
 interface ProductHeroProps {
@@ -25,12 +25,12 @@ const ProductHero = ({ header }: ProductHeroProps) => {
     return (
         <div className={styles.frame} data-intro-phase={introPhase}>
             <div className={styles.backdrop} aria-hidden="true">
-                {palettes.map(({ name, colors: [light, mid, deep] }) => (
+                {palettes.map(({ name, colors: [mid, deep] }) => (
                     <div key={name}
                          className={styles.gradient}
                          style={{
                              opacity: activeProduct === name ? 1 : 0,
-                             background: `linear-gradient(to bottom, ${deep} 0%, transparent 30%, transparent 58%, #ffffff 100%), radial-gradient(ellipse at 20% 38%, ${light} 0%, transparent 55%), radial-gradient(ellipse at 86% 32%, ${mid} 0%, transparent 60%), linear-gradient(to bottom, ${deep} 0%, ${mid} 42%, ${light} 72%, #ffffff 100%)`,
+                             background: `linear-gradient(to bottom, transparent 74%, #ffffff 100%), radial-gradient(circle max(105vw, 136svh) at 50% -38%, ${deep} 0%, ${deep} 49%, ${mid} 76%, #ffffff 100%)`,
                          }}
                     />
                 ))}
