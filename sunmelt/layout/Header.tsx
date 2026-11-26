@@ -7,14 +7,14 @@ import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import auraLogo from "../public/aura_logo.png";
 import WaterText from "../component/ui/WaterText";
 
-const Header = () => {
+const Header = ({ transparent = false }: { transparent?: boolean }) => {
   const [menuOpen, setMenuOpen] = useState(false);
   const menuButton = useRef<HTMLButtonElement>(null);
   const reduceMotion = useReducedMotion();
 
   return (
     <div
-        className="w-full flex flex-col bg-white px-3 md:px-16 lg:px-32"
+        className={`w-full flex flex-col px-3 md:px-16 lg:px-32 ${transparent ? "bg-transparent" : "bg-white"}`}
         onKeyDown={e => {
           if (e.key === "Escape" && menuOpen) {
             setMenuOpen(false);

@@ -1,15 +1,12 @@
 import Header from "../layout/Header";
-import ProductCarousel from "../component/ui/ProductCarousel";
+import ProductHero from "../component/ui/ProductHero";
 
 export default function Home() {
   return (
-    <div className="flex flex-col items-center justify-center w-screen bg-background bg-black">
+    <ProductHero header={
         <header className="w-full min-h-16">
-            <Header />
+            <Header transparent />
         </header>
-      <main className="w-full">
-          <ProductCarousel />
-      </main>
-    </div>
+    } />
   );
 }
