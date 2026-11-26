@@ -3,7 +3,7 @@ import Header from "../layout/Header";
 
 export default function Home() {
   return (
-    <div className="flex flex-col items-center justify-center w-screen bg-background">
+    <div className="flex flex-col items-center justify-center w-screen bg-background bg-black">
         <header className="w-full min-h-16">
             <Header />
         </header>
