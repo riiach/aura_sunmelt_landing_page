@@ -1,0 +1,44 @@
+{
+  "flavors": [
+    {
+      "id": "mango",
+      "name": "mango glow",
+      "original": "/textures/labels/mango.webp",
+      "uv": "/textures/uv/mango.webp"
+    },
+    {
+      "id": "peach",
+      "name": "peach glow",
+      "original": "/textures/labels/peach.webp",
+      "uv": "/textures/uv/peach.webp"
+    },
+    {
+      "id": "grapefruit",
+      "name": "grapefruit fizz",
+      "original": "/textures/labels/grapefruit.webp",
+      "uv": "/textures/uv/grapefruit.webp"
+    },
+    {
+      "id": "pomegranate",
+      "name": "pomegranate aura",
+      "original": "/textures/labels/pomegranate.webp",
+      "uv": "/textures/uv/pomegranate.webp"
+    },
+    {
+      "id": "grape",
+      "name": "grape aura",
+      "original": "/textures/labels/grape.webp",
+      "uv": "/textures/uv/grape.webp"
+    }
+  ],
+  "uvSize": [
+    1536,
+    1152
+  ],
+  "originalSize": [
+    2172,
+    724
+  ],
+  "frontU": 0.5,
+  "note": "Concept assets only; product data and barcodes are illustrative."
+}
