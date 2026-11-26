@@ -42,7 +42,6 @@ const ProductCarousel = ({ onProductChange }: ProductCarouselProps) => {
             {ready && (
                 <div className={styles.caption} aria-hidden="true">
                     <span className={styles.flavor}>{activeProduct}</span>
-                    <span className={styles.hint}>Drag to explore</span>
                 </div>
             )}
             {!ready && (
