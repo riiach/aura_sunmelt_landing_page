@@ -23,12 +23,15 @@ const Header = () => {
         }}
     >
       <div className="w-full h-16 flex flex-row items-center justify-between">
-        <div className="min-w-12 w-auto h-full flex flex-row items-center justify-start">
-          <Image
-              src={auraLogo}
-              alt="Aura Logo"
-              className="w-24 h-auto brightness-0"
-          />
+        <div className="min-w-12 w-auto h-full flex flex-row items-center justify-start gap-2 shrink-0">
+          <div className="w-14 flex items-center justify-center overflow-hidden shrink-0">
+            <Image
+                src={auraLogo}
+                alt="Aura Logo"
+                className="w-24 max-w-none h-auto shrink-0 brightness-0"
+            />
+          </div>
+          <span className="font-fraunces text-black text-lg">x</span>
           <p className="font-fraunces text-black text-2xl">sunmelt</p>
         </div>
 
