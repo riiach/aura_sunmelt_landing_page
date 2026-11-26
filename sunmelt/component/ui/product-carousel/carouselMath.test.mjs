@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { wrap, mod, scaleAt, getLayout, getSnap } from "./carouselMath.mjs";
+import { wrap, mod, scaleAt, getLayout, getSnap, centerWeight, depthAt, rightTilt, isSelected } from "./carouselMath.mjs";
 
 test("desktop shows five whole cans, tablet shows three, mobile peeks on both sides", () => {
     const sideRadius = 0.314 * scaleAt(1);
@@ -42,4 +42,21 @@ test("center scale grows continuously and neighboring cans have equal scale", ()
     assert.ok(scaleAt(0.5) > scaleAt(1));
     assert.equal(scaleAt(-1), scaleAt(1));
     assert.equal(scaleAt(1), scaleAt(2));
+});
+
+test("the center is closer and the sides recede symmetrically", () => {
+    assert.ok(depthAt(0) > depthAt(1));
+    assert.ok(depthAt(1) > depthAt(2));
+    assert.equal(depthAt(-1), depthAt(1));
+    assert.equal(centerWeight(0), 1);
+    assert.equal(centerWeight(1), 0);
+});
+
+test("only one product owns selection and its right tilt is twelve degrees", () => {
+    assert.ok(Math.abs(rightTilt * 180 / Math.PI + 12) < 1e-9);
+    for (const position of [-1.3, 0, .49, .51, 2, 4.9, 5.2]) {
+        assert.equal([0, 1, 2, 3, 4].filter(index => isSelected(index, position, 5)).length, 1);
+    }
+    assert.equal(isSelected(0, 4.9, 5), true);
+    assert.equal(isSelected(2, 2, 5), true);
 });
