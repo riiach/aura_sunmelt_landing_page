@@ -71,6 +71,22 @@
     text-decoration: none;
 }
 
+[data-intro-phase="lineup"] .brand {
+    opacity: 0;
+    transform: translateY(26px);
+}
+
+[data-intro-phase="reveal"] .brand,
+[data-intro-phase="active"] .brand {
+    animation: brandReveal 950ms cubic-bezier(.22,1,.36,1) both;
+}
+
+@keyframes brandReveal {
+    0% { opacity: 0; transform: translateY(26px); }
+    74% { opacity: 1; transform: translateY(-3px); }
+    100% { opacity: 1; transform: translateY(0); }
+}
+
 .logoCrop {
     width: 59px;
     display: flex;
@@ -193,4 +209,6 @@
 
 @media (prefers-reduced-motion: reduce) {
     .contact { transition: none; }
+    [data-intro-phase="reveal"] .brand,
+    [data-intro-phase="active"] .brand { animation: none; }
 }

@@ -4,13 +4,17 @@ import { useEffect, useRef, useState } from "react";
 import { mountCarousel } from "./product-carousel/carouselScene";
 import styles from "./ProductCarousel.module.css";
 
+export type IntroPhase = "lineup" | "reveal" | "active";
+
 interface ProductCarouselProps {
     onProductChange?: (name: string) => void;
+    onIntroPhase?: (phase: IntroPhase) => void;
 }
 
-const ProductCarousel = ({ onProductChange }: ProductCarouselProps) => {
+const ProductCarousel = ({ onProductChange, onIntroPhase }: ProductCarouselProps) => {
     const stageRef = useRef<HTMLDivElement>(null);
     const [ready, setReady] = useState(false);
+    const [introPhase, setIntroPhase] = useState<IntroPhase>("lineup");
     const [error, setError] = useState("");
     const [activeProduct, setActiveProduct] = useState("Grapefruit Fizz");
 
@@ -20,26 +24,34 @@ const ProductCarousel = ({ onProductChange }: ProductCarouselProps) => {
 
         return mountCarousel(stage, {
             onReady: () => setReady(true),
-            onError: (message: string) => setError(message),
+            onError: (message: string) => {
+                setError(message);
+                setIntroPhase("active");
+                onIntroPhase?.("active");
+            },
+            onIntroPhase: (phase: IntroPhase) => {
+                setIntroPhase(phase);
+                onIntroPhase?.(phase);
+            },
             onChange: (name: string) => {
                 setActiveProduct(name);
                 onProductChange?.(name);
             },
         });
-    }, [onProductChange]);
+    }, [onProductChange, onIntroPhase]);
 
     return (
-        <section aria-label="Sunmelt product carousel" className={styles.hero}>
+        <section aria-label="Sunmelt product carousel" className={styles.hero} data-carousel-phase={introPhase}>
             <div className={styles.wordmark} aria-hidden="true">sunmelt.</div>
             <div
                 ref={stageRef}
-                tabIndex={0}
+                tabIndex={introPhase === "active" && !error ? 0 : -1}
                 role="group"
                 aria-label="Drag or use the arrow keys to browse Sunmelt flavors"
-                aria-busy={!ready && !error}
+                aria-busy={introPhase !== "active" && !error}
                 className={styles.stage}
             />
-            {ready && (
+            {ready && introPhase === "active" && (
                 <div className={styles.caption} aria-hidden="true">
                     <span className={styles.flavor}>{activeProduct}</span>
                 </div>
@@ -49,7 +61,7 @@ const ProductCarousel = ({ onProductChange }: ProductCarouselProps) => {
                     <p role="status">{error || "Loading Sunmelt flavors..."}</p>
                 </div>
             )}
-            <p className="sr-only" aria-live="polite">{activeProduct}</p>
+            <p className="sr-only" aria-live="polite">{introPhase === "active" && !error ? activeProduct : ""}</p>
         </section>
     );
 };

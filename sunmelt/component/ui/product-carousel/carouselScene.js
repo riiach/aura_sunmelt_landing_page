@@ -4,7 +4,7 @@ import { createCanAssets, flavors, frontRotation } from "./createCan";
 import { wrap, mod, getLayout, getSnap, rightTilt, isSelected, introPoseAt } from "./carouselMath.mjs";
 import { createStudio, createContactShadows } from "./studio";
 
-export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase = () => {} }) => {
+export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase }) => {
     let renderer;
     try {
         renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true, powerPreference: "high-performance" });
@@ -311,7 +311,7 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase 
         });
         updateLayout();
         stage.style.cursor = "grab";
-        onIntroPhase("active");
+        onIntroPhase?.("active");
         updateHover();
     };
 
@@ -328,7 +328,7 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase 
             delay: .55,
             duration: 1.15,
             ease: "power3.inOut",
-            onStart: () => onIntroPhase("reveal"),
+            onStart: () => onIntroPhase?.("reveal"),
             onUpdate: updateLayout,
             onComplete: finishIntro,
         });

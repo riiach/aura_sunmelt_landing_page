@@ -3,6 +3,7 @@
 import { useState } from "react";
 import type { ReactNode } from "react";
 import ProductCarousel from "./ProductCarousel";
+import type { IntroPhase } from "./ProductCarousel";
 import styles from "./ProductCarousel.module.css";
 
 const palettes = [
@@ -19,9 +20,10 @@ interface ProductHeroProps {
 
 const ProductHero = ({ header }: ProductHeroProps) => {
     const [activeProduct, setActiveProduct] = useState("Grapefruit Fizz");
+    const [introPhase, setIntroPhase] = useState<IntroPhase>("lineup");
 
     return (
-        <div className={styles.frame}>
+        <div className={styles.frame} data-intro-phase={introPhase}>
             <div className={styles.backdrop} aria-hidden="true">
                 {palettes.map(({ name, colors: [light, mid, deep] }) => (
                     <div key={name}
@@ -33,9 +35,11 @@ const ProductHero = ({ header }: ProductHeroProps) => {
                     />
                 ))}
             </div>
-            {header}
+            <div className={styles.headerReveal} inert={introPhase === "lineup"}>
+                {header}
+            </div>
             <main className="w-full">
-                <ProductCarousel onProductChange={setActiveProduct} />
+                <ProductCarousel onProductChange={setActiveProduct} onIntroPhase={setIntroPhase} />
             </main>
         </div>
     );
