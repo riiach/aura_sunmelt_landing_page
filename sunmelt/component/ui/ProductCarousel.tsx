@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { mountCarousel } from "./product-carousel/carouselScene";
 import styles from "./ProductCarousel.module.css";
 
-export type IntroPhase = "lineup" | "reveal" | "active";
+export type IntroPhase = "lineup" | "spread" | "reveal" | "active";
 
 interface ProductCarouselProps {
     onProductChange?: (name: string) => void;

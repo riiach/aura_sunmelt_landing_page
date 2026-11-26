@@ -84,7 +84,9 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase 
                 tilt.rotation.z = Math.abs(nextTilt - targetTilt) < .0001 ? targetTilt : nextTilt;
                 tilt.position.y = Math.abs(nextFloat - float) < .0001 ? float : nextFloat;
                 const emphasis = selected ? intro.progress : 0;
-                shadow.material.opacity = .60 - .12 * emphasis - tilt.position.y * 1.5;
+                const shadowReveal = introComplete || selected ? 1 :
+                    introSpreadAt(wrap(index - track.position, count), intro.spread);
+                shadow.material.opacity = (.60 - .12 * emphasis - tilt.position.y * 1.5) * shadowReveal;
                 shadow.scale.setScalar(.82 + .33 * emphasis + tilt.position.y * 2);
             }
         });

@@ -115,14 +115,15 @@
     text-decoration: none;
 }
 
-[data-intro-phase="lineup"] .brand {
+[data-intro-phase="lineup"] .brand,
+[data-intro-phase="spread"] .brand {
     opacity: 0;
     transform: translateY(26px);
 }
 
 [data-intro-phase="reveal"] .brand,
 [data-intro-phase="active"] .brand {
-    animation: brandReveal 950ms cubic-bezier(.22,1,.36,1) both;
+    animation: brandReveal 820ms cubic-bezier(.22,1,.36,1) both;
 }
 
 @keyframes brandReveal {

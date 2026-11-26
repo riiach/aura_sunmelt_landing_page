@@ -35,7 +35,7 @@ const ProductHero = ({ header }: ProductHeroProps) => {
                     />
                 ))}
             </div>
-            <div className={styles.headerReveal} inert={introPhase === "lineup"}>
+            <div className={styles.headerReveal} inert={introPhase === "lineup" || introPhase === "spread"}>
                 {header}
             </div>
             <main className="w-full">
