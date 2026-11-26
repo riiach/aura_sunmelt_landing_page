@@ -22,8 +22,8 @@ const WaterText = ({ children }: WaterTextProps) => {
         fizzHeight: 12,
         fizzTop: "20%",
 
-        firstColor: "#FFBB38",
-        secondColor: "#F36A26",
+        firstColor: "#F89862",
+        secondColor: "#D2C6D4",
     };
 
     const handleMouseEnter = (
