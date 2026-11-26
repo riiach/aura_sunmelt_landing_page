@@ -34,7 +34,7 @@ const Header = () => {
 
         <nav className="hidden md:flex min-w-60 h-full
         flex-row justify-between items-center gap-6
-        text-black font-bold text-base md:text-lg">
+        text-black font-medium text-base md:text-lg">
           <Link href=""><WaterText>HOME</WaterText></Link>
           <Link href=""><WaterText>ABOUT</WaterText></Link>
           <Link href=""><WaterText>SALES</WaterText></Link>
@@ -84,7 +84,7 @@ const Header = () => {
                 transition={{ duration: reduceMotion ? 0 : 0.3, ease: "easeInOut" }}
                 className="overflow-hidden"
             >
-              <nav className="flex flex-col items-end gap-5 py-5 text-black font-bold text-base">
+              <nav className="flex flex-col items-end gap-5 py-5 text-black font-medium text-base">
                 <Link href="" onClick={() => setMenuOpen(false)}><WaterText>HOME</WaterText></Link>
                 <Link href="" onClick={() => setMenuOpen(false)}><WaterText>ABOUT</WaterText></Link>
                 <Link href="" onClick={() => setMenuOpen(false)}><WaterText>SALES</WaterText></Link>
