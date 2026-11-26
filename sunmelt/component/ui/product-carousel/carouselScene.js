@@ -1,10 +1,10 @@
 import * as THREE from "three";
 import { gsap } from "gsap";
 import { createCanAssets, flavors, frontRotation } from "./createCan";
-import { wrap, mod, scaleAt, getLayout, getSnap, centerWeight, depthAt, rightTilt, isSelected } from "./carouselMath.mjs";
+import { wrap, mod, getLayout, getSnap, rightTilt, isSelected, introPoseAt } from "./carouselMath.mjs";
 import { createStudio, createContactShadows } from "./studio";
 
-export const mountCarousel = (stage, { onReady, onError, onChange }) => {
+export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase = () => {} }) => {
     let renderer;
     try {
         renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true, powerPreference: "high-performance" });
@@ -45,7 +45,9 @@ export const mountCarousel = (stage, { onReady, onError, onChange }) => {
     const pointer = new THREE.Vector2();
     const motionPreference = window.matchMedia("(prefers-reduced-motion: reduce)");
     const cans = [];
-    let assets, snapTween, spinTween, spinningCan;
+    let assets, snapTween, spinTween, spinningCan, introTween;
+    const intro = { progress: 0 };
+    let introComplete = false;
     let ready = false, disposed = false, dirty = true, inView = true;
     let worldWidth = 4.92, pixelsPerUnit = 1, spacing = 1;
     let activeIndex = 2, drag = null, lastMouse = null;
@@ -59,8 +61,8 @@ export const mountCarousel = (stage, { onReady, onError, onChange }) => {
     const render = (_time, deltaMs) => {
         if (disposed || !ready || !inView) return;
         const dt = Math.min(.05, (deltaMs || 16.7) / 1000);
-        if (!reduced()) elapsed += dt;
-        const moving = Boolean(drag || snapTween);
+        if (introComplete && !reduced()) elapsed += dt;
+        const moving = Boolean(!introComplete || drag || snapTween);
         const px = moving || reduced() ? 0 : parallax.x * .19;
         const py = moving || reduced() ? 0 : parallax.y * .14;
         const nextX = damp(parallaxX, px, dt);
@@ -74,15 +76,16 @@ export const mountCarousel = (stage, { onReady, onError, onChange }) => {
             for (const [can, shadow, isPrimary] of [[primary, primaryShadow, true], [copy, copyShadow, false]]) {
                 const selected = isPrimary && isSelected(index, track.position, count);
                 const tilt = can.userData.tilt;
-                const targetTilt = selected ? rightTilt : 0;
-                const nextTilt = damp(tilt.rotation.z, targetTilt, dt);
+                const targetTilt = selected ? rightTilt * intro.progress : 0;
+                const nextTilt = introComplete ? damp(tilt.rotation.z, targetTilt, dt) : targetTilt;
                 const float = selected && !moving && !reduced() ? .045 * Math.sin(elapsed * 1.5) : 0;
                 const nextFloat = damp(tilt.position.y, float, dt);
                 if (Math.abs(tilt.rotation.z - nextTilt) + Math.abs(tilt.position.y - nextFloat) > .00001) dirty = true;
                 tilt.rotation.z = Math.abs(nextTilt - targetTilt) < .0001 ? targetTilt : nextTilt;
                 tilt.position.y = Math.abs(nextFloat - float) < .0001 ? float : nextFloat;
-                shadow.material.opacity = selected ? .48 - tilt.position.y * 1.5 : .60;
-                shadow.scale.setScalar(selected ? 1.15 + tilt.position.y * 2 : .82);
+                const emphasis = selected ? intro.progress : 0;
+                shadow.material.opacity = .60 - .12 * emphasis - tilt.position.y * 1.5;
+                shadow.scale.setScalar(.82 + .33 * emphasis + tilt.position.y * 2);
             }
         });
         if (!dirty) return;
@@ -95,11 +98,10 @@ export const mountCarousel = (stage, { onReady, onError, onChange }) => {
             const distance = wrap(index - track.position, count);
             const otherDistance = distance + (distance < 0 ? count : -count);
             [[primary, primaryShadow, distance], [copy, copyShadow, otherDistance]].forEach(([can, shadow, x]) => {
-                const weight = centerWeight(x);
-                const scale = scaleAt(x);
-                can.position.set(x * spacing, -.11 + .20 * weight, depthAt(x));
-                can.scale.setScalar(scale);
-                can.visible = Math.abs(x) < worldWidth / 2 + .9;
+                const pose = introPoseAt(x, intro.progress);
+                can.position.set(x * spacing, pose.y, pose.z);
+                can.scale.setScalar(pose.scale);
+                can.visible = (introComplete || can === primary) && Math.abs(x) < worldWidth / 2 + .9;
                 shadow.position.x = x * spacing;
                 shadow.position.z = can.position.z;
                 shadow.visible = can.visible;
@@ -170,7 +172,7 @@ export const mountCarousel = (stage, { onReady, onError, onChange }) => {
     };
 
     const updateHover = () => {
-        if (!ready || drag || snapTween || !lastMouse || !inView) {
+        if (!ready || !introComplete || drag || snapTween || !lastMouse || !inView) {
             stopSpin();
             return;
         }
@@ -222,7 +224,7 @@ export const mountCarousel = (stage, { onReady, onError, onChange }) => {
     };
 
     const onPointerDown = (event) => {
-        if (!ready || drag || !event.isPrimary || event.button !== 0) return;
+        if (!ready || !introComplete || drag || !event.isPrimary || event.button !== 0) return;
         cancelSnap();
         stopSpin(true);
         // Reset any earlier front-return tween before the cans start sliding.
@@ -293,12 +295,48 @@ export const mountCarousel = (stage, { onReady, onError, onChange }) => {
         if (!drag) stopSpin();
     };
     const onKeyDown = event => {
-        if (!ready || drag || !["ArrowLeft", "ArrowRight"].includes(event.key)) return;
+        if (!ready || !introComplete || drag || !["ArrowLeft", "ArrowRight"].includes(event.key)) return;
         event.preventDefault();
         snapTo(Math.round(track.position) + (event.key === "ArrowRight" ? 1 : -1));
     };
+    const finishIntro = () => {
+        if (disposed || introComplete) return;
+        introTween?.kill();
+        introTween = undefined;
+        intro.progress = 1;
+        introComplete = true;
+        elapsed = 0;
+        cans.forEach(({ index, primary }) => {
+            primary.userData.tilt.rotation.z = index === activeIndex ? rightTilt : 0;
+        });
+        updateLayout();
+        stage.style.cursor = "grab";
+        onIntroPhase("active");
+        updateHover();
+    };
+
+    const startIntro = () => {
+        if (reduced()) {
+            finishIntro();
+            return;
+        }
+
+        // Start only after the textures are ready and the straight lineup has rendered.
+        stage.style.cursor = "default";
+        introTween = gsap.to(intro, {
+            progress: 1,
+            delay: .55,
+            duration: 1.15,
+            ease: "power3.inOut",
+            onStart: () => onIntroPhase("reveal"),
+            onUpdate: updateLayout,
+            onComplete: finishIntro,
+        });
+    };
+
     const onMotionChange = () => {
         if (motionPreference.matches) {
+            if (ready && !introComplete) finishIntro();
             stopSpin(true);
             parallax.set(0, 0);
             if (snapTween) snapTo(Math.round(track.position));
@@ -342,12 +380,13 @@ export const mountCarousel = (stage, { onReady, onError, onChange }) => {
             const copyShadow = shadows.create();
             scene.add(primary, copy, primaryShadow, copyShadow);
             cans.push({ index, primary, copy, primaryShadow, copyShadow });
-            primary.userData.tilt.rotation.z = index === activeIndex ? rightTilt : 0;
         });
         ready = true;
         resize();
         onReady();
         onChange(flavors[activeIndex].name);
+        render(0, 0);
+        startIntro();
     }).catch(error => {
         if (!disposed) {
             console.error("Sunmelt carousel:", error);
@@ -357,6 +396,7 @@ export const mountCarousel = (stage, { onReady, onError, onChange }) => {
 
     return () => {
         disposed = true;
+        introTween?.kill();
         cancelSnap();
         stopSpin(true);
         cans.forEach(({ primary, copy }) => {

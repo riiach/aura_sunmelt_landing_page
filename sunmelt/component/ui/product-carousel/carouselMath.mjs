@@ -18,3 +18,14 @@ export const depthAt = distance => 0.42 * centerWeight(distance) - 0.22 * Math.m
 export const rightTilt = -Math.PI / 15;
 
 export const isSelected = (index, position, count) => index === mod(Math.round(position), count);
+
+ 
+// All cans start on one plane, at equal size. The existing carousel pose is the endpoint.
+export const introPoseAt = (distance, progress) => {
+    const t = Math.max(0, Math.min(1, progress));
+    return {
+        y: -.11 + .20 * centerWeight(distance) * t,
+        z: depthAt(distance) * t,
+        scale: .86 + (scaleAt(distance) - .86) * t,
+    };
+};

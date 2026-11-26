@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { wrap, mod, scaleAt, getLayout, getSnap, centerWeight, depthAt, rightTilt, isSelected } from "./carouselMath.mjs";
+import { wrap, mod, scaleAt, getLayout, getSnap, centerWeight, depthAt, rightTilt, isSelected, introPoseAt } from "./carouselMath.mjs";
 
 test("desktop shows five whole cans, tablet shows three, mobile peeks on both sides", () => {
     const sideRadius = 0.314 * scaleAt(1);
@@ -59,4 +59,21 @@ test("only one product owns selection and its right tilt is twelve degrees", () 
     }
     assert.equal(isSelected(0, 4.9, 5), true);
     assert.equal(isSelected(2, 2, 5), true);
+});
+
+test("intro begins with every can upright on one plane at equal scale", () => {
+    for (const x of [-2, -1, 0, 1, 2]) {
+        assert.equal(introPoseAt(x, 0).y, -.11);
+        assert.ok(Math.abs(introPoseAt(x, 0).z) < 1e-9);
+        assert.equal(introPoseAt(x, 0).scale, .86);
+    }
+});
+
+test("intro moves the center forward and ends exactly at the carousel pose", () => {
+    assert.ok(introPoseAt(0, .5).z > introPoseAt(0, 0).z);
+    assert.ok(introPoseAt(0, .5).scale > introPoseAt(1, .5).scale);
+    for (const x of [-2, -1, 0, 1, 2]) {
+        assert.equal(introPoseAt(x, 1).z, depthAt(x));
+        assert.ok(Math.abs(introPoseAt(x, 1).scale - scaleAt(x)) < 1e-9);
+    }
 });
