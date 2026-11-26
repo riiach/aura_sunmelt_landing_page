@@ -5,7 +5,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import auraLogo from "../public/aura_logo.png";
-import WaterText from "../component/ui/WaterText";
 import styles from "./Header.module.css";
 
 const links = [
@@ -57,7 +56,7 @@ const Header = ({ transparent = false }: { transparent?: boolean }) => {
         <nav aria-label="Main navigation" className={styles.leftNav}>
           {links.slice(0, 2).map(({ label, href }) => (
             <Link key={label} href={href} className={styles.navLink}>
-              <WaterText>{label}</WaterText>
+              <span className={styles.linkLabel}>{label}</span>
             </Link>
           ))}
         </nav>
@@ -79,7 +78,7 @@ const Header = ({ transparent = false }: { transparent?: boolean }) => {
           {links.slice(2).map(({ label, href }) => (
             <Link key={label} href={href}
                   className={label === "Contact" ? styles.contact : styles.navLink}>
-              <WaterText>{label}</WaterText>
+              <span className={styles.linkLabel}>{label}</span>
               {label === "Contact" && (
                 <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
                   <path d="M4 12 12 4M5 4h7v7" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round" />
@@ -130,7 +129,7 @@ const Header = ({ transparent = false }: { transparent?: boolean }) => {
                 {links.map(({ label, href }) => (
                   <Link key={label} href={href} className={styles.mobileLink}
                         onClick={() => setMenuOpen(false)}>
-                    {label}
+                    <span className={styles.linkLabel}>{label}</span>
                   </Link>
                 ))}
               </nav>
