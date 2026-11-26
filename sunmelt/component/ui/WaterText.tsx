@@ -17,8 +17,8 @@ const WaterText = ({ children }: WaterTextProps) => {
         firstWaveExitDuration: 600,
         secondWaveExitDuration: 700,
 
-        firstColor: "#F89862",
-        secondColor: "#D2C6D4",
+        firstColor: "#D2C6D4",
+        secondColor: "#F89862",
     };
 
     const handleMouseEnter = () => {
