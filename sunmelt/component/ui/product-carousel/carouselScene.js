@@ -267,6 +267,7 @@ export const mountCarousel = (stage, { onReady, onError, onChange }) => {
             return;
         }
         assets = result;
+        assets.preload();
         flavors.forEach((_, index) => {
             const primary = assets.createCan(index);
             const copy = assets.createCan(index);

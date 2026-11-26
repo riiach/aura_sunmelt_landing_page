@@ -12,6 +12,7 @@ export const frontRotation = Math.PI;
 
 export const createCanAssets = async (renderer, base = "/textures") => {
     const loader = new THREE.TextureLoader();
+    const anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy());
     const loaded = await Promise.allSettled([
         ...flavors.map(flavor => loader.loadAsync(base + "/uv/" + flavor.id + ".webp")),
         loader.loadAsync(base + "/metal/can-top.png"),
@@ -28,9 +29,8 @@ export const createCanAssets = async (renderer, base = "/textures") => {
     const textures = loaded.map(result => result.value);
     textures.forEach(texture => {
         texture.colorSpace = THREE.SRGBColorSpace;
-        texture.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy());
+        texture.anisotropy = anisotropy;
         texture.needsUpdate = true;
-        renderer.initTexture(texture);
     });
 
     // Match label circumference to the supplied 1536 x 1152 UV ratio.
@@ -96,5 +96,5 @@ export const createCanAssets = async (renderer, base = "/textures") => {
         textures.forEach(texture => texture.dispose());
     };
 
-    return { createCan, dispose };
+    return { createCan, dispose, preload: () => textures.forEach(texture => renderer.initTexture(texture)) };
 };

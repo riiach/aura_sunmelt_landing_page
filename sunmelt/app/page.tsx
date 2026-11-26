@@ -1,5 +1,5 @@
-import Image from "next/image";
 import Header from "../layout/Header";
+import ProductCarousel from "../component/ui/ProductCarousel";
 
 export default function Home() {
   return (
@@ -7,8 +7,8 @@ export default function Home() {
         <header className="w-full min-h-16">
             <Header />
         </header>
-      <main className="">
-
+      <main className="w-full">
+          <ProductCarousel />
       </main>
     </div>
   );
