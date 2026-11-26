@@ -17,6 +17,7 @@ const WaterText = ({ children }: WaterTextProps) => {
         firstWaveExitDuration: 600,
         secondWaveExitDuration: 700,
         waveEnterEasing: "cubic-bezier(0.18, 0.65, 0.35, 1)",
+        waveEnterDelay: -120,
 
         firstColor: "#D2C6D4",
         secondColor: "#F89862",
@@ -47,7 +48,7 @@ const WaterText = ({ children }: WaterTextProps) => {
                 className="absolute inset-0 z-10 pointer-events-none"
                 style={{
                     color: settings.firstColor,
-                    transition: `clip-path ${hovered ? settings.firstWaveDuration : settings.firstWaveExitDuration}ms ${hovered ? settings.waveEnterEasing : "ease-in-out"}`,
+                    transition: `clip-path ${hovered ? settings.firstWaveDuration : settings.firstWaveExitDuration}ms ${hovered ? settings.waveEnterEasing : "ease-in-out"} ${hovered ? settings.waveEnterDelay : 0}ms`,
                     clipPath: hovered
                         ? `polygon(
                             0 -10%,
@@ -78,7 +79,7 @@ const WaterText = ({ children }: WaterTextProps) => {
                 className="absolute inset-0 z-20 pointer-events-none"
                 style={{
                     color: settings.secondColor,
-                    transition: `clip-path ${hovered ? settings.secondWaveDuration : settings.secondWaveExitDuration}ms ${hovered ? settings.waveEnterEasing : "ease-in-out"}`,
+                    transition: `clip-path ${hovered ? settings.secondWaveDuration : settings.secondWaveExitDuration}ms ${hovered ? settings.waveEnterEasing : "ease-in-out"} ${hovered ? settings.waveEnterDelay : 0}ms`,
                     clipPath: hovered
                         ? `polygon(
                             0 -20%,
