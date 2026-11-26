@@ -14,7 +14,7 @@ const Header = () => {
 
   return (
     <div
-        className="w-full flex flex-col px-3 md:px-16 lg:px-32"
+        className="w-full flex flex-col bg-white px-3 md:px-16 lg:px-32"
         onKeyDown={e => {
           if (e.key === "Escape" && menuOpen) {
             setMenuOpen(false);
@@ -27,14 +27,14 @@ const Header = () => {
           <Image
               src={auraLogo}
               alt="Aura Logo"
-              className="w-24 h-auto"
+              className="w-24 h-auto brightness-0"
           />
-          <p className="font-fraunces text-white text-2xl">sunmelt</p>
+          <p className="font-fraunces text-black text-2xl">sunmelt</p>
         </div>
 
         <nav className="hidden md:flex min-w-60 h-full
         flex-row justify-between items-center gap-6
-        text-white font-bold text-base md:text-lg">
+        text-black font-bold text-base md:text-lg">
           <Link href=""><WaterText>HOME</WaterText></Link>
           <Link href=""><WaterText>ABOUT</WaterText></Link>
           <Link href=""><WaterText>SALES</WaterText></Link>
@@ -44,7 +44,7 @@ const Header = () => {
         <button
             ref={menuButton}
             type="button"
-            className="md:hidden w-11 h-11 flex items-center justify-center text-white"
+            className="md:hidden w-11 h-11 flex items-center justify-center text-black"
             aria-label={menuOpen ? "Close menu" : "Open menu"}
             aria-expanded={menuOpen}
             aria-controls="mobile-nav"
@@ -84,7 +84,7 @@ const Header = () => {
                 transition={{ duration: reduceMotion ? 0 : 0.3, ease: "easeInOut" }}
                 className="overflow-hidden"
             >
-              <nav className="flex flex-col items-end gap-5 py-5 text-white font-bold text-base">
+              <nav className="flex flex-col items-end gap-5 py-5 text-black font-bold text-base">
                 <Link href="" onClick={() => setMenuOpen(false)}><WaterText>HOME</WaterText></Link>
                 <Link href="" onClick={() => setMenuOpen(false)}><WaterText>ABOUT</WaterText></Link>
                 <Link href="" onClick={() => setMenuOpen(false)}><WaterText>SALES</WaterText></Link>
