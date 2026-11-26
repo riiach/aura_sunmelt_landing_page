@@ -30,7 +30,7 @@ const ProductHero = ({ header }: ProductHeroProps) => {
                          className={styles.gradient}
                          style={{
                              opacity: activeProduct === name ? 1 : 0,
-                             background: `linear-gradient(to bottom, transparent 74%, #ffffff 100%), radial-gradient(circle max(105vw, 136svh) at 50% -38%, ${deep} 0%, ${deep} 49%, ${mid} 76%, #ffffff 100%)`,
+                             background: `radial-gradient(ellipse var(--curve-rx) var(--curve-ry) at 50% var(--curve-center-y), ${deep} 0%, ${deep} 94%, ${mid} 110%, transparent 119%), linear-gradient(to bottom, ${mid} 0%, ${mid} 28%, #ffffff 100%)`,
                          }}
                     />
                 ))}
