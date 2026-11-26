@@ -1,0 +1,196 @@
+.header {
+    position: relative;
+    z-index: 30;
+    width: 100%;
+}
+
+.transparent {
+    background: transparent;
+    color: #fff;
+}
+
+.solid {
+    background: #fff;
+    color: #25201e;
+}
+
+.inner {
+    width: 100%;
+    max-width: 1600px;
+    height: 80px;
+    margin-inline: auto;
+    padding-inline: clamp(32px, 6vw, 96px);
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    align-items: center;
+    column-gap: clamp(20px, 4vw, 64px);
+}
+
+.leftNav, .rightNav {
+    display: flex;
+    align-items: center;
+    gap: clamp(20px, 3vw, 44px);
+}
+
+.rightNav { justify-content: flex-end; }
+
+.navLink, .contact {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: inherit;
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: .025em;
+    white-space: nowrap;
+    text-decoration: none;
+}
+
+.navLink { min-height: 44px; }
+
+.contact {
+    min-height: 38px;
+    padding: 0 17px;
+    gap: 9px;
+    border: 1px solid currentColor;
+    border-radius: 100px;
+    transition: background-color 200ms ease, border-color 200ms ease;
+}
+
+.transparent .contact:hover { background-color: rgba(255,255,255,.10); }
+.solid .contact:hover { background-color: rgba(0,0,0,.05); }
+
+.brand {
+    grid-column: 2;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 9px;
+    white-space: nowrap;
+    color: inherit;
+    text-decoration: none;
+}
+
+.logoCrop {
+    width: 59px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.logo {
+    width: 84px;
+    max-width: none;
+    height: auto;
+    flex-shrink: 0;
+}
+
+.darkLogo { filter: brightness(0); }
+
+.collaboration {
+    font-size: 14px;
+    font-weight: 400;
+    opacity: .76;
+}
+
+.wordmark {
+    font-family: var(--font-fraunces), Georgia, serif;
+    font-size: 30px;
+    font-weight: 500;
+    line-height: 1;
+    letter-spacing: -.04em;
+}
+
+.menuButton, .mobileOverlay { display: none; }
+
+.header a:focus-visible, .menuButton:focus-visible {
+    outline: 2px solid currentColor;
+    outline-offset: 5px;
+}
+
+@media (max-width: 767px) {
+    .inner {
+        height: 64px;
+        padding-inline: 16px;
+        column-gap: 8px;
+        grid-template-columns: 44px minmax(0, 1fr) 44px;
+    }
+
+    .leftNav, .rightNav { display: none; }
+
+    .brand { justify-self: center; gap: 7px; }
+    .wordmark { font-size: 26px; }
+    .logoCrop { width: 51px; }
+    .logo { width: 74px; }
+
+    .menuButton {
+        grid-column: 3;
+        width: 44px;
+        height: 44px;
+        display: grid;
+        place-items: center;
+        background: transparent;
+        color: inherit;
+        border: none;
+        cursor: pointer;
+    }
+
+    .menuIcon {
+        width: 23px;
+        height: 24px;
+        position: relative;
+    }
+
+    .menuLine {
+        position: absolute;
+        left: 0;
+        top: 11px;
+        height: 1.5px;
+        width: 23px;
+        background: currentColor;
+        border-radius: 2px;
+    }
+
+    .mobileOverlay {
+        display: block;
+        position: absolute;
+        top: 100%;
+        inset-inline: 12px;
+    }
+
+    .mobilePanel {
+        overflow: hidden;
+        background: #fff;
+        color: #25201e;
+        border-radius: 0 0 14px 14px;
+    }
+
+    .mobileNav {
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        padding: 14px 24px 22px;
+        max-height: calc(100dvh - 80px);
+        overflow-y: auto;
+    }
+
+    .mobileLink {
+        display: grid;
+        place-items: center;
+        min-height: 52px;
+        font-size: 16px;
+        font-weight: 400;
+        color: inherit;
+        text-decoration: none;
+    }
+
+    .mobileLink + .mobileLink {
+        border-top: 1px solid rgba(37,32,30,.09);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .contact { transition: none; }
+}
