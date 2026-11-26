@@ -76,7 +76,7 @@ const Header = ({ transparent = false }: { transparent?: boolean }) => {
         </button>
       </div>
 
-      <div id="mobile-nav" className="md:hidden" inert={!menuOpen}>
+      <div id="mobile-nav" className="absolute inset-x-0 top-full md:hidden" inert={!menuOpen}>
         <AnimatePresence initial={false}>
           {menuOpen && (
             <motion.div
@@ -85,9 +85,9 @@ const Header = ({ transparent = false }: { transparent?: boolean }) => {
                 animate={{ height: "auto", opacity: 1 }}
                 exit={{ height: 0, opacity: 0 }}
                 transition={{ duration: reduceMotion ? 0 : 0.3, ease: "easeInOut" }}
-                className="overflow-hidden"
+                className="overflow-hidden bg-white shadow-sm"
             >
-              <nav className="flex flex-col items-center gap-5 py-5 text-black font-medium text-base">
+              <nav className="flex flex-col items-center gap-5 py-5 text-black font-medium text-base max-h-[calc(100dvh-4rem)] overflow-y-auto">
                 <Link href="" onClick={() => setMenuOpen(false)}><WaterText>HOME</WaterText></Link>
                 <Link href="" onClick={() => setMenuOpen(false)}><WaterText>ABOUT</WaterText></Link>
                 <Link href="" onClick={() => setMenuOpen(false)}><WaterText>SALES</WaterText></Link>
