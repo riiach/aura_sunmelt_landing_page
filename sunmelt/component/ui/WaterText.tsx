@@ -12,8 +12,8 @@ const WaterText = ({ children }: WaterTextProps) => {
 
     // Animation Settings
     const settings = {
-        firstWaveDuration: 350,
-        secondWaveDuration: 450,
+        firstWaveDuration: 1500,
+        secondWaveDuration: 2200,
 
         firstColor: "#F89862",
         secondColor: "#D2C6D4",
