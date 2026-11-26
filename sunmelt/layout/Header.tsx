@@ -28,16 +28,16 @@ const Header = () => {
             <Image
                 src={auraLogo}
                 alt="Aura Logo"
-                className="w-24 max-w-none h-auto shrink-0 brightness-0"
+                className="w-20 max-w-none h-auto shrink-0 brightness-0"
             />
           </div>
-          <span className="font-fraunces text-black text-lg">x</span>
+          <span className="text-black text-lg">x</span>
           <p className="font-fraunces text-black text-2xl">sunmelt</p>
         </div>
 
         <nav className="hidden md:flex min-w-60 h-full
         flex-row justify-between items-center gap-6
-        text-black font-medium text-base md:text-lg">
+        text-black font-medium text-base">
           <Link href=""><WaterText>HOME</WaterText></Link>
           <Link href=""><WaterText>ABOUT</WaterText></Link>
           <Link href=""><WaterText>SALES</WaterText></Link>
