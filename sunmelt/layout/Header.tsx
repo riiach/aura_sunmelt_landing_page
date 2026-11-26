@@ -14,7 +14,7 @@ const Header = ({ transparent = false }: { transparent?: boolean }) => {
 
   return (
     <div
-        className={`w-full flex flex-col px-3 md:px-16 lg:px-32 ${transparent ? "bg-transparent" : "bg-white"}`}
+        className={`relative z-30 w-full flex flex-col px-3 md:px-16 lg:px-32 ${transparent ? "bg-transparent text-white" : "bg-white text-black"}`}
         onKeyDown={e => {
           if (e.key === "Escape" && menuOpen) {
             setMenuOpen(false);
@@ -28,16 +28,16 @@ const Header = ({ transparent = false }: { transparent?: boolean }) => {
             <Image
                 src={auraLogo}
                 alt="Aura Logo"
-                className="w-20 max-w-none h-auto shrink-0 brightness-0"
+                className={`w-20 max-w-none h-auto shrink-0 ${transparent ? "" : "brightness-0"}`}
             />
           </div>
-          <span className="text-black text-lg">x</span>
-          <p className="font-fraunces text-black text-2xl">sunmelt</p>
+          <span className="text-lg">x</span>
+          <p className="font-fraunces text-2xl">sunmelt</p>
         </div>
 
         <nav className="hidden md:flex min-w-60 h-full
         flex-row justify-between items-center gap-6
-        text-black font-medium text-base">
+        font-medium text-base">
           <Link href=""><WaterText>HOME</WaterText></Link>
           <Link href=""><WaterText>ABOUT</WaterText></Link>
           <Link href=""><WaterText>SALES</WaterText></Link>
@@ -47,7 +47,7 @@ const Header = ({ transparent = false }: { transparent?: boolean }) => {
         <button
             ref={menuButton}
             type="button"
-            className="md:hidden w-11 h-11 flex items-center justify-center text-black"
+            className="md:hidden w-11 h-11 flex items-center justify-center"
             aria-label={menuOpen ? "Close menu" : "Open menu"}
             aria-expanded={menuOpen}
             aria-controls="mobile-nav"
