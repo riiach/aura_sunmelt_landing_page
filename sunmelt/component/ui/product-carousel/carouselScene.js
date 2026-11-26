@@ -24,7 +24,7 @@ export const mountCarousel = (stage, { onReady, onError, onChange }) => {
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(34, 1, .1, 40);
     const cameraDistance = 7.8;
-    const cameraHeight = 1.18;
+    const cameraHeight = 2.05;
     camera.position.set(0, cameraHeight, cameraDistance);
     camera.lookAt(0, 0, 0);
     let disposeStudio, shadows;
@@ -47,7 +47,7 @@ export const mountCarousel = (stage, { onReady, onError, onChange }) => {
     const cans = [];
     let assets, snapTween, spinTween, spinningCan;
     let ready = false, disposed = false, dirty = true, inView = true;
-    let worldWidth = 5.12, pixelsPerUnit = 1;
+    let worldWidth = 4.92, pixelsPerUnit = 1, spacing = 1;
     let activeIndex = 2, drag = null, lastMouse = null;
     let visualIndex = 2, elapsed = 0;
     let parallaxX = 0, parallaxY = 0;
@@ -97,10 +97,10 @@ export const mountCarousel = (stage, { onReady, onError, onChange }) => {
             [[primary, primaryShadow, distance], [copy, copyShadow, otherDistance]].forEach(([can, shadow, x]) => {
                 const weight = centerWeight(x);
                 const scale = scaleAt(x);
-                can.position.set(x, -.11 + .20 * weight, depthAt(x));
+                can.position.set(x * spacing, -.11 + .20 * weight, depthAt(x));
                 can.scale.setScalar(scale);
                 can.visible = Math.abs(x) < worldWidth / 2 + .9;
-                shadow.position.x = x;
+                shadow.position.x = x * spacing;
                 shadow.position.z = can.position.z;
                 shadow.visible = can.visible;
             });
@@ -126,7 +126,8 @@ export const mountCarousel = (stage, { onReady, onError, onChange }) => {
         camera.aspect = aspect;
         camera.fov = THREE.MathUtils.radToDeg(2 * Math.atan(worldHeight / (2 * distance)));
         camera.updateProjectionMatrix();
-        pixelsPerUnit = width / (worldHeight * aspect);
+        spacing = worldHeight * aspect / worldWidth;
+        pixelsPerUnit = width / worldWidth;
         renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, width < 640 ? 1.25 : 1.75));
         renderer.setSize(width, height, false);
         updateLayout();
