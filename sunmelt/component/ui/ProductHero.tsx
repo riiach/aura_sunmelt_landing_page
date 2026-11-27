@@ -182,10 +182,6 @@ const ProductHero = ({ header }: ProductHeroProps) => {
             motion.removeEventListener("change", schedule);
         };
     }, []);
-    const meetMango = useCallback(() => {
-        aboutState.current.returnToMango = true;
-        trackRef.current?.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth", block: "start" });
-    }, []);
     const syncIntroProgress = useCallback((progress: number) => {
         trackRef.current?.style.setProperty("--intro-progress", String(Math.max(0, Math.min(1, progress))));
     }, []);
@@ -206,7 +202,7 @@ const ProductHero = ({ header }: ProductHeroProps) => {
                         ))}
                     </div>
                 </div>
-                <AboutSection tileRef={tileRef} interactive={aboutInteractive} onMeetMango={meetMango} />
+                <AboutSection tileRef={tileRef} interactive={aboutInteractive} />
             </main>
             <ProductCarousel
                 onProductChange={setActiveProduct}
