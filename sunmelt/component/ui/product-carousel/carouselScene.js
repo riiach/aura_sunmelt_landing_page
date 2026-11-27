@@ -3,8 +3,9 @@ import { gsap } from "gsap";
 import { createCanAssets, flavors, frontRotation } from "./createCan";
 import { wrap, mod, getLayout, getSnap, rightTilt, isSelected, introPoseAt, introSpreadAt } from "./carouselMath.mjs";
 import { createStudio, createContactShadows } from "./studio";
+import { aboutPhases, nearestFlavorPosition } from "./aboutMath.mjs";
 
-export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase, onIntroProgress }) => {
+export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase, onIntroProgress, aboutState }) => {
     let renderer;
     try {
         renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true, powerPreference: "high-performance" });
@@ -54,6 +55,12 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
     let visualIndex = 2, elapsed = 0;
     let parallaxX = 0, parallaxY = 0;
     const parallax = new THREE.Vector2();
+    const mangoIndex = flavors.findIndex(flavor => flavor.name.toLowerCase().startsWith("mango"));
+    let aboutOrigin = null, aboutTarget = null, lastAboutProgress = -1;
+    const targetRay = new THREE.Raycaster();
+    const tilePoint = new THREE.Vector3();
+    const tilePlane = new THREE.Plane(new THREE.Vector3(0, 0, 1), -.65);
+    const aboutProgress = () => aboutState?.current?.progress || 0;
     const reduced = () => motionPreference.matches;
     const damp = (from, to, dt) => reduced() ? to : THREE.MathUtils.damp(from, to, 10, dt);
 
@@ -61,6 +68,32 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
     const render = (_time, deltaMs) => {
         if (disposed || !ready || !inView) return;
         const dt = Math.min(.05, (deltaMs || 16.7) / 1000);
+        const progress = introComplete ? aboutProgress() : 0;
+        if (progress > 0 && mangoIndex >= 0) {
+            if (aboutOrigin === null || progress !== lastAboutProgress || dirty || aboutState?.current?.returnToMango) {
+                updateAboutLayout(progress);
+                lastAboutProgress = progress;
+                dirty = false;
+                renderer.render(scene, camera);
+            }
+            return;
+        }
+        if (aboutOrigin !== null) {
+            track.position = mod(Math.round(aboutOrigin), count);
+            activeIndex = mod(Math.round(track.position), count);
+            aboutOrigin = aboutTarget = null;
+            lastAboutProgress = -1;
+            cans.forEach(({primary, copy}) => {
+                for (const can of [primary, copy]) {
+                    can.userData.tilt.rotation.set(0, 0, 0);
+                    can.userData.tilt.position.y = 0;
+                    can.userData.spin.rotation.y = frontRotation;
+                }
+            });
+            updateLayout();
+            onChange(flavors[activeIndex].name);
+            stage.style.cursor = "grab";
+        }
         if (introComplete && !reduced()) elapsed += dt;
         const moving = Boolean(!introComplete || drag || snapTween);
         const px = moving || reduced() ? 0 : parallax.x * .19;
@@ -123,6 +156,85 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
         invalidate();
     };
 
+    // Keep the original procedural mango can and its shared materials.
+    const updateAboutLayout = progress => {
+        if (aboutOrigin === null) {
+            cancelSnap();
+            stopSpin(true);
+            aboutOrigin = Math.round(track.position);
+            aboutTarget = nearestFlavorPosition(aboutOrigin, mangoIndex, count);
+            lastMouse = null;
+            parallax.set(0, 0);
+            cans.forEach(({primary, copy}) => {
+                returnToFront(primary, true);
+                returnToFront(copy, true);
+            });
+        }
+        if (aboutState?.current?.returnToMango) {
+            aboutOrigin = aboutTarget;
+            aboutState.current.returnToMango = false;
+        }
+        const { settle, travel, merge, land } = aboutPhases(progress);
+        const lerp = THREE.MathUtils.lerp;
+        track.position = lerp(aboutOrigin, aboutTarget, travel);
+        parallaxX = parallaxY = 0;
+        camera.position.set(0, cameraHeight, cameraDistance);
+        camera.lookAt(0, 0, 0);
+        camera.updateMatrixWorld();
+        const tile = aboutState?.current?.target?.getBoundingClientRect();
+        const rect = stage.getBoundingClientRect();
+        let landingScale = 1.05;
+        tilePoint.set(1.3, -.08, .65);
+        if (tile && rect.width > 0 && rect.height > 0) {
+            targetRay.setFromCamera(new THREE.Vector2(
+                (tile.left + tile.width * .5 - rect.left) / rect.width * 2 - 1,
+                1 - (tile.top + tile.height * .46 - rect.top) / rect.height * 2
+            ), camera);
+            targetRay.ray.intersectPlane(tilePlane, tilePoint);
+            const top = tilePoint.clone().add(new THREE.Vector3(0, .74, 0)).project(camera);
+            const bottom = tilePoint.clone().add(new THREE.Vector3(0, -.74, 0)).project(camera);
+            const unitHeight = Math.abs(top.y - bottom.y) * rect.height / 2;
+            landingScale = THREE.MathUtils.clamp(tile.height * .88 / Math.max(1, unitHeight), .30, 1.45);
+        }
+        cans.forEach(({index, primary, copy, primaryShadow, copyShadow}) => {
+            const distance = wrap(index - track.position, count);
+            const other = distance + (distance < 0 ? count : -count);
+            for (const [can, shadow, x, isPrimary] of [[primary, primaryShadow, distance, true], [copy, copyShadow, other, false]]) {
+                const pose = introPoseAt(x, 1 - settle);
+                const mango = index === mangoIndex && isPrimary;
+                const offset = x * (1 - merge);
+                const tilt = can.userData.tilt;
+                can.position.set(offset * spacing, pose.y, pose.z - (mango ? 0 : merge * .28));
+                can.scale.setScalar(pose.scale * (mango ? 1 : 1 - merge * .97));
+                tilt.rotation.set(0, 0, isPrimary ? rightTilt * (1 - settle) * Math.max(0, 1-Math.abs(x)) : 0);
+                tilt.position.y = 0;
+                can.userData.spin.rotation.y = frontRotation;
+                can.visible = Math.abs(offset) < worldWidth / 2 + .9 && (merge < .995 || mango);
+                shadow.position.x = can.position.x;
+                shadow.position.z = can.position.z;
+                shadow.visible = can.visible && land < .99;
+                shadow.scale.setScalar(.82 * (mango ? 1 : 1 - merge * .8));
+                shadow.material.opacity = .43 * (1 - merge * .8) * (1 - land);
+                if (mango && land > 0) {
+                    can.position.set(lerp(0, tilePoint.x, land),
+                        lerp(-.11, tilePoint.y, land) + Math.sin(Math.PI * land) * .28,
+                        lerp(0, tilePoint.z, land));
+                    can.scale.setScalar(lerp(.86, landingScale, land));
+                    tilt.rotation.set(-.12 * land, 0, -.43 * land);
+                    can.userData.spin.rotation.y = frontRotation - Math.PI * 2 * land - .15 * land;
+                    can.visible = true;
+                    shadow.visible = false;
+                }
+            }
+        });
+        const nextIndex = mod(Math.round(track.position), count);
+        if (visualIndex !== nextIndex) {
+            visualIndex = nextIndex;
+            onChange(flavors[nextIndex].name);
+        }
+        stage.style.cursor = progress >= .985 ? "default" : drag ? "grabbing" : "ns-resize";
+    };
+
     const resize = () => {
         const width = stage.clientWidth;
         const height = stage.clientHeight;
@@ -140,7 +252,8 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
         pixelsPerUnit = width / worldWidth;
         renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, width < 640 ? 1.25 : 1.75));
         renderer.setSize(width, height, false);
-        updateLayout();
+        if (introComplete && aboutProgress() > 0) invalidate();
+        else updateLayout();
     };
 
     const returnToFront = (can, immediate = false) => {
@@ -180,7 +293,7 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
     };
 
     const updateHover = () => {
-        if (!ready || !introComplete || drag || snapTween || !lastMouse || !inView) {
+        if (!ready || !introComplete || aboutProgress() > 0 || drag || snapTween || !lastMouse || !inView) {
             stopSpin();
             return;
         }
@@ -232,11 +345,11 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
     };
 
     const onPointerDown = (event) => {
-        if (!ready || !introComplete || drag || !event.isPrimary || event.button !== 0) return;
+        if (!ready || !introComplete || drag || aboutProgress() >= .985 || !event.isPrimary || event.button !== 0) return;
         cancelSnap();
         stopSpin(true);
         // Reset any earlier front-return tween before the cans start sliding.
-        cans.forEach(({ primary, copy }) => {
+        if (aboutProgress() === 0) cans.forEach(({ primary, copy }) => {
             returnToFront(primary, true);
             returnToFront(copy, true);
         });
@@ -244,6 +357,7 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
             id: event.pointerId, x: event.clientX, y: event.clientY,
             origin: track.position, lastPosition: track.position,
             lastTime: performance.now(), velocity: 0, moved: false,
+            axis: null, scrollY: event.clientY, aboutOnly: aboutProgress() > 0,
         };
         stage.setPointerCapture(event.pointerId);
         stage.style.cursor = "grabbing";
@@ -267,8 +381,19 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
 
         const dx = event.clientX - drag.x;
         const dy = event.clientY - drag.y;
-        if (!drag.moved && Math.abs(dx) < 5) return;
-        if (!drag.moved && event.pointerType === "touch" && Math.abs(dy) > Math.abs(dx)) return;
+        if (!drag.axis) {
+            if (Math.max(Math.abs(dx), Math.abs(dy)) < 5) return;
+            drag.axis = drag.aboutOnly || Math.abs(dy) > Math.abs(dx) ? "vertical" : "horizontal";
+        }
+        if (drag.axis === "vertical") {
+            if (event.pointerType === "mouse") {
+                window.scrollBy({ top: event.clientY - drag.scrollY, behavior: "instant" });
+                drag.scrollY = event.clientY;
+                if (event.cancelable) event.preventDefault();
+            }
+            return;
+        }
+        if (aboutProgress() > 0) return;
         drag.moved = true;
         const now = performance.now();
         const next = drag.origin - dx / pixelsPerUnit;
@@ -287,6 +412,7 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
         drag = null;
         if (stage.hasPointerCapture(event.pointerId)) stage.releasePointerCapture(event.pointerId);
         stage.style.cursor = "grab";
+        if (aboutProgress() > 0 || previous.axis === "vertical") return;
         const velocity = performance.now() - previous.lastTime > 100 ? 0 : previous.velocity;
         if (event.pointerType !== "mouse" || canceled) lastMouse = null;
         const target = previous.moved
@@ -303,7 +429,7 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
         if (!drag) stopSpin();
     };
     const onKeyDown = event => {
-        if (!ready || !introComplete || drag || !["ArrowLeft", "ArrowRight"].includes(event.key)) return;
+        if (!ready || !introComplete || aboutProgress() > 0 || drag || !["ArrowLeft", "ArrowRight"].includes(event.key)) return;
         event.preventDefault();
         snapTo(Math.round(track.position) + (event.key === "ArrowRight" ? 1 : -1));
     };

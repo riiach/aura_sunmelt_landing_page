@@ -1,9 +1,11 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import ProductCarousel from "./ProductCarousel";
-import type { IntroPhase } from "./ProductCarousel";
+import type { AboutSceneState, IntroPhase } from "./ProductCarousel";
+import AboutSection from "./AboutSection";
+import { aboutPhases } from "./product-carousel/aboutMath.mjs";
 import styles from "./ProductCarousel.module.css";
 
 /* Temporarily disabled for the white-background preview.
@@ -34,12 +36,57 @@ const ProductHero = ({ header }: ProductHeroProps) => {
     const activeBackground = backgroundFor(activeProduct);
     const [introPhase, setIntroPhase] = useState<IntroPhase>("lineup");
     const frameRef = useRef<HTMLDivElement>(null);
+    const trackRef = useRef<HTMLDivElement>(null);
+    const tileRef = useRef<HTMLDivElement>(null);
+    const aboutState = useRef<AboutSceneState>({ progress: 0, target: null, returnToMango: false });
+    const [aboutInteractive, setAboutInteractive] = useState(false);
+    useEffect(() => {
+        const root = trackRef.current, frame = frameRef.current;
+        if (!root || !frame) return;
+        const motion = window.matchMedia("(prefers-reduced-motion: reduce)");
+        let scheduled = 0;
+        const update = () => {
+            scheduled = 0;
+            const travel = Math.max(1, root.offsetHeight - frame.offsetHeight);
+            const raw = Math.max(0, Math.min(1, -root.getBoundingClientRect().top / travel));
+            const progress = motion.matches ? (raw >= .5 ? 1 : 0) : raw;
+            const phases = aboutPhases(progress);
+            aboutState.current.progress = progress;
+            aboutState.current.target = tileRef.current;
+            frame.style.setProperty("--about-opacity", String(phases.reveal));
+            frame.style.setProperty("--about-land", String(phases.land));
+            const interactive = progress >= .985;
+            frame.dataset.aboutActive = String(interactive);
+            setAboutInteractive(interactive);
+        };
+        const schedule = () => { if (!scheduled) scheduled = requestAnimationFrame(update); };
+        const observer = new ResizeObserver(schedule);
+        observer.observe(root);
+        observer.observe(frame);
+        window.addEventListener("scroll", schedule, { passive: true });
+        window.addEventListener("resize", schedule, { passive: true });
+        motion.addEventListener("change", schedule);
+        update();
+        return () => {
+            cancelAnimationFrame(scheduled);
+            observer.disconnect();
+            window.removeEventListener("scroll", schedule);
+            window.removeEventListener("resize", schedule);
+            motion.removeEventListener("change", schedule);
+        };
+    }, []);
+    const meetMango = useCallback(() => {
+        aboutState.current.returnToMango = true;
+        trackRef.current?.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth", block: "start" });
+    }, []);
     const syncIntroProgress = useCallback((progress: number) => {
         frameRef.current?.style.setProperty("--intro-progress", String(Math.max(0, Math.min(1, progress))));
     }, []);
 
     return (
-        <div ref={frameRef} className={styles.frame} data-intro-phase={introPhase}>
+        <div id="home" ref={trackRef} className={styles.aboutTrack}>
+            <div id="about" className={styles.aboutAnchor} aria-hidden="true" />
+            <div ref={frameRef} className={styles.frame} data-intro-phase={introPhase}>
             {/* <div className={styles.backdrop} aria-hidden="true">
                 {palettes.map(({ name, colors: [mid, deep] }) => (
                     <div key={name}
@@ -71,8 +118,12 @@ const ProductHero = ({ header }: ProductHeroProps) => {
                     onProductChange={setActiveProduct}
                     onIntroPhase={setIntroPhase}
                     onIntroProgress={syncIntroProgress}
+                    aboutState={aboutState}
+                    aboutInteractive={aboutInteractive}
                 />
+                <AboutSection tileRef={tileRef} interactive={aboutInteractive} onMeetMango={meetMango} />
             </main>
+            </div>
         </div>
     );
 };

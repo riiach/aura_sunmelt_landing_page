@@ -1,9 +1,25 @@
+.aboutTrack {
+    --about-travel: clamp(650px, 112svh, 1100px);
+    position: relative;
+    width: 100%;
+    padding-bottom: var(--about-travel);
+}
+.aboutAnchor {
+    position: absolute;
+    top: var(--about-travel);
+    left: 0;
+    width: 1px;
+    height: 1px;
+    pointer-events: none;
+}
+
 .frame {
     --header-height: 68px;
     --curve-rx: 50%;
     --curve-ry: 82%;
     --curve-center-y: -45%;
-    position: relative;
+    position: sticky;
+    top: 0;
     isolation: isolate;
     width: 100%;
     min-height: 100svh;
@@ -33,6 +49,7 @@
 
 .hero {
     position: relative;
+    z-index: 2;
     isolation: isolate;
     width: 100%;
     overflow: hidden;
@@ -51,6 +68,9 @@
     background-size: cover;
     background-repeat: no-repeat;
 }
+.frame[data-about-active="true"] .hero { pointer-events: none; }
+.frame[data-about-active="true"] .stage { cursor: default; }
+
 .stage {
     position: relative;
     width: 100%;

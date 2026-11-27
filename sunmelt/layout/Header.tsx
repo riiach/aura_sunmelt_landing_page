@@ -10,7 +10,7 @@ import styles from "./Header.module.css";
 
 const links = [
   { label: "Home", href: "/" },
-  { label: "About", href: "" },
+  { label: "About", href: "#about" },
   { label: "Sales", href: "" },
   { label: "Contact", href: "" },
 ];
