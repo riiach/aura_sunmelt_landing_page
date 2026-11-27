@@ -5,7 +5,7 @@ export default function Home() {
   return (
     <ProductHero header={
         <header className="w-full min-h-16">
-            <Header transparent />
+            <Header />
         </header>
     } />
   );

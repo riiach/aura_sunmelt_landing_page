@@ -7,7 +7,8 @@
     isolation: isolate;
     width: 100%;
     min-height: 100svh;
-    background: radial-gradient(ellipse var(--curve-rx) var(--curve-ry) at 50% var(--curve-center-y), #a04542 0%, #a04542 94%, #e48d82 110%, transparent 119%), linear-gradient(to bottom, #e48d82 0%, #e48d82 28%, #ffffff 100%);
+    /* background: radial-gradient(ellipse var(--curve-rx) var(--curve-ry) at 50% var(--curve-center-y), #a04542 0%, #a04542 94%, #e48d82 110%, transparent 119%), linear-gradient(to bottom, #e48d82 0%, #e48d82 28%, #ffffff 100%); */
+    background: #ffffff;
     display: flex;
     flex-direction: column;
 }
