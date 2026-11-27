@@ -224,8 +224,8 @@
     font-weight: 500;
     line-height: 1;
     letter-spacing: -.04em;
-    /* Optical alignment: the lowercase ink sits above its line-box center. */
-    transform: translateY(3px);
+    /* Raise the wordmark to align optically with the collaboration cross. */
+    transform: translateY(-1px);
 }
 
 .menuButton, .mobileOverlay { display: none; }
@@ -257,7 +257,7 @@
     .leftNav, .rightNav { display: none; }
 
     .brand { grid-column: 1; justify-self: start; gap: 7px; }
-    .wordmark { font-size: 26px; transform: translateY(2.6px); }
+    .wordmark { font-size: 26px; transform: translateY(-1.4px); }
     .logoCrop { width: 51px; height: 37px; }
     .logo { width: 74px; }
 
@@ -321,7 +321,7 @@
         text-decoration: none;
         box-sizing: border-box;
         background-color: transparent;
-        transition: background-color 180ms ease;
+        transition: color 180ms ease;
     }
 
     .mobileContact {
@@ -336,14 +336,14 @@
     }
 
     @media (hover: hover) {
-        .mobileLink:hover {
-            background-color: #f1f1f1;
+        .mobileLink:not(.mobileContact):hover {
+            color: #787878;
         }
     }
 
-    .mobileLink:active,
-    .mobileLink:focus-visible {
-        background-color: #f1f1f1;
+    .mobileLink:not(.mobileContact):active,
+    .mobileLink:not(.mobileContact):focus-visible {
+        color: #787878;
     }
 
     .flipWindow {
