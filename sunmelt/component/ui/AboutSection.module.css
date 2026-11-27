@@ -11,6 +11,7 @@
                       linear-gradient(90deg, rgba(80, 70, 55, .045) 1px, transparent 1px);
     background-size: 76px 76px;
     opacity: var(--about-opacity, 0);
+    transform: translateY(calc(22svh * (1 - var(--about-opacity, 0))));
     pointer-events: none;
 }
 .section:not([inert]) { pointer-events: auto; }

@@ -5,7 +5,7 @@ import type { ReactNode } from "react";
 import ProductCarousel from "./ProductCarousel";
 import type { AboutSceneState, IntroPhase } from "./ProductCarousel";
 import AboutSection from "./AboutSection";
-import { aboutPhases } from "./product-carousel/aboutMath.mjs";
+import { aboutPhases, aboutScrollProgress, MANGO_READY } from "./product-carousel/aboutMath.mjs";
 import styles from "./ProductCarousel.module.css";
 
 /* Temporarily disabled for the white-background preview.
@@ -38,40 +38,148 @@ const ProductHero = ({ header }: ProductHeroProps) => {
     const frameRef = useRef<HTMLDivElement>(null);
     const trackRef = useRef<HTMLDivElement>(null);
     const tileRef = useRef<HTMLDivElement>(null);
-    const aboutState = useRef<AboutSceneState>({ progress: 0, target: null, returnToMango: false });
+    const aboutState = useRef<AboutSceneState>({ progress: 0, target: null, returnToMango: false, preparing: false, failed: false });
     const [aboutInteractive, setAboutInteractive] = useState(false);
     useEffect(() => {
         const root = trackRef.current, frame = frameRef.current;
         if (!root || !frame) return;
         const motion = window.matchMedia("(prefers-reduced-motion: reduce)");
+        const state = aboutState.current;
+        const html = document.documentElement;
         let scheduled = 0;
-        const update = () => {
-            scheduled = 0;
-            const travel = Math.max(1, root.offsetHeight - frame.offsetHeight);
-            const raw = Math.max(0, Math.min(1, -root.getBoundingClientRect().top / travel));
-            const progress = motion.matches ? (raw >= .5 ? 1 : 0) : raw;
+        let locked = false, prepared = false, entered = false, jumpToAbout = false;
+        let priorOverflow = "", priorGutter = "";
+        let safetyTimer: ReturnType<typeof setTimeout> | undefined;
+        let touchX = 0, touchY = 0;
+        const top = () => window.scrollY + root.getBoundingClientRect().top;
+        const scrollRange = () => Math.max(1, root.offsetHeight - frame.offsetHeight);
+        const pinToHero = () => window.scrollTo({ top: top(), behavior: "instant" });
+        const unlock = () => {
+            clearTimeout(safetyTimer);
+            if (!locked) return;
+            locked = false;
+            html.style.overflowY = priorOverflow;
+            html.style.scrollbarGutter = priorGutter;
+            frame.removeAttribute("data-scroll-locked");
+        };
+        const publish = (progress: number) => {
             const phases = aboutPhases(progress);
-            aboutState.current.progress = progress;
-            aboutState.current.target = tileRef.current;
+            state.progress = progress;
+            state.target = tileRef.current;
             frame.style.setProperty("--about-opacity", String(phases.reveal));
             frame.style.setProperty("--about-land", String(phases.land));
             const interactive = progress >= .985;
             frame.dataset.aboutActive = String(interactive);
             setAboutInteractive(interactive);
         };
+        const completePreparation = () => {
+            if (!locked) return;
+            state.preparing = false;
+            prepared = true;
+            publish(MANGO_READY);
+            pinToHero();
+            unlock();
+            if (jumpToAbout) {
+                jumpToAbout = false;
+                window.scrollTo({ top: top() + scrollRange(), behavior: motion.matches ? "instant" : "smooth" });
+            }
+        };
+        state.onPrepared = completePreparation;
+        const beginPreparation = () => {
+            if (locked || prepared) return;
+            if (state.failed) { prepared = true; return; }
+            priorOverflow = html.style.overflowY;
+            priorGutter = html.style.scrollbarGutter;
+            html.style.scrollbarGutter = "stable";
+            html.style.overflowY = "hidden";
+            locked = true;
+            state.preparing = true;
+            frame.dataset.scrollLocked = "true";
+            pinToHero();
+            safetyTimer = setTimeout(() => {
+                state.failed = true;
+                completePreparation();
+            }, 12000);
+        };
+        const update = () => {
+            scheduled = 0;
+            state.target = tileRef.current;
+            if (locked) {
+                if (Math.abs(root.getBoundingClientRect().top) > 1) pinToHero();
+                return;
+            }
+            const raw = Math.max(0, Math.min(1, -root.getBoundingClientRect().top / scrollRange()));
+            if (!prepared && raw > .001) {
+                beginPreparation();
+                if (locked) return;
+            }
+            if (!prepared) { publish(0); return; }
+            if (raw > .001) entered = true;
+            if (entered && raw <= .001) {
+                entered = false;
+                prepared = false;
+                state.returnToMango = true;
+                publish(0);
+                return;
+            }
+            publish(motion.matches && raw > .001 ? 1 : aboutScrollProgress(raw));
+        };
         const schedule = () => { if (!scheduled) scheduled = requestAnimationFrame(update); };
+        const onWheel = (event: WheelEvent) => {
+            if (event.ctrlKey || Math.abs(event.deltaX) > Math.abs(event.deltaY)) return;
+            if ((event.target as Element | null)?.closest?.('nav[aria-label="Mobile navigation"]')) return;
+            if (locked) { event.preventDefault(); return; }
+            if (!prepared && event.deltaY > 0 && !state.failed) {
+                event.preventDefault();
+                beginPreparation();
+            }
+        };
+        const onTouchStart = (event: TouchEvent) => {
+            if (event.touches.length !== 1) return;
+            touchX = event.touches[0].clientX;
+            touchY = event.touches[0].clientY;
+        };
+        const onTouchMove = (event: TouchEvent) => {
+            if (event.touches.length !== 1) return;
+            if ((event.target as Element | null)?.closest?.('nav[aria-label="Mobile navigation"]')) return;
+            const dy = touchY - event.touches[0].clientY;
+            const dx = event.touches[0].clientX - touchX;
+            if (locked) { if (event.cancelable) event.preventDefault(); return; }
+            if (!prepared && !state.failed && dy > 8 && dy > Math.abs(dx)) {
+                if (event.cancelable) event.preventDefault();
+                beginPreparation();
+            }
+        };
+        const onAboutLink = (event: MouseEvent) => {
+            const anchor = (event.target as Element | null)?.closest?.('a[href="#about"]');
+            if (!anchor || prepared || state.failed) return;
+            event.preventDefault();
+            jumpToAbout = true;
+            beginPreparation();
+        };
         const observer = new ResizeObserver(schedule);
         observer.observe(root);
         observer.observe(frame);
         window.addEventListener("scroll", schedule, { passive: true });
         window.addEventListener("resize", schedule, { passive: true });
+        window.addEventListener("wheel", onWheel, { passive: false });
+        window.addEventListener("touchstart", onTouchStart, { passive: true });
+        window.addEventListener("touchmove", onTouchMove, { passive: false });
+        root.addEventListener("click", onAboutLink);
         motion.addEventListener("change", schedule);
         update();
         return () => {
+            unlock();
+            state.preparing = false;
+            state.onPrepared = undefined;
             cancelAnimationFrame(scheduled);
             observer.disconnect();
             window.removeEventListener("scroll", schedule);
             window.removeEventListener("resize", schedule);
+            window.removeEventListener("wheel", onWheel);
+            window.removeEventListener("touchstart", onTouchStart);
+            window.removeEventListener("touchmove", onTouchMove);
+            root.removeEventListener("click", onAboutLink);
             motion.removeEventListener("change", schedule);
         };
     }, []);

@@ -3,7 +3,7 @@ import { gsap } from "gsap";
 import { createCanAssets, flavors, frontRotation } from "./createCan";
 import { wrap, mod, getLayout, getSnap, rightTilt, isSelected, introPoseAt, introSpreadAt } from "./carouselMath.mjs";
 import { createStudio, createContactShadows } from "./studio";
-import { aboutPhases, nearestFlavorPosition } from "./aboutMath.mjs";
+import { aboutPhases, nearestFlavorPosition, preparationDuration, preparationProgress, MANGO_READY } from "./aboutMath.mjs";
 
 export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase, onIntroProgress, aboutState }) => {
     let renderer;
@@ -57,6 +57,35 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
     const parallax = new THREE.Vector2();
     const mangoIndex = flavors.findIndex(flavor => flavor.name.toLowerCase().startsWith("mango"));
     let aboutOrigin = null, aboutTarget = null, lastAboutProgress = -1;
+    let prepTime = 0, prepDuration = null;
+    const fadeMaterials = new Map();
+    const setCanOpacity = (can, opacity) => {
+        let entries = fadeMaterials.get(can);
+        if (opacity >= .999) {
+            if (entries) for (const { mesh, original } of entries) mesh.material = original;
+            return;
+        }
+        if (!entries) {
+            entries = [];
+            const clones = new Map();
+            can.traverse(mesh => {
+                if (!mesh.isMesh) return;
+                const original = mesh.material;
+                if (!clones.has(original)) {
+                    const faded = original.clone();
+                    faded.transparent = true;
+                    faded.depthWrite = false;
+                    clones.set(original, faded);
+                }
+                entries.push({ mesh, original, faded: clones.get(original) });
+            });
+            fadeMaterials.set(can, entries);
+        }
+        for (const { mesh, faded } of entries) {
+            faded.opacity = opacity;
+            mesh.material = faded;
+        }
+    };
     const targetRay = new THREE.Raycaster();
     const tilePoint = new THREE.Vector3();
     const tilePlane = new THREE.Plane(new THREE.Vector3(0, 0, 1), -.65);
@@ -68,6 +97,18 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
     const render = (_time, deltaMs) => {
         if (disposed || !ready || !inView) return;
         const dt = Math.min(.05, (deltaMs || 16.7) / 1000);
+        const state = aboutState?.current;
+        let preparedNow = false;
+        if (introComplete && state?.preparing && mangoIndex >= 0) {
+            if (!prepDuration) {
+                const destination = nearestFlavorPosition(track.position, mangoIndex, count);
+                prepDuration = preparationDuration(Math.abs(destination - track.position));
+                prepTime = 0;
+            }
+            prepTime += dt;
+            state.progress = reduced() ? MANGO_READY : preparationProgress(prepTime, prepDuration);
+            preparedNow = state.progress >= MANGO_READY;
+        }
         const progress = introComplete ? aboutProgress() : 0;
         if (progress > 0 && mangoIndex >= 0) {
             if (aboutOrigin === null || progress !== lastAboutProgress || dirty || aboutState?.current?.returnToMango) {
@@ -76,10 +117,18 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
                 dirty = false;
                 renderer.render(scene, camera);
             }
+            if (preparedNow) {
+                state.preparing = false;
+                state.onPrepared?.();
+                prepDuration = null;
+            }
             return;
         }
         if (aboutOrigin !== null) {
-            track.position = mod(Math.round(aboutOrigin), count);
+            track.position = mod(Math.round(state?.returnToMango ? aboutTarget : aboutOrigin), count);
+            if (state) state.returnToMango = false;
+            prepDuration = null;
+            prepTime = 0;
             activeIndex = mod(Math.round(track.position), count);
             aboutOrigin = aboutTarget = null;
             lastAboutProgress = -1;
@@ -88,6 +137,7 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
                     can.userData.tilt.rotation.set(0, 0, 0);
                     can.userData.tilt.position.y = 0;
                     can.userData.spin.rotation.y = frontRotation;
+                    setCanOpacity(can, 1);
                 }
             });
             updateLayout();
@@ -161,7 +211,7 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
         if (aboutOrigin === null) {
             cancelSnap();
             stopSpin(true);
-            aboutOrigin = Math.round(track.position);
+            aboutOrigin = track.position;
             aboutTarget = nearestFlavorPosition(aboutOrigin, mangoIndex, count);
             lastMouse = null;
             parallax.set(0, 0);
@@ -174,7 +224,7 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
             aboutOrigin = aboutTarget;
             aboutState.current.returnToMango = false;
         }
-        const { settle, travel, merge, land } = aboutPhases(progress);
+        const { settle, travel, fade, land } = aboutPhases(progress);
         const lerp = THREE.MathUtils.lerp;
         track.position = lerp(aboutOrigin, aboutTarget, travel);
         parallaxX = parallaxY = 0;
@@ -202,22 +252,23 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
             for (const [can, shadow, x, isPrimary] of [[primary, primaryShadow, distance, true], [copy, copyShadow, other, false]]) {
                 const pose = introPoseAt(x, 1 - settle);
                 const mango = index === mangoIndex && isPrimary;
-                const offset = x * (1 - merge);
+                const opacity = mango ? 1 : 1 - fade;
                 const tilt = can.userData.tilt;
-                can.position.set(offset * spacing, pose.y, pose.z - (mango ? 0 : merge * .28));
-                can.scale.setScalar(pose.scale * (mango ? 1 : 1 - merge * .97));
+                can.position.set(x * spacing, pose.y, pose.z);
+                can.scale.setScalar(pose.scale);
+                setCanOpacity(can, opacity);
                 tilt.rotation.set(0, 0, isPrimary ? rightTilt * (1 - settle) * Math.max(0, 1-Math.abs(x)) : 0);
                 tilt.position.y = 0;
                 can.userData.spin.rotation.y = frontRotation;
-                can.visible = Math.abs(offset) < worldWidth / 2 + .9 && (merge < .995 || mango);
+                can.visible = Math.abs(x) < worldWidth / 2 + .9 && opacity > .005;
                 shadow.position.x = can.position.x;
                 shadow.position.z = can.position.z;
                 shadow.visible = can.visible && land < .99;
-                shadow.scale.setScalar(.82 * (mango ? 1 : 1 - merge * .8));
-                shadow.material.opacity = .43 * (1 - merge * .8) * (1 - land);
+                shadow.scale.setScalar(.82);
+                shadow.material.opacity = .43 * opacity * (1 - land);
                 if (mango && land > 0) {
                     can.position.set(lerp(0, tilePoint.x, land),
-                        lerp(-.11, tilePoint.y, land) + Math.sin(Math.PI * land) * .28,
+                        lerp(-.11, tilePoint.y, land) - Math.sin(Math.PI * land) * .22,
                         lerp(0, tilePoint.z, land));
                     can.scale.setScalar(lerp(.86, landingScale, land));
                     tilt.rotation.set(-.12 * land, 0, -.43 * land);
@@ -345,7 +396,7 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
     };
 
     const onPointerDown = (event) => {
-        if (!ready || !introComplete || drag || aboutProgress() >= .985 || !event.isPrimary || event.button !== 0) return;
+        if (!ready || !introComplete || aboutState?.current?.preparing || drag || aboutProgress() >= .985 || !event.isPrimary || event.button !== 0) return;
         cancelSnap();
         stopSpin(true);
         // Reset any earlier front-return tween before the cans start sliding.
@@ -393,7 +444,7 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
             }
             return;
         }
-        if (aboutProgress() > 0) return;
+        if (aboutState?.current?.preparing || aboutProgress() > 0) return;
         drag.moved = true;
         const now = performance.now();
         const next = drag.origin - dx / pixelsPerUnit;
@@ -412,7 +463,7 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
         drag = null;
         if (stage.hasPointerCapture(event.pointerId)) stage.releasePointerCapture(event.pointerId);
         stage.style.cursor = "grab";
-        if (aboutProgress() > 0 || previous.axis === "vertical") return;
+        if (aboutState?.current?.preparing || aboutProgress() > 0 || previous.axis === "vertical") return;
         const velocity = performance.now() - previous.lastTime > 100 ? 0 : previous.velocity;
         if (event.pointerType !== "mouse" || canceled) lastMouse = null;
         const target = previous.moved
@@ -429,7 +480,7 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
         if (!drag) stopSpin();
     };
     const onKeyDown = event => {
-        if (!ready || !introComplete || aboutProgress() > 0 || drag || !["ArrowLeft", "ArrowRight"].includes(event.key)) return;
+        if (!ready || !introComplete || aboutState?.current?.preparing || aboutProgress() > 0 || drag || !["ArrowLeft", "ArrowRight"].includes(event.key)) return;
         event.preventDefault();
         snapTo(Math.round(track.position) + (event.key === "ArrowRight" ? 1 : -1));
     };
@@ -561,6 +612,10 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
         stage.removeEventListener("pointerleave", onPointerLeave);
         stage.removeEventListener("keydown", onKeyDown);
         motionPreference.removeEventListener("change", onMotionChange);
+        for (const entries of fadeMaterials.values()) {
+            for (const material of new Set(entries.map(entry => entry.faded))) material.dispose();
+        }
+        fadeMaterials.clear();
         assets?.dispose();
         shadows.dispose();
         disposeStudio();

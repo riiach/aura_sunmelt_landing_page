@@ -11,6 +11,9 @@ export interface AboutSceneState {
     progress: number;
     target: HTMLDivElement | null;
     returnToMango: boolean;
+    preparing: boolean;
+    failed: boolean;
+    onPrepared?: () => void;
 }
 
 interface ProductCarouselProps {
@@ -38,6 +41,11 @@ const ProductCarousel = ({ onProductChange, onIntroPhase, onIntroProgress, about
             aboutState,
             onError: (message: string) => {
                 setError(message);
+                if (aboutState) {
+                    aboutState.current.failed = true;
+                    aboutState.current.preparing = false;
+                    aboutState.current.onPrepared?.();
+                }
                 onIntroProgress?.(1);
                 setIntroPhase("active");
                 onIntroPhase?.("active");
