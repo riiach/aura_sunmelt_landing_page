@@ -1,5 +1,5 @@
 .frame {
-    --header-height: 72px;
+    --header-height: 54px;
     --curve-rx: 50%;
     --curve-ry: 82%;
     --curve-center-y: -45%;
@@ -32,7 +32,7 @@
     width: 100%;
     overflow: hidden;
     min-height: 540px;
-    min-height: max(540px, calc(100svh - var(--header-height, 72px)));
+    min-height: max(540px, calc(100svh - var(--header-height, 54px)));
     background: transparent;
     color: #251b19;
     display: grid;
@@ -49,7 +49,7 @@
 .stage {
     position: relative;
     width: 100%;
-    height: max(540px, calc(100svh - var(--header-height, 72px)));
+    height: max(540px, calc(100svh - var(--header-height, 54px)));
     cursor: grab;
     user-select: none;
     touch-action: pan-y;
@@ -71,14 +71,14 @@
 }
 @media (max-width: 767px) {
     .frame {
-        --header-height: 60px;
+        --header-height: 48px;
         --curve-rx: 94%;
         --curve-ry: 76%;
         --curve-center-y: -39%;
     }
 }
 @media (max-width: 639px) {
-    .hero, .stage { min-height: 480px; height: max(480px, calc(100svh - var(--header-height, 72px))); }
+    .hero, .stage { min-height: 480px; height: max(480px, calc(100svh - var(--header-height, 54px))); }
 }
 @media (prefers-reduced-motion: reduce) {
     .gradient, .imageBackground, .headerReveal { transition: none; }
