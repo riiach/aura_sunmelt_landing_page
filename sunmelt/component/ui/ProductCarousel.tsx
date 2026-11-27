@@ -50,11 +50,6 @@ const ProductCarousel = ({ onProductChange, onIntroPhase }: ProductCarouselProps
                 aria-busy={introPhase !== "active" && !error}
                 className={styles.stage}
             />
-            {ready && introPhase === "active" && (
-                <div className={styles.caption} aria-hidden="true">
-                    <span className={styles.flavor}>{activeProduct}</span>
-                </div>
-            )}
             {!ready && (
                 <div className={styles.status}>
                     <p role="status">{error || "Loading Sunmelt flavors..."}</p>

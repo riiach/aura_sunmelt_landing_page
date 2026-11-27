@@ -59,27 +59,6 @@
     cursor: default;
 }
 
-.caption {
-    position: absolute;
-    left: 50%;
-    bottom: clamp(22px, 5vh, 48px);
-    transform: translateX(-50%);
-    text-align: center;
-    pointer-events: none;
-    white-space: nowrap;
-    display: flex;
-    flex-direction: column;
-    animation: captionReveal 450ms cubic-bezier(.22,.61,.36,1) both;
-}
-@keyframes captionReveal {
-    from { opacity: 0; transform: translate(-50%, 12px); }
-    to { opacity: 1; transform: translate(-50%, 0); }
-}
-.flavor {
-    font-family: var(--font-fraunces), Georgia, serif;
-    font-size: clamp(1.15rem, 2.2vw, 1.8rem);
-    font-weight: 500;
-}
 .status {
     position: absolute;
     inset: 0;
@@ -100,9 +79,7 @@
 }
 @media (max-width: 639px) {
     .hero, .stage { min-height: 480px; height: max(480px, calc(100svh - var(--header-height, 72px))); }
-    .caption { bottom: 28px; }
 }
 @media (prefers-reduced-motion: reduce) {
     .gradient, .imageBackground, .headerReveal { transition: none; }
-    .caption { animation: none; }
 }
