@@ -7,9 +7,14 @@
     box-sizing: border-box;
     border: none;
     border-radius: 0;
-    background: rgba(255, 255, 255, .88);
-    -webkit-backdrop-filter: blur(16px) saturate(110%);
-    backdrop-filter: blur(16px) saturate(110%);
+}
+
+.glassSurface {
+    position: relative;
+    width: 100%;
+    background: var(--header-glass);
+    -webkit-backdrop-filter: blur(24px) saturate(130%);
+    backdrop-filter: blur(24px) saturate(130%);
     box-shadow: 0 5px 8px -5px rgba(40, 40, 55, .09);
 }
 
@@ -18,12 +23,12 @@
     --nav-rest: rgba(255, 255, 255, .09);
     --nav-selected: rgba(0, 0, 0, .06);
     --nav-selected-shadow: inset 0 0 5px rgba(0, 0, 0, .10);
-    background: linear-gradient(165deg, rgba(255, 255, 255, .18), rgba(255, 255, 255, .07));
-    border-color: rgba(255, 255, 255, .35);
+    --header-glass: linear-gradient(180deg, rgba(255, 255, 255, .20), rgba(255, 255, 255, .12));
     color: #fff;
 }
 
 .solid {
+    --header-glass: linear-gradient(180deg, rgba(255, 255, 255, .66), rgba(255, 255, 255, .48));
     --nav-hover: #f1f1f1;
     --nav-rest: #f6f6f6;
     --nav-selected: rgba(110, 110, 120, .035);
@@ -220,6 +225,16 @@
 }
 
 @media (max-width: 767px) {
+    .header {
+        height: 48px;
+    }
+
+    .glassSurface {
+        position: absolute;
+        top: 0;
+        inset-inline: 0;
+    }
+
     .inner {
         height: 48px;
         padding-inline: 8px;
@@ -264,21 +279,10 @@
 
     .mobileOverlay {
         display: block;
-        position: absolute;
-        top: calc(100% + 8px);
-        inset-inline: 0;
     }
 
     .mobilePanel {
         overflow: hidden;
-        background: #fff;
-        color: #25201e;
-        border-radius: 14px;
-        border: 1px solid rgba(120, 120, 130, .12);
-        --nav-hover: #f1f1f1;
-        --nav-selected: rgba(110, 110, 120, .035);
-        --nav-selected-shadow: inset 0 0 5px rgba(45, 45, 55, .075);
-        box-shadow: 0 12px 28px -12px rgba(40, 40, 55, .20);
     }
 
     .mobileNav {
