@@ -52,14 +52,14 @@ const Header = ({ transparent = false }: { transparent?: boolean }) => {
           }
         }}
     >
-      <div className={styles.inner}>
-        <nav aria-label="Main navigation" className={styles.leftNav}>
+      <nav className={styles.inner} aria-label="Main navigation">
+        <div className={styles.leftNav}>
           {links.slice(0, 2).map(({ label, href }) => (
             <Link key={label} href={href} className={styles.navLink}>
               <span className={styles.linkLabel}>{label}</span>
             </Link>
           ))}
-        </nav>
+        </div>
 
         <Link href="/" className={styles.brand} aria-label="Aura x Sunmelt home"
               onClick={() => setMenuOpen(false)}>
@@ -74,7 +74,7 @@ const Header = ({ transparent = false }: { transparent?: boolean }) => {
           <span className={styles.wordmark}>sunmelt</span>
         </Link>
 
-        <nav aria-label="Sales and contact" className={styles.rightNav}>
+        <div className={styles.rightNav}>
           {links.slice(2).map(({ label, href }) => (
             <Link key={label} href={href}
                   className={label === "Contact" ? styles.contact : styles.navLink}>
@@ -86,7 +86,7 @@ const Header = ({ transparent = false }: { transparent?: boolean }) => {
               )}
             </Link>
           ))}
-        </nav>
+        </div>
 
         <button
             ref={menuButton}
@@ -112,7 +112,7 @@ const Header = ({ transparent = false }: { transparent?: boolean }) => {
             />
           </span>
         </button>
-      </div>
+      </nav>
 
       <div id="mobile-nav" className={styles.mobileOverlay} inert={!menuOpen}>
         <AnimatePresence initial={false}>
