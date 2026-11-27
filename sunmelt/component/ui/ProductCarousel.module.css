@@ -17,12 +17,17 @@
     position: relative;
     z-index: 30;
     opacity: 1;
-    transition: opacity 620ms cubic-bezier(.22,.61,.36,1);
+
 }
 
 .frame[data-intro-phase="lineup"] .headerReveal,
 .frame[data-intro-phase="spread"] .headerReveal {
     opacity: 0;
+    pointer-events: none;
+}
+
+.frame[data-intro-phase="reveal"] .headerReveal {
+    opacity: var(--intro-progress, 0);
     pointer-events: none;
 }
 
@@ -81,5 +86,5 @@
     .hero, .stage { min-height: 480px; height: max(480px, calc(100svh - var(--header-height, 54px))); }
 }
 @media (prefers-reduced-motion: reduce) {
-    .gradient, .imageBackground, .headerReveal { transition: none; }
+    .gradient, .imageBackground { transition: none; }
 }

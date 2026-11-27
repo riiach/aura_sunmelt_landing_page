@@ -4,7 +4,7 @@ import { createCanAssets, flavors, frontRotation } from "./createCan";
 import { wrap, mod, getLayout, getSnap, rightTilt, isSelected, introPoseAt, introSpreadAt } from "./carouselMath.mjs";
 import { createStudio, createContactShadows } from "./studio";
 
-export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase }) => {
+export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase, onIntroProgress }) => {
     let renderer;
     try {
         renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true, powerPreference: "high-performance" });
@@ -320,6 +320,7 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase 
         });
         updateLayout();
         stage.style.cursor = "grab";
+        onIntroProgress?.(1);
         onIntroPhase?.("active");
         updateHover();
     };
@@ -333,7 +334,11 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase 
         // One shared timeline: hold the single hero, fan out, then lift and tilt.
         stage.style.cursor = "default";
         introTween = gsap.timeline({
-            onUpdate: updateLayout,
+            onUpdate: () => {
+                updateLayout();
+                // Drive the DOM header from the exact same eased progress as the can.
+                onIntroProgress?.(intro.progress);
+            },
             onComplete: finishIntro,
         });
         introTween.to(intro, {

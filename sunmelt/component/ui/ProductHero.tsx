@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import ProductCarousel from "./ProductCarousel";
 import type { IntroPhase } from "./ProductCarousel";
@@ -33,9 +33,13 @@ const ProductHero = ({ header }: ProductHeroProps) => {
     const [activeProduct, setActiveProduct] = useState("Grapefruit Fizz");
     const activeBackground = backgroundFor(activeProduct);
     const [introPhase, setIntroPhase] = useState<IntroPhase>("lineup");
+    const frameRef = useRef<HTMLDivElement>(null);
+    const syncIntroProgress = useCallback((progress: number) => {
+        frameRef.current?.style.setProperty("--intro-progress", String(Math.max(0, Math.min(1, progress))));
+    }, []);
 
     return (
-        <div className={styles.frame} data-intro-phase={introPhase}>
+        <div ref={frameRef} className={styles.frame} data-intro-phase={introPhase}>
             {/* <div className={styles.backdrop} aria-hidden="true">
                 {palettes.map(({ name, colors: [mid, deep] }) => (
                     <div key={name}
@@ -59,13 +63,14 @@ const ProductHero = ({ header }: ProductHeroProps) => {
                     />
                 ))}
             </div>
-            <div className={styles.headerReveal} inert={introPhase === "lineup" || introPhase === "spread"}>
+            <div className={styles.headerReveal} inert={introPhase !== "active"}>
                 {header}
             </div>
             <main className="w-full">
                 <ProductCarousel
                     onProductChange={setActiveProduct}
                     onIntroPhase={setIntroPhase}
+                    onIntroProgress={syncIntroProgress}
                 />
             </main>
         </div>

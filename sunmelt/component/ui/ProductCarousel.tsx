@@ -9,9 +9,10 @@ export type IntroPhase = "lineup" | "spread" | "reveal" | "active";
 interface ProductCarouselProps {
     onProductChange?: (name: string) => void;
     onIntroPhase?: (phase: IntroPhase) => void;
+    onIntroProgress?: (progress: number) => void;
 }
 
-const ProductCarousel = ({ onProductChange, onIntroPhase }: ProductCarouselProps) => {
+const ProductCarousel = ({ onProductChange, onIntroPhase, onIntroProgress }: ProductCarouselProps) => {
     const stageRef = useRef<HTMLDivElement>(null);
     const [ready, setReady] = useState(false);
     const [introPhase, setIntroPhase] = useState<IntroPhase>("lineup");
@@ -24,8 +25,10 @@ const ProductCarousel = ({ onProductChange, onIntroPhase }: ProductCarouselProps
 
         return mountCarousel(stage, {
             onReady: () => setReady(true),
+            onIntroProgress,
             onError: (message: string) => {
                 setError(message);
+                onIntroProgress?.(1);
                 setIntroPhase("active");
                 onIntroPhase?.("active");
             },
@@ -38,7 +41,7 @@ const ProductCarousel = ({ onProductChange, onIntroPhase }: ProductCarouselProps
                 onProductChange?.(name);
             },
         });
-    }, [onProductChange, onIntroPhase]);
+    }, [onProductChange, onIntroPhase, onIntroProgress]);
 
     return (
         <section aria-label="Sunmelt product carousel" className={styles.hero} data-carousel-phase={introPhase}>

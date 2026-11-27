@@ -172,15 +172,12 @@
     transform: translateY(26px);
 }
 
-[data-intro-phase="reveal"] .brand,
-[data-intro-phase="active"] .brand {
-    animation: brandReveal 820ms cubic-bezier(.22,1,.36,1) both;
+[data-intro-phase="reveal"] .brand {
+    transform: translateY(calc(26px * (1 - var(--intro-progress, 0))));
 }
 
-@keyframes brandReveal {
-    0% { opacity: 0; transform: translateY(26px); }
-    74% { opacity: 1; transform: translateY(-3px); }
-    100% { opacity: 1; transform: translateY(0); }
+[data-intro-phase="active"] .brand {
+    transform: translateY(0);
 }
 
 .logoCrop {
@@ -313,5 +310,5 @@
     .contact svg, .navLink::before, .contact::before, .mobileLink::before, .menuButton::before { transition: none; }
     .contact:hover svg { transform: none; }
     [data-intro-phase="reveal"] .brand,
-    [data-intro-phase="active"] .brand { animation: none; }
+    [data-intro-phase="active"] .brand { transform: none; }
 }
