@@ -131,6 +131,9 @@ const Header = ({ transparent = false }: { transparent?: boolean }) => {
                           aria-current={href && pathname === href ? "page" : undefined}
                           onClick={() => setMenuOpen(false)}>
                       <span className={styles.linkLabel}>{label}</span>
+                      <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                        <path d="M4 12 12 4M5 4h7v7" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
                     </Link>
                   ))}
                 </nav>
