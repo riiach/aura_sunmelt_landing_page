@@ -38,9 +38,14 @@
     display: grid;
     align-items: center;
 }
-.backdrop, .gradient { position: absolute; inset: 0; pointer-events: none; }
+.backdrop, .gradient, .imageBackground { position: absolute; inset: 0; pointer-events: none; }
 .backdrop { z-index: -1; }
-.gradient { transition: opacity 850ms cubic-bezier(.22,.61,.36,1); }
+.gradient, .imageBackground { transition: opacity 850ms cubic-bezier(.22,.61,.36,1); }
+.imageBackground {
+    background-position: center center;
+    background-size: cover;
+    background-repeat: no-repeat;
+}
 .wordmark {
     position: absolute;
     z-index: -1;
@@ -123,6 +128,6 @@
     .caption { bottom: 28px; }
 }
 @media (prefers-reduced-motion: reduce) {
-    .gradient, .headerReveal, .wordmark { transition: none; }
+    .gradient, .imageBackground, .headerReveal, .wordmark { transition: none; }
     .caption { animation: none; }
 }

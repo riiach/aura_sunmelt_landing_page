@@ -16,12 +16,22 @@ const palettes = [
 ];
 */
 
+// Uploaded background artwork is stored in public/backgrounds.
+// Keep the existing grapefruit can until its replacement lychee artwork is supplied.
+const imageBackgrounds = ["mango", "grape", "peach", "pomegranate", "lychee"] as const;
+
+const backgroundFor = (name: string) => {
+    const flavor = name.toLowerCase().split(" ")[0];
+    return flavor === "grapefruit" ? "lychee" : flavor;
+};
+
 interface ProductHeroProps {
     header: ReactNode;
 }
 
 const ProductHero = ({ header }: ProductHeroProps) => {
-    // const [activeProduct, setActiveProduct] = useState("Grapefruit Fizz");
+    const [activeProduct, setActiveProduct] = useState("Grapefruit Fizz");
+    const activeBackground = backgroundFor(activeProduct);
     const [introPhase, setIntroPhase] = useState<IntroPhase>("lineup");
 
     return (
@@ -37,12 +47,24 @@ const ProductHero = ({ header }: ProductHeroProps) => {
                     />
                 ))}
             </div> */}
+            <div className={styles.backdrop} aria-hidden="true">
+                {imageBackgrounds.map(flavor => (
+                    <div
+                        key={flavor}
+                        className={styles.imageBackground}
+                        style={{
+                            opacity: activeBackground === flavor ? 1 : 0,
+                            backgroundImage: `url("/backgrounds/${flavor}.webp")`,
+                        }}
+                    />
+                ))}
+            </div>
             <div className={styles.headerReveal} inert={introPhase === "lineup" || introPhase === "spread"}>
                 {header}
             </div>
             <main className="w-full">
                 <ProductCarousel
-                    // onProductChange={setActiveProduct}
+                    onProductChange={setActiveProduct}
                     onIntroPhase={setIntroPhase}
                 />
             </main>
