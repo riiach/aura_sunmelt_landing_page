@@ -140,6 +140,7 @@ const ProductHero = ({ header }: ProductHeroProps) => {
         };
         const onTouchMove = (event: TouchEvent) => {
             if (event.touches.length !== 1) return;
+            if ((event.target as Element | null)?.closest?.("[data-rotate-control]")) return;
             if ((event.target as Element | null)?.closest?.('nav[aria-label="Mobile navigation"]')) return;
             const dy = touchY - event.touches[0].clientY;
             const dx = event.touches[0].clientX - touchX;

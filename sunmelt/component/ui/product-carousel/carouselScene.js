@@ -5,7 +5,7 @@ import { wrap, mod, getLayout, getSnap, rightTilt, isSelected, introPoseAt, intr
 import { createStudio, createContactShadows } from "./studio";
 import { aboutPhases, nearestFlavorPosition, preparationDuration, preparationProgress, MANGO_READY, advanceAboutProgress } from "./aboutMath.mjs";
 
-export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase, onIntroProgress, aboutState }) => {
+export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase, onIntroProgress, aboutState, rotateControl }) => {
     let renderer;
     try {
         renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true, powerPreference: "high-performance" });
@@ -45,6 +45,10 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
     const raycaster = new THREE.Raycaster();
     const pointer = new THREE.Vector2();
     const motionPreference = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const touchPreference = window.matchMedia("(hover: none) and (pointer: coarse)");
+    const rotateAnchor = new THREE.Vector3();
+    let heldCan = null, heldPointer = null, heldKey = null;
+    let rotateAvailable = false;
     const cans = [];
     let assets, snapTween, spinTween, spinningCan, introTween;
     const intro = { spread: 0, progress: 0 };
@@ -95,6 +99,75 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
     const damp = (from, to, dt) => reduced() ? to : THREE.MathUtils.damp(from, to, 10, dt);
 
     const invalidate = () => { dirty = true; };
+    const stopHeldRotation = () => {
+        const id = heldPointer;
+        heldCan = null;
+        heldPointer = heldKey = null;
+        if (rotateControl) {
+            rotateControl.removeAttribute("data-holding");
+            if (id !== null && rotateControl.hasPointerCapture(id)) {
+                rotateControl.releasePointerCapture(id);
+            }
+        }
+        // Deliberately keep the current rotation angle on release.
+        invalidate();
+    };
+    const canHoldRotate = () => Boolean(rotateControl && touchPreference.matches &&
+        ready && introComplete && inView && !disposed && !drag && !snapTween &&
+        !aboutState?.current?.preparing && aboutProgress() === 0);
+    const syncRotateControl = () => {
+        if (!rotateControl) return;
+        const available = canHoldRotate();
+        if (!available && heldCan) stopHeldRotation();
+        if (available !== rotateAvailable) {
+            rotateAvailable = available;
+            rotateControl.dataset.available = String(available);
+        }
+        if (!available) return;
+        const center = cans[activeIndex]?.primary;
+        if (!center) return;
+        // Project the actual 3D center so the button follows the floating can.
+        center.userData.tilt.getWorldPosition(rotateAnchor);
+        camera.updateMatrixWorld();
+        rotateAnchor.project(camera);
+        rotateControl.style.setProperty("--rotate-x", `${(rotateAnchor.x + 1) * 50}%`);
+        rotateControl.style.setProperty("--rotate-y", `${(1 - rotateAnchor.y) * 50}%`);
+    };
+    const beginHeldRotation = () => {
+        if (!canHoldRotate() || heldCan) return false;
+        const center = cans[activeIndex]?.primary;
+        if (!center) return false;
+        lastMouse = null;
+        stopSpin(true);
+        gsap.killTweensOf(center.userData.spin.rotation);
+        heldCan = center;
+        rotateControl.dataset.holding = "true";
+        invalidate();
+        return true;
+    };
+    const onRotateDown = event => {
+        if (!event.isPrimary || event.button !== 0 || !beginHeldRotation()) return;
+        event.preventDefault();
+        heldPointer = event.pointerId;
+        rotateControl.setPointerCapture(event.pointerId);
+    };
+    const onRotateRelease = event => {
+        if (event.pointerId === heldPointer) stopHeldRotation();
+    };
+    const onRotateKeyDown = event => {
+        if (![" ", "Enter"].includes(event.key)) return;
+        event.preventDefault();
+        if (!event.repeat && beginHeldRotation()) heldKey = event.key;
+    };
+    const onRotateKeyUp = event => {
+        if (heldKey === event.key) {
+            event.preventDefault();
+            stopHeldRotation();
+        }
+    };
+    const onRotateContextMenu = event => event.preventDefault();
+    const onRotateVisibility = () => { if (document.hidden) stopHeldRotation(); };
+    const onRotatePreference = () => { stopHeldRotation(); syncRotateControl(); };
     const render = (_time, deltaMs) => {
         if (disposed || !ready || !inView) return;
         const dt = Math.min(.05, (deltaMs || 16.7) / 1000);
@@ -117,6 +190,7 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
         );
         const progress = displayAboutProgress;
         if (progress > 0 && mangoIndex >= 0) {
+            syncRotateControl();
             if (aboutOrigin === null || progress !== lastAboutProgress || dirty || aboutState?.current?.returnToMango) {
                 updateAboutLayout(progress);
                 lastAboutProgress = progress;
@@ -179,6 +253,12 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
                 shadow.scale.setScalar(.82 + .33 * emphasis + tilt.position.y * 2);
             }
         });
+        syncRotateControl();
+        if (heldCan) {
+            // User-controlled rotation: one full turn every six seconds.
+            heldCan.userData.spin.rotation.y -= dt * Math.PI * 2 / 6;
+            dirty = true;
+        }
         if (!dirty) return;
         dirty = false;
         renderer.render(scene, camera);
@@ -352,6 +432,7 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
     };
 
     const updateHover = () => {
+        if (heldCan || touchPreference.matches) return;
         if (!ready || !introComplete || aboutProgress() > 0 || drag || snapTween || !lastMouse || !inView) {
             stopSpin();
             return;
@@ -376,6 +457,7 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
     };
 
     const snapTo = (target, velocity = 0) => {
+        stopHeldRotation();
         cancelSnap();
         stopSpin(true);
         const distance = Math.abs(target - track.position);
@@ -405,6 +487,7 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
 
     const onPointerDown = (event) => {
         if (!ready || !introComplete || aboutState?.current?.preparing || drag || aboutProgress() >= .985 || !event.isPrimary || event.button !== 0) return;
+        stopHeldRotation();
         cancelSnap();
         stopSpin(true);
         // Reset any earlier front-return tween before the cans start sliding.
@@ -554,6 +637,8 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
     const visibility = new IntersectionObserver(entries => {
         inView = entries[0]?.isIntersecting ?? true;
         if (!inView) {
+            stopHeldRotation();
+            syncRotateControl();
             lastMouse = null;
             parallax.set(0, 0);
             stopSpin(true);
@@ -562,6 +647,17 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
     });
     visibility.observe(stage);
 
+    rotateControl?.addEventListener("pointerdown", onRotateDown);
+    rotateControl?.addEventListener("pointerup", onRotateRelease);
+    rotateControl?.addEventListener("pointercancel", onRotateRelease);
+    rotateControl?.addEventListener("lostpointercapture", onRotateRelease);
+    rotateControl?.addEventListener("keydown", onRotateKeyDown);
+    rotateControl?.addEventListener("keyup", onRotateKeyUp);
+    rotateControl?.addEventListener("blur", stopHeldRotation);
+    rotateControl?.addEventListener("contextmenu", onRotateContextMenu);
+    window.addEventListener("blur", stopHeldRotation);
+    document.addEventListener("visibilitychange", onRotateVisibility);
+    touchPreference.addEventListener("change", onRotatePreference);
     stage.addEventListener("pointerdown", onPointerDown);
     stage.addEventListener("pointermove", onPointerMove);
     stage.addEventListener("pointerup", onPointerUp);
@@ -602,6 +698,19 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
 
     return () => {
         disposed = true;
+        stopHeldRotation();
+        rotateControl?.removeAttribute("data-available");
+        rotateControl?.removeEventListener("pointerdown", onRotateDown);
+        rotateControl?.removeEventListener("pointerup", onRotateRelease);
+        rotateControl?.removeEventListener("pointercancel", onRotateRelease);
+        rotateControl?.removeEventListener("lostpointercapture", onRotateRelease);
+        rotateControl?.removeEventListener("keydown", onRotateKeyDown);
+        rotateControl?.removeEventListener("keyup", onRotateKeyUp);
+        rotateControl?.removeEventListener("blur", stopHeldRotation);
+        rotateControl?.removeEventListener("contextmenu", onRotateContextMenu);
+        window.removeEventListener("blur", stopHeldRotation);
+        document.removeEventListener("visibilitychange", onRotateVisibility);
+        touchPreference.removeEventListener("change", onRotatePreference);
         introTween?.kill();
         cancelSnap();
         stopSpin(true);
