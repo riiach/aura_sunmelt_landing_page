@@ -18,20 +18,16 @@
 }
 
 .transparent {
-    --nav-hover: rgba(255, 255, 255, .18);
+    --nav-hover: rgba(255, 255, 255, .16);
     --nav-rest: rgba(255, 255, 255, .09);
-    --nav-edge: rgba(255, 255, 255, .24);
-    --nav-glint: rgba(255, 255, 255, .40);
     background: linear-gradient(165deg, rgba(255, 255, 255, .18), rgba(255, 255, 255, .07));
     border-color: rgba(255, 255, 255, .35);
     color: #fff;
 }
 
 .solid {
-    --nav-hover: rgba(65, 65, 78, .085);
-    --nav-rest: rgba(65, 65, 78, .045);
-    --nav-edge: rgba(65, 65, 78, .10);
-    --nav-glint: rgba(255, 255, 255, .95);
+    --nav-hover: #f1f1f1;
+    --nav-rest: #f6f6f6;
     color: #000;
 }
 
@@ -49,7 +45,7 @@
 .leftNav, .rightNav {
     display: flex;
     align-items: center;
-    gap: clamp(8px, 1.4vw, 18px);
+    gap: clamp(16px, 2.2vw, 32px);
 }
 
 .rightNav { justify-content: flex-end; }
@@ -68,9 +64,9 @@
     min-height: 44px;
     padding-inline: clamp(10px, 1.15vw, 18px);
     color: inherit;
-    font-size: 16px;
-    font-weight: 500;
-    letter-spacing: .025em;
+    font-size: 13px;
+    font-weight: 400;
+    letter-spacing: .01em;
     white-space: nowrap;
     text-decoration: none;
 }
@@ -90,13 +86,8 @@
     inset: 4px 0;
     border-radius: inherit;
     background: var(--nav-hover);
-    box-shadow: inset 0 1px 1px var(--nav-glint),
-                inset 0 0 0 1px var(--nav-edge),
-                0 2px 5px rgba(40, 40, 55, .04);
     opacity: 0;
-    transform: scale(.92);
-    transition: opacity 220ms ease, transform 300ms cubic-bezier(.22,1,.36,1),
-                background-color 220ms ease;
+    transition: opacity 180ms ease, background-color 180ms ease;
     pointer-events: none;
 }
 
@@ -107,7 +98,6 @@
 .contact::before {
     background: var(--nav-rest);
     opacity: 1;
-    transform: scale(1);
 }
 
 .contact svg {
@@ -119,7 +109,6 @@
     .navLink:hover::before, .contact:hover::before,
     .mobileLink:hover::before, .menuButton:hover::before {
         opacity: 1;
-        transform: scale(1);
         background: var(--nav-hover);
     }
     .contact:hover svg { transform: translate(2px, -2px); }
@@ -129,14 +118,13 @@
 .mobileLink:focus-visible::before, .menuButton:focus-visible::before,
 .menuButton[aria-expanded="true"]::before {
     opacity: 1;
-    transform: scale(1);
     background: var(--nav-hover);
 }
 
 .navLink:active::before, .contact:active::before,
 .mobileLink:active::before, .menuButton:active::before {
     opacity: 1;
-    transform: scale(.96);
+    background: var(--nav-hover);
 }
 
 .brand {
@@ -268,9 +256,7 @@
         color: #25201e;
         border-radius: 22px;
         border: 1px solid rgba(120, 120, 130, .12);
-        --nav-hover: rgba(65, 65, 78, .085);
-        --nav-edge: rgba(65, 65, 78, .10);
-        --nav-glint: rgba(255, 255, 255, .95);
+        --nav-hover: #f1f1f1;
         box-shadow: 0 12px 28px -12px rgba(40, 40, 55, .20);
     }
 
@@ -278,7 +264,7 @@
         display: flex;
         flex-direction: column;
         align-items: stretch;
-        gap: 4px;
+        gap: 8px;
         padding: 10px;
         max-height: calc(100dvh - 80px);
         overflow-y: auto;
@@ -288,7 +274,7 @@
         display: grid;
         place-items: center;
         min-height: 48px;
-        font-size: 18px;
+        font-size: 15px;
         font-weight: 400;
         color: inherit;
         text-decoration: none;
@@ -301,7 +287,6 @@
 
 @media (prefers-reduced-motion: reduce) {
     .contact svg, .navLink::before, .contact::before, .mobileLink::before, .menuButton::before { transition: none; }
-    .navLink:active::before, .contact:active::before, .mobileLink:active::before, .menuButton:active::before { transform: scale(1); }
     .contact:hover svg { transform: none; }
     [data-intro-phase="reveal"] .brand,
     [data-intro-phase="active"] .brand { animation: none; }
