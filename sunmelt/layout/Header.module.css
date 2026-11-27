@@ -128,7 +128,7 @@
     opacity: 1;
 }
 
-.contact svg, .mobileLink svg {
+.contact svg {
     flex-shrink: 0;
     transition: transform 300ms cubic-bezier(.22,1,.36,1);
 }
@@ -139,7 +139,7 @@
         opacity: 1;
         background: var(--nav-hover);
     }
-    .contact:hover svg, .mobileLink:hover svg { transform: translate(2px, -2px); }
+    .contact:hover svg { transform: translate(2px, -2px); }
 }
 
 .navLink:focus-visible::before, .contact:focus-visible::before,
@@ -300,20 +300,38 @@
     .mobileLink {
         display: inline-flex;
         align-items: center;
-        justify-content: space-between;
+        justify-content: center;
         width: 100%;
         min-width: 44px;
         min-height: 44px;
         padding-inline: 18px;
-        gap: 16px;
         font-size: 15px;
         font-weight: 600;
         color: inherit;
         text-decoration: none;
     }
 
-    .mobileLink:active svg, .mobileLink:focus-visible svg {
-        transform: translate(2px, -2px);
+    .mobileLink .linkLabel::after {
+        content: "";
+        position: absolute;
+        inset-inline: 0;
+        bottom: -4px;
+        height: 1px;
+        background: currentColor;
+        transform: scaleX(0);
+        transform-origin: center;
+        transition: transform 180ms ease;
+        pointer-events: none;
+    }
+
+    @media (hover: hover) {
+        .mobileLink:hover .linkLabel::after { transform: scaleX(1); }
+    }
+
+    .mobileLink[aria-current="page"] .linkLabel::after,
+    .mobileLink:active .linkLabel::after,
+    .mobileLink:focus-visible .linkLabel::after {
+        transform: scaleX(1);
     }
 
     .menuButton::before {
@@ -322,8 +340,8 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .contact svg, .mobileLink svg, .navLink::before, .contact::before, .menuButton::before { transition: none; }
-    .contact:hover svg, .mobileLink:hover svg, .mobileLink:active svg, .mobileLink:focus-visible svg { transform: none; }
+    .contact svg, .navLink::before, .contact::before, .menuButton::before, .mobileLink .linkLabel::after { transition: none; }
+    .contact:hover svg { transform: none; }
     [data-intro-phase="reveal"] .brand,
     [data-intro-phase="active"] .brand { transform: none; }
 }
