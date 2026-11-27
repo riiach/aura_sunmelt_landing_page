@@ -3,6 +3,7 @@
 import React, { useEffect, useRef, useState } from 'react'
 import Image from "next/image";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import auraLogo from "../public/aura_logo.png";
 import styles from "./Header.module.css";
@@ -15,6 +16,7 @@ const links = [
 ];
 
 const Header = ({ transparent = false }: { transparent?: boolean }) => {
+  const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
   const menuButton = useRef<HTMLButtonElement>(null);
   const headerRef = useRef<HTMLDivElement>(null);
@@ -53,14 +55,6 @@ const Header = ({ transparent = false }: { transparent?: boolean }) => {
         }}
     >
       <nav className={styles.inner} aria-label="Main navigation">
-        <div className={styles.leftNav}>
-          {links.slice(0, 2).map(({ label, href }) => (
-            <Link key={label} href={href} className={styles.navLink}>
-              <span className={styles.linkLabel}>{label}</span>
-            </Link>
-          ))}
-        </div>
-
         <Link href="/" className={styles.brand} aria-label="Aura x Sunmelt home"
               onClick={() => setMenuOpen(false)}>
           <span className={styles.logoCrop}>
@@ -74,18 +68,23 @@ const Header = ({ transparent = false }: { transparent?: boolean }) => {
           <span className={styles.wordmark}>sunmelt</span>
         </Link>
 
-        <div className={styles.rightNav}>
-          {links.slice(2).map(({ label, href }) => (
-            <Link key={label} href={href}
-                  className={label === "Contact" ? styles.contact : styles.navLink}>
+        <div className={styles.centerNav}>
+          {links.slice(0, 3).map(({ label, href }) => (
+            <Link key={label} href={href} className={styles.navLink}
+                  aria-current={href && pathname === href ? "page" : undefined}>
               <span className={styles.linkLabel}>{label}</span>
-              {label === "Contact" && (
-                <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-                  <path d="M4 12 12 4M5 4h7v7" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              )}
             </Link>
           ))}
+        </div>
+
+        <div className={styles.rightNav}>
+          <span className={styles.contactHint}>Have a question?</span>
+          <Link href={links[3].href} className={styles.contact}>
+            <span className={styles.linkLabel}>{links[3].label}</span>
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+              <path d="M4 12 12 4M5 4h7v7" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </Link>
         </div>
 
         <button

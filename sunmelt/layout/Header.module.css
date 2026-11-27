@@ -6,7 +6,7 @@
     margin: 12px auto 4px;
     box-sizing: border-box;
     border: 1px solid rgba(120, 120, 130, .08);
-    border-radius: 22px;
+    border-radius: 10px;
     background: rgba(255, 255, 255, .88);
     -webkit-backdrop-filter: blur(16px) saturate(110%);
     backdrop-filter: blur(16px) saturate(110%);
@@ -35,16 +35,48 @@
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
     align-items: center;
-    column-gap: clamp(10px, 2vw, 28px);
+    column-gap: clamp(8px, 1.4vw, 20px);
 }
 
-.leftNav, .rightNav {
+.centerNav, .rightNav {
     display: flex;
     align-items: center;
-    gap: clamp(16px, 2.2vw, 32px);
 }
 
-.rightNav { justify-content: flex-end; }
+.centerNav {
+    grid-column: 2;
+    justify-content: center;
+    gap: clamp(12px, 2.2vw, 32px);
+}
+
+.rightNav {
+    grid-column: 3;
+    justify-content: flex-end;
+    gap: 12px;
+}
+
+.contactHint {
+    font-size: 11px;
+    color: inherit;
+    opacity: .55;
+    white-space: nowrap;
+}
+
+.navLink[aria-current="page"] .linkLabel::after {
+    content: "";
+    position: absolute;
+    bottom: -6px;
+    left: 50%;
+    width: 5px;
+    height: 1px;
+    background: currentColor;
+    border-radius: 2px;
+    transform: translateX(-50%);
+}
+
+@media (max-width: 1023px) {
+    .contactHint { display: none; }
+}
 
 .navLink, .contact, .mobileLink, .menuButton {
     position: relative;
@@ -124,7 +156,8 @@
 }
 
 .brand {
-    grid-column: 2;
+    grid-column: 1;
+    justify-self: start;
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -194,25 +227,25 @@
     .header {
         width: calc(100% - 24px);
         margin: 7px auto 3px;
-        border-radius: 22px;
+        border-radius: 10px;
     }
 
     .inner {
         height: 48px;
         padding-inline: 8px;
         column-gap: 4px;
-        grid-template-columns: 44px minmax(0, 1fr) 44px;
+        grid-template-columns: minmax(0, 1fr) 44px;
     }
 
-    .leftNav, .rightNav { display: none; }
+    .centerNav, .rightNav { display: none; }
 
-    .brand { justify-self: center; gap: 7px; }
+    .brand { justify-self: start; gap: 7px; }
     .wordmark { font-size: 26px; }
     .logoCrop { width: 51px; }
     .logo { width: 74px; }
 
     .menuButton {
-        grid-column: 3;
+        grid-column: 2;
         width: 44px;
         height: 44px;
         display: grid;
@@ -250,7 +283,7 @@
         overflow: hidden;
         background: #fff;
         color: #25201e;
-        border-radius: 22px;
+        border-radius: 10px;
         border: 1px solid rgba(120, 120, 130, .12);
         --nav-hover: #f1f1f1;
         box-shadow: 0 12px 28px -12px rgba(40, 40, 55, .20);
