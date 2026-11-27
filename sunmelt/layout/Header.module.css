@@ -236,6 +236,7 @@
 
 @media (max-width: 767px) {
     .header {
+        --mobile-nav-padding: 20px;
         height: 62px;
     }
 
@@ -247,7 +248,7 @@
 
     .inner {
         height: 62px;
-        padding-inline: 20px;
+        padding-inline: var(--mobile-nav-padding);
         column-gap: 4px;
         grid-template-columns: minmax(0, 1fr) 44px;
     }
@@ -300,7 +301,7 @@
         flex-direction: column;
         align-items: stretch;
         gap: 8px;
-        padding: 10px;
+        padding: 10px var(--mobile-nav-padding) 20px;
         max-height: calc(100dvh - 94px);
         overflow-y: auto;
     }
@@ -317,14 +318,31 @@
         font-weight: 600;
         color: inherit;
         text-decoration: none;
+        box-sizing: border-box;
+        background-color: transparent;
+        transition: background-color 180ms ease;
     }
 
     .mobileContact {
-        background: #fff;
+        background-color: rgba(255, 255, 255, .30);
         color: #000;
+        border: 1px solid rgba(255, 255, 255, .55);
         border-radius: 9999px;
         width: 100%;
         min-height: 48px;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, .55),
+                    0 3px 8px rgba(40, 40, 55, .055);
+    }
+
+    @media (hover: hover) {
+        .mobileLink:hover {
+            background-color: #f1f1f1;
+        }
+    }
+
+    .mobileLink:active,
+    .mobileLink:focus-visible {
+        background-color: #f1f1f1;
     }
 
     .flipWindow {
@@ -355,36 +373,13 @@
         transform: translateY(-50%);
     }
 
-    .mobileLink .linkLabel::after {
-        content: "";
-        position: absolute;
-        inset-inline: 0;
-        bottom: -4px;
-        height: 1px;
-        background: currentColor;
-        transform: scaleX(0);
-        transform-origin: center;
-        transition: transform 180ms ease;
-        pointer-events: none;
-    }
-
-    @media (hover: hover) {
-        .mobileLink:hover .linkLabel::after { transform: scaleX(1); }
-    }
-
-    .mobileLink[aria-current="page"] .linkLabel::after,
-    .mobileLink:active .linkLabel::after,
-    .mobileLink:focus-visible .linkLabel::after {
-        transform: scaleX(1);
-    }
-
     .menuButton::before {
         inset: 2px;
     }
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .contact svg, .navLink::before, .contact::before, .menuButton::before, .mobileLink .linkLabel::after, .flipTrack { transition: none; }
+    .contact svg, .navLink::before, .contact::before, .menuButton::before, .mobileLink, .flipTrack { transition: none; }
     .mobileContact:hover .flipTrack,
     .mobileContact:focus-visible .flipTrack,
     .mobileContact:active .flipTrack { transform: none; }
