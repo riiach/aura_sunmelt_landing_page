@@ -1,0 +1,38 @@
+.fizzBubble {
+    opacity: 0;
+}
+
+.root:hover .fizzBubble {
+    animation-name: waterFizz;
+    animation-duration: 400ms;
+    animation-timing-function: ease-out;
+    animation-fill-mode: both;
+}
+
+@keyframes waterFizz {
+    0% {
+        opacity: 0;
+        transform: translateY(0) scale(0.3);
+    }
+
+    25% {
+        opacity: 1;
+        transform: translateY(-4px) scale(1);
+    }
+
+    75% {
+        opacity: 1;
+        transform: translate(var(--fizz-x), -17px) scale(1.15);
+    }
+
+    100% {
+        opacity: 0;
+        transform: translate(var(--fizz-x), -23px) scale(1.6);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .root:hover .fizzBubble {
+        animation: none;
+    }
+}
