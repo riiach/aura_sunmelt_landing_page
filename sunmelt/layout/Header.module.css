@@ -16,8 +16,8 @@
 .transparent {
     --nav-hover: rgba(255, 255, 255, .16);
     --nav-rest: rgba(255, 255, 255, .09);
-    --nav-selected: rgba(0, 0, 0, .12);
-    --nav-selected-shadow: inset 0 2px 4px rgba(0, 0, 0, .15), inset 0 -1px 0 rgba(255, 255, 255, .22);
+    --nav-selected: rgba(0, 0, 0, .06);
+    --nav-selected-shadow: inset 0 0 5px rgba(0, 0, 0, .10);
     background: linear-gradient(165deg, rgba(255, 255, 255, .18), rgba(255, 255, 255, .07));
     border-color: rgba(255, 255, 255, .35);
     color: #fff;
@@ -26,8 +26,8 @@
 .solid {
     --nav-hover: #f1f1f1;
     --nav-rest: #f6f6f6;
-    --nav-selected: rgba(110, 110, 120, .075);
-    --nav-selected-shadow: inset 0 2px 4px rgba(45, 45, 55, .11), inset 0 -1px 1px rgba(255, 255, 255, .9);
+    --nav-selected: rgba(110, 110, 120, .035);
+    --nav-selected-shadow: inset 0 0 5px rgba(45, 45, 55, .075);
     color: #000;
 }
 
@@ -285,8 +285,8 @@
         border-radius: 14px;
         border: 1px solid rgba(120, 120, 130, .12);
         --nav-hover: #f1f1f1;
-        --nav-selected: rgba(110, 110, 120, .075);
-        --nav-selected-shadow: inset 0 2px 4px rgba(45, 45, 55, .11), inset 0 -1px 1px rgba(255, 255, 255, .9);
+        --nav-selected: rgba(110, 110, 120, .035);
+        --nav-selected-shadow: inset 0 0 5px rgba(45, 45, 55, .075);
         box-shadow: 0 12px 28px -12px rgba(40, 40, 55, .20);
     }
 
