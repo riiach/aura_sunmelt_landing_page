@@ -3,7 +3,7 @@ import { gsap } from "gsap";
 import { createCanAssets, flavors, frontRotation } from "./createCan";
 import { wrap, mod, getLayout, getSnap, rightTilt, isSelected, introPoseAt, introSpreadAt } from "./carouselMath.mjs";
 import { createStudio, createContactShadows } from "./studio";
-import { aboutPhases, nearestFlavorPosition, preparationDuration, preparationProgress, MANGO_READY } from "./aboutMath.mjs";
+import { aboutPhases, nearestFlavorPosition, preparationDuration, preparationProgress, MANGO_READY, advanceAboutProgress } from "./aboutMath.mjs";
 
 export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase, onIntroProgress, aboutState }) => {
     let renderer;
@@ -58,6 +58,7 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
     const mangoIndex = flavors.findIndex(flavor => flavor.name.toLowerCase().startsWith("mango"));
     let aboutOrigin = null, aboutTarget = null, lastAboutProgress = -1;
     let prepTime = 0, prepDuration = null;
+    let displayAboutProgress = 0;
     const fadeMaterials = new Map();
     const setCanOpacity = (can, opacity) => {
         let entries = fadeMaterials.get(can);
@@ -89,7 +90,7 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
     const targetRay = new THREE.Raycaster();
     const tilePoint = new THREE.Vector3();
     const tilePlane = new THREE.Plane(new THREE.Vector3(0, 0, 1), -.65);
-    const aboutProgress = () => aboutState?.current?.progress || 0;
+    const aboutProgress = () => Math.max(displayAboutProgress, aboutState?.current?.progress || 0);
     const reduced = () => motionPreference.matches;
     const damp = (from, to, dt) => reduced() ? to : THREE.MathUtils.damp(from, to, 10, dt);
 
@@ -109,7 +110,12 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
             state.progress = reduced() ? MANGO_READY : preparationProgress(prepTime, prepDuration);
             preparedNow = state.progress >= MANGO_READY;
         }
-        const progress = introComplete ? aboutProgress() : 0;
+        const requestedProgress = introComplete ? state?.progress || 0 : 0;
+        displayAboutProgress = advanceAboutProgress(
+            displayAboutProgress, requestedProgress, dt,
+            !introComplete || reduced() || Boolean(state?.preparing) || preparedNow
+        );
+        const progress = displayAboutProgress;
         if (progress > 0 && mangoIndex >= 0) {
             if (aboutOrigin === null || progress !== lastAboutProgress || dirty || aboutState?.current?.returnToMango) {
                 updateAboutLayout(progress);

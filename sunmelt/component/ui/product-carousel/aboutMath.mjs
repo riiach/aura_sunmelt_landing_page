@@ -29,3 +29,14 @@ export const preparationProgress = (elapsed, duration) => {
     return .18 + (MANGO_READY - .18) * clamp((elapsed - duration.settle) / duration.travel);
 };
 export const aboutScrollProgress = raw => MANGO_READY + (1 - MANGO_READY) * clamp(raw);
+
+// Forward scroll stays directly responsive. Returning toward the hero is
+// rate-limited and eases into its final pose even after a large wheel delta.
+export const advanceAboutProgress = (current, target, dt, immediate = false) => {
+    const next = clamp(target);
+    if (immediate || next >= current) return next;
+    const gap = current - next;
+    if (gap < .001) return next;
+    const step = Math.min(.78 * Math.max(0, dt), gap * (1 - Math.exp(-4.5 * Math.max(0, dt))));
+    return Math.max(next, current - step);
+};

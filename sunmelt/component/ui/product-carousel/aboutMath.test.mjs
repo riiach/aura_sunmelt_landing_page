@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { aboutPhases, nearestFlavorPosition, preparationDuration, preparationProgress, aboutScrollProgress, MANGO_READY } from "./aboutMath.mjs";
+import { aboutPhases, nearestFlavorPosition, preparationDuration, preparationProgress, aboutScrollProgress, MANGO_READY, advanceAboutProgress } from "./aboutMath.mjs";
 
 test("the four phases follow the requested order", () => {
     assert.deepEqual(aboutPhases(0), {settle:0,travel:0,fade:0,land:0,reveal:0});
@@ -38,4 +38,23 @@ test("fade finishes before the rotating landing starts", () => {
     assert.ok(aboutPhases(.57).fade > 0 && aboutPhases(.57).fade < 1);
     assert.equal(aboutPhases(.68).fade, 1);
     assert.equal(aboutPhases(.68).land, 0);
+});
+
+test("reverse scroll limits speed and restores the hero smoothly", () => {
+    let p = 1;
+    const dt = 1 / 60;
+    const first = advanceAboutProgress(p, 0, dt);
+    assert.ok(first > .98 && first < 1);
+    for (let i = 0; i < 60; i++) {
+        const next = advanceAboutProgress(p, 0, dt);
+        assert.ok(next <= p && next >= 0);
+        p = next;
+    }
+    assert.ok(p > .2);
+    for (let i = 0; i < 180; i++) p = advanceAboutProgress(p, 0, dt);
+    assert.equal(p, 0);
+});
+test("forward scroll and reduced motion do not inherit reverse lag", () => {
+    assert.equal(advanceAboutProgress(.2, .9, 1/60), .9);
+    assert.equal(advanceAboutProgress(.9, 0, 1/60, true), 0);
 });
