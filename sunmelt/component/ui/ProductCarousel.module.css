@@ -46,30 +46,6 @@
     background-size: cover;
     background-repeat: no-repeat;
 }
-.wordmark {
-    position: absolute;
-    z-index: -1;
-    left: 50%;
-    top: 44%;
-    transform: translate(-50%, -50%);
-    opacity: 1;
-    transition: opacity 700ms ease, transform 900ms cubic-bezier(.22,1,.36,1);
-    font-family: var(--font-fraunces), Georgia, serif;
-    font-weight: 600;
-    font-size: clamp(6rem, 22vw, 26rem);
-    line-height: .85;
-    letter-spacing: -.085em;
-    color: rgba(255,255,255,.38);
-    white-space: nowrap;
-    user-select: none;
-    pointer-events: none;
-}
-.hero[data-carousel-phase="lineup"] .wordmark,
-.hero[data-carousel-phase="spread"] .wordmark {
-    opacity: 0;
-    transform: translate(-50%, calc(-50% + 56px));
-}
-
 .stage {
     position: relative;
     width: 100%;
@@ -124,10 +100,9 @@
 }
 @media (max-width: 639px) {
     .hero, .stage { min-height: 480px; height: max(480px, calc(100svh - var(--header-height, 72px))); }
-    .wordmark { font-size: 28vw; top: 42%; }
     .caption { bottom: 28px; }
 }
 @media (prefers-reduced-motion: reduce) {
-    .gradient, .imageBackground, .headerReveal, .wordmark { transition: none; }
+    .gradient, .imageBackground, .headerReveal { transition: none; }
     .caption { animation: none; }
 }

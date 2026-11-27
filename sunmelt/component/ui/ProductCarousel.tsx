@@ -42,7 +42,6 @@ const ProductCarousel = ({ onProductChange, onIntroPhase }: ProductCarouselProps
 
     return (
         <section aria-label="Sunmelt product carousel" className={styles.hero} data-carousel-phase={introPhase}>
-            <div className={styles.wordmark} aria-hidden="true">sunmelt.</div>
             <div
                 ref={stageRef}
                 tabIndex={introPhase === "active" && !error ? 0 : -1}
