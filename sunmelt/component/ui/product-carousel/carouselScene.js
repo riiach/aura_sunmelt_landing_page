@@ -174,7 +174,7 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase 
         gsap.killTweensOf(rotation);
         spinningCan = can;
         spinTween = gsap.to(rotation, {
-            y: "+=" + Math.PI * 2, duration: 10,
+            y: "-=" + Math.PI * 2, duration: 10,
             ease: "none", repeat: -1, onUpdate: invalidate,
         });
     };
