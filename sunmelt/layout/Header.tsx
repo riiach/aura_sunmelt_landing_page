@@ -127,10 +127,20 @@ const Header = ({ transparent = false }: { transparent?: boolean }) => {
               >
                 <nav aria-label="Mobile navigation" className={styles.mobileNav}>
                   {links.map(({ label, href }) => (
-                    <Link key={label} href={href} className={styles.mobileLink}
+                    <Link key={label} href={href}
+                          className={label === "Contact" ? `${styles.mobileLink} ${styles.mobileContact}` : styles.mobileLink}
                           aria-current={href && pathname === href ? "page" : undefined}
                           onClick={() => setMenuOpen(false)}>
-                      <span className={styles.linkLabel}>{label}</span>
+                      {label === "Contact" ? (
+                        <span className={styles.flipWindow}>
+                          <span className={styles.flipTrack}>
+                            <span>{label}</span>
+                            <span aria-hidden="true">{label}</span>
+                          </span>
+                        </span>
+                      ) : (
+                        <span className={styles.linkLabel}>{label}</span>
+                      )}
                     </Link>
                   ))}
                 </nav>
