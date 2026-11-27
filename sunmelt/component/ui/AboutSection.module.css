@@ -6,7 +6,7 @@
     display: grid;
     align-items: center;
     color: #251b19;
-    background-color: #f7f7f7;
+    background-color: #fff;
     pointer-events: none;
 }
 .section:not([inert]) { pointer-events: auto; }
@@ -73,13 +73,12 @@
 }
 .glow {
     position: absolute;
-    inset: -5%;
+    inset: 3%;
     background:
-        radial-gradient(ellipse 33% 33% at 62% 64%, #d7ee12 0%, #a8e31a 28%, rgba(176,231,49,.75) 52%, transparent 100%),
-        radial-gradient(ellipse 37% 36% at 43% 55%, #47cc00 0%, #3bbe0a 34%, rgba(70,174,39,.65) 68%, transparent 100%),
-        radial-gradient(ellipse 36% 32% at 53% 35%, #298916 0%, #3c9130 35%, rgba(76,151,62,.52) 65%, transparent 100%);
-    filter: blur(clamp(10px, 1.5vw, 23px));
-    opacity: .98;
+        radial-gradient(ellipse 43% 40% at 60% 62%, #ffcd42 0%, rgba(255,194,31,.9) 32%, rgba(255,195,42,.42) 63%, transparent 100%),
+        radial-gradient(ellipse 43% 40% at 40% 41%, #f49a35 0%, rgba(245,144,39,.76) 38%, rgba(255,172,56,.28) 70%, transparent 100%),
+        radial-gradient(ellipse 44% 46% at 54% 50%, rgba(255,215,121,.68), transparent 100%);
+    filter: blur(clamp(12px, 1.6vw, 24px));
     pointer-events: none;
 }
 .tiles {
@@ -88,29 +87,41 @@
     display: grid;
     grid-template-columns: repeat(5, minmax(0, 1fr));
     grid-template-rows: repeat(5, minmax(0, 1fr));
-    gap: 0;
+    gap: clamp(5px, .8vw, 11px);
 }
 .tile {
+    position: relative;
     min-width: 0;
-    border-radius: 16%;
-    background: linear-gradient(145deg, rgba(255,255,255,.19), rgba(255,255,255,.035) 45%, rgba(255,255,255,.14));
-    -webkit-backdrop-filter: blur(9px) saturate(132%);
-    backdrop-filter: blur(9px) saturate(132%);
-    border: 1px solid rgba(255,255,255,.64);
-    box-shadow: inset 0 0 17px rgba(255,255,255,.30),
-                inset 0 1px 1px rgba(255,255,255,.67),
-                inset 0 -1px 2px rgba(255,255,255,.40);
+    border-radius: 23%;
+    background:
+        radial-gradient(ellipse at 24% 18%, rgba(255,255,255,.76), transparent 67%),
+        linear-gradient(155deg, rgba(255,255,255,.56), rgba(255,255,255,.23) 48%, rgba(255,255,255,.57));
+    -webkit-backdrop-filter: blur(13px) saturate(120%);
+    backdrop-filter: blur(13px) saturate(120%);
+    border: 1px solid rgba(255,255,255,.87);
+    box-shadow:
+        inset 0 0 14px rgba(255,255,255,.74),
+        inset 0 2px 3px rgba(255,255,255,.88),
+        inset 0 -2px 4px rgba(255,255,255,.57),
+        0 7px 15px -6px rgba(64,47,26,.15),
+        0 2px 7px rgba(66,58,49,.045);
+}
+.tile::after {
+    content: "";
+    position: absolute;
+    inset: 1px;
+    border-radius: inherit;
+    background: linear-gradient(135deg, rgba(255,255,255,.30), transparent 38%, transparent 65%, rgba(255,255,255,.17));
+    pointer-events: none;
 }
 .tile:nth-child(-n+5),
 .tile:nth-child(n+21),
 .tile:nth-child(5n),
 .tile:nth-child(5n+1) {
-    background: linear-gradient(140deg, rgba(255,255,255,.36), rgba(255,255,255,.13));
-    box-shadow: inset 0 0 22px rgba(255,255,255,.36),
-                inset 0 1px 1px rgba(255,255,255,.7);
+    background: linear-gradient(145deg, rgba(255,255,255,.78), rgba(255,255,255,.36) 55%, rgba(255,255,255,.72));
 }
 .tile:nth-child(1), .tile:nth-child(5), .tile:nth-child(21), .tile:nth-child(25) {
-    background: rgba(255,255,255,.50);
+    background: rgba(255,255,255,.82);
 }
 @media (max-width: 767px) {
     .inner {

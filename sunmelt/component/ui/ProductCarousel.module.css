@@ -55,6 +55,27 @@
 }
 .backdrop, .gradient, .imageBackground { position: absolute; inset: 0; pointer-events: none; }
 .backdrop { z-index: -1; }
+
+/* Full-width fluted glass: the subtle grey bevel remains visible on white,
+   while the clear central face lets the flavor artwork show through. */
+.backdrop::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    --glass-flute: calc(100% / 18);
+    background: repeating-linear-gradient(
+        90deg,
+        rgba(255,255,255,.64) 0,
+        rgba(255,255,255,.26) calc(var(--glass-flute) * .025),
+        rgba(255,255,255,.07) calc(var(--glass-flute) * .12),
+        rgba(255,255,255,.015) calc(var(--glass-flute) * .55),
+        rgba(90,90,105,.022) calc(var(--glass-flute) * .89),
+        rgba(90,90,105,.075) calc(var(--glass-flute) - 1px),
+        rgba(90,90,105,.09) var(--glass-flute)
+    );
+}
 .gradient, .imageBackground { transition: opacity 850ms cubic-bezier(.22,.61,.36,1); }
 .imageBackground {
     background-position: center center;
