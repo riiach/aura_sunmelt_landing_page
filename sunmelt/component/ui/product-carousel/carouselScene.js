@@ -267,8 +267,10 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
                 shadow.scale.setScalar(.82);
                 shadow.material.opacity = .43 * opacity * (1 - land);
                 if (mango && land > 0) {
+                    // The destination is the real tile in the next section's
+                    // current viewport position, not a fixed coordinate in the hero.
                     can.position.set(lerp(0, tilePoint.x, land),
-                        lerp(-.11, tilePoint.y, land) - Math.sin(Math.PI * land) * .22,
+                        lerp(-.11, tilePoint.y, land) - Math.sin(Math.PI * land) * .24,
                         lerp(0, tilePoint.z, land));
                     can.scale.setScalar(lerp(.86, landingScale, land));
                     tilt.rotation.set(-.12 * land, 0, -.43 * land);

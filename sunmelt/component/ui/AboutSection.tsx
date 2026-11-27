@@ -10,7 +10,7 @@ interface AboutSectionProps {
 }
 
 const AboutSection = ({ tileRef, interactive, onMeetMango }: AboutSectionProps) => (
-    <section className={styles.section} aria-labelledby="about-title" inert={!interactive}>
+    <section id="about" className={styles.section} aria-labelledby="about-title" inert={!interactive}>
         <div className={styles.inner}>
             <div className={styles.copy}>
                 <span className={styles.eyebrow}>A little brighter by nature.</span>

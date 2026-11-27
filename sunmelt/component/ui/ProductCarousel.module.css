@@ -1,60 +1,53 @@
 .aboutTrack {
-    --about-travel: clamp(650px, 112svh, 1100px);
-    position: relative;
-    width: 100%;
-    padding-bottom: var(--about-travel);
-}
-.aboutAnchor {
-    position: absolute;
-    top: var(--about-travel);
-    left: 0;
-    width: 1px;
-    height: 1px;
-    pointer-events: none;
-}
-
-.frame {
     --header-height: 68px;
-    --curve-rx: 50%;
-    --curve-ry: 82%;
-    --curve-center-y: -45%;
-    position: sticky;
-    top: 0;
+    --stage-height: max(540px, calc(100svh - var(--header-height)));
+    --screen-height: calc(var(--header-height) + var(--stage-height));
+    position: relative;
+    isolation: isolate;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    width: 100%;
+    background: #fff;
+}
+.sections {
+    grid-area: 1 / 1;
+    min-width: 0;
+}
+.frame {
+    position: relative;
     isolation: isolate;
     width: 100%;
-    min-height: 100svh;
-    /* background: radial-gradient(ellipse var(--curve-rx) var(--curve-ry) at 50% var(--curve-center-y), #a04542 0%, #a04542 94%, #e48d82 110%, transparent 119%), linear-gradient(to bottom, #e48d82 0%, #e48d82 28%, #ffffff 100%); */
-    background: #ffffff;
-    display: flex;
-    flex-direction: column;
+    height: var(--screen-height);
+    background: #fff;
 }
-
 .headerReveal {
-    position: relative;
+    grid-area: 1 / 1;
+    position: sticky;
+    top: 0;
+    align-self: start;
     z-index: 30;
     opacity: 1;
-
 }
-
-.frame[data-intro-phase="lineup"] .headerReveal,
-.frame[data-intro-phase="spread"] .headerReveal {
+.aboutTrack[data-intro-phase="lineup"] .headerReveal,
+.aboutTrack[data-intro-phase="spread"] .headerReveal {
     opacity: 0;
     pointer-events: none;
 }
-
-.frame[data-intro-phase="reveal"] .headerReveal {
+.aboutTrack[data-intro-phase="reveal"] .headerReveal {
     opacity: var(--intro-progress, 0);
     pointer-events: none;
 }
-
 .hero {
-    position: relative;
+    grid-area: 1 / 1;
+    position: sticky;
+    top: var(--header-height);
+    margin-top: var(--header-height);
+    align-self: start;
     z-index: 2;
     isolation: isolate;
     width: 100%;
+    height: var(--stage-height);
     overflow: hidden;
-    min-height: 540px;
-    min-height: max(540px, calc(100svh - var(--header-height, 68px)));
     background: transparent;
     color: #251b19;
     display: grid;
@@ -68,22 +61,18 @@
     background-size: cover;
     background-repeat: no-repeat;
 }
-.frame[data-about-active="true"] .hero { pointer-events: none; }
-.frame[data-about-active="true"] .stage { cursor: default; }
-
+.aboutTrack[data-about-active="true"] .hero { pointer-events: none; }
+.aboutTrack[data-about-active="true"] .stage { cursor: default; }
 .stage {
     position: relative;
     width: 100%;
-    height: max(540px, calc(100svh - var(--header-height, 68px)));
+    height: var(--stage-height);
     cursor: grab;
     user-select: none;
     touch-action: pan-y;
     outline-offset: -4px;
 }
-.hero[data-carousel-phase]:not([data-carousel-phase="active"]) .stage {
-    cursor: default;
-}
-
+.hero[data-carousel-phase]:not([data-carousel-phase="active"]) .stage { cursor: default; }
 .status {
     position: absolute;
     inset: 0;
@@ -95,15 +84,10 @@
     pointer-events: none;
 }
 @media (max-width: 767px) {
-    .frame {
-        --header-height: 62px;
-        --curve-rx: 94%;
-        --curve-ry: 76%;
-        --curve-center-y: -39%;
-    }
+    .aboutTrack { --header-height: 62px; }
 }
 @media (max-width: 639px) {
-    .hero, .stage { min-height: 480px; height: max(480px, calc(100svh - var(--header-height, 68px))); }
+    .aboutTrack { --stage-height: max(480px, calc(100svh - var(--header-height))); }
 }
 @media (prefers-reduced-motion: reduce) {
     .gradient, .imageBackground { transition: none; }

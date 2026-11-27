@@ -52,7 +52,7 @@ const ProductHero = ({ header }: ProductHeroProps) => {
         let safetyTimer: ReturnType<typeof setTimeout> | undefined;
         let touchX = 0, touchY = 0;
         const top = () => window.scrollY + root.getBoundingClientRect().top;
-        const scrollRange = () => Math.max(1, root.offsetHeight - frame.offsetHeight);
+        const scrollRange = () => Math.max(1, frame.offsetHeight);
         const pinToHero = () => window.scrollTo({ top: top(), behavior: "instant" });
         const unlock = () => {
             clearTimeout(safetyTimer);
@@ -60,16 +60,15 @@ const ProductHero = ({ header }: ProductHeroProps) => {
             locked = false;
             html.style.overflowY = priorOverflow;
             html.style.scrollbarGutter = priorGutter;
-            frame.removeAttribute("data-scroll-locked");
+            root.removeAttribute("data-scroll-locked");
         };
         const publish = (progress: number) => {
             const phases = aboutPhases(progress);
             state.progress = progress;
             state.target = tileRef.current;
-            frame.style.setProperty("--about-opacity", String(phases.reveal));
-            frame.style.setProperty("--about-land", String(phases.land));
+            root.style.setProperty("--about-land", String(phases.land));
             const interactive = progress >= .985;
-            frame.dataset.aboutActive = String(interactive);
+            root.dataset.aboutActive = String(interactive);
             setAboutInteractive(interactive);
         };
         const completePreparation = () => {
@@ -94,7 +93,7 @@ const ProductHero = ({ header }: ProductHeroProps) => {
             html.style.overflowY = "hidden";
             locked = true;
             state.preparing = true;
-            frame.dataset.scrollLocked = "true";
+            root.dataset.scrollLocked = "true";
             pinToHero();
             safetyTimer = setTimeout(() => {
                 state.failed = true;
@@ -188,49 +187,36 @@ const ProductHero = ({ header }: ProductHeroProps) => {
         trackRef.current?.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth", block: "start" });
     }, []);
     const syncIntroProgress = useCallback((progress: number) => {
-        frameRef.current?.style.setProperty("--intro-progress", String(Math.max(0, Math.min(1, progress))));
+        trackRef.current?.style.setProperty("--intro-progress", String(Math.max(0, Math.min(1, progress))));
     }, []);
 
     return (
-        <div id="home" ref={trackRef} className={styles.aboutTrack}>
-            <div id="about" className={styles.aboutAnchor} aria-hidden="true" />
-            <div ref={frameRef} className={styles.frame} data-intro-phase={introPhase}>
-            {/* <div className={styles.backdrop} aria-hidden="true">
-                {palettes.map(({ name, colors: [mid, deep] }) => (
-                    <div key={name}
-                         className={styles.gradient}
-                         style={{
-                             opacity: activeProduct === name ? 1 : 0,
-                             background: `radial-gradient(ellipse var(--curve-rx) var(--curve-ry) at 50% var(--curve-center-y), ${deep} 0%, ${deep} 94%, ${mid} 110%, transparent 119%), linear-gradient(to bottom, ${mid} 0%, ${mid} 28%, #ffffff 100%)`,
-                         }}
-                    />
-                ))}
-            </div> */}
-            <div className={styles.backdrop} aria-hidden="true">
-                {imageBackgrounds.map(flavor => (
-                    <div
-                        key={flavor}
-                        className={styles.imageBackground}
-                        style={{
-                            opacity: activeBackground === flavor ? 1 : 0,
-                            backgroundImage: `url("/backgrounds/${flavor}.webp")`,
-                        }}
-                    />
-                ))}
-            </div>
-            <div className={styles.headerReveal} inert={introPhase !== "active"}>
-                {header}
-            </div>
-            <main className="w-full">
-                <ProductCarousel
-                    onProductChange={setActiveProduct}
-                    onIntroPhase={setIntroPhase}
-                    onIntroProgress={syncIntroProgress}
-                    aboutState={aboutState}
-                    aboutInteractive={aboutInteractive}
-                />
+        <div id="home" ref={trackRef} className={styles.aboutTrack} data-intro-phase={introPhase}>
+            <main className={styles.sections}>
+                <div ref={frameRef} className={styles.frame}>
+                    <div className={styles.backdrop} aria-hidden="true">
+                        {imageBackgrounds.map(flavor => (
+                            <div key={flavor}
+                                 className={styles.imageBackground}
+                                 style={{
+                                     opacity: activeBackground === flavor ? 1 : 0,
+                                     backgroundImage: `url("/backgrounds/${flavor}.webp")`,
+                                 }}
+                            />
+                        ))}
+                    </div>
+                </div>
                 <AboutSection tileRef={tileRef} interactive={aboutInteractive} onMeetMango={meetMango} />
             </main>
+            <ProductCarousel
+                onProductChange={setActiveProduct}
+                onIntroPhase={setIntroPhase}
+                onIntroProgress={syncIntroProgress}
+                aboutState={aboutState}
+                aboutInteractive={aboutInteractive}
+            />
+            <div className={styles.headerReveal} inert={introPhase !== "active"}>
+                {header}
             </div>
         </div>
     );

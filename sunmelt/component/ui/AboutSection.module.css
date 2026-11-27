@@ -1,7 +1,7 @@
 .section {
-    position: absolute;
-    inset: var(--header-height) 0 0;
-    z-index: 1;
+    position: relative;
+    min-height: var(--screen-height, 100svh);
+    padding-top: var(--header-height, 68px);
     overflow: hidden;
     display: grid;
     align-items: center;
@@ -10,8 +10,6 @@
     background-image: linear-gradient(rgba(80, 70, 55, .045) 1px, transparent 1px),
                       linear-gradient(90deg, rgba(80, 70, 55, .045) 1px, transparent 1px);
     background-size: 76px 76px;
-    opacity: var(--about-opacity, 0);
-    transform: translateY(calc(22svh * (1 - var(--about-opacity, 0))));
     pointer-events: none;
 }
 .section:not([inert]) { pointer-events: auto; }
