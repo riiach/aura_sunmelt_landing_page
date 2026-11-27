@@ -55,6 +55,15 @@ const Header = ({ transparent = false }: { transparent?: boolean }) => {
         }}
     >
       <nav className={styles.inner} aria-label="Main navigation">
+        <div className={styles.leftNav}>
+          {links.slice(0, 3).map(({ label, href }) => (
+            <Link key={label} href={href} className={styles.navLink}
+                  aria-current={href && pathname === href ? "page" : undefined}>
+              <span className={styles.linkLabel}>{label}</span>
+            </Link>
+          ))}
+        </div>
+
         <Link href="/" className={styles.brand} aria-label="Aura x Sunmelt home"
               onClick={() => setMenuOpen(false)}>
           <span className={styles.logoCrop}>
@@ -67,15 +76,6 @@ const Header = ({ transparent = false }: { transparent?: boolean }) => {
           <span className={styles.collaboration} aria-hidden="true">×</span>
           <span className={styles.wordmark}>sunmelt</span>
         </Link>
-
-        <div className={styles.centerNav}>
-          {links.slice(0, 3).map(({ label, href }) => (
-            <Link key={label} href={href} className={styles.navLink}
-                  aria-current={href && pathname === href ? "page" : undefined}>
-              <span className={styles.linkLabel}>{label}</span>
-            </Link>
-          ))}
-        </div>
 
         <div className={styles.rightNav}>
           <span className={styles.contactHint}>Have a question?</span>
@@ -127,6 +127,7 @@ const Header = ({ transparent = false }: { transparent?: boolean }) => {
               <nav aria-label="Mobile navigation" className={styles.mobileNav}>
                 {links.map(({ label, href }) => (
                   <Link key={label} href={href} className={styles.mobileLink}
+                        aria-current={href && pathname === href ? "page" : undefined}
                         onClick={() => setMenuOpen(false)}>
                     <span className={styles.linkLabel}>{label}</span>
                   </Link>
