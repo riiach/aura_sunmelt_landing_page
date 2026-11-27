@@ -239,7 +239,7 @@
 
     .inner {
         height: 62px;
-        padding-inline: 8px;
+        padding-inline: 20px;
         column-gap: 4px;
         grid-template-columns: minmax(0, 1fr) 44px;
     }
