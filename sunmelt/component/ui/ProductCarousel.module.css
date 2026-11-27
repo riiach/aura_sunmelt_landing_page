@@ -54,10 +54,16 @@
     align-items: center;
 }
 .backdrop, .gradient, .imageBackground { position: absolute; inset: 0; pointer-events: none; }
-.backdrop { z-index: -1; }
+.backdrop {
+    z-index: -1;
+    /* Both the flavor artwork and the flutes dissolve into the white About section. */
+    --hero-edge-fade: linear-gradient(to bottom, #000 0%, #000 79%, rgba(0,0,0,.86) 86%, rgba(0,0,0,.28) 94%, transparent 99%, transparent 100%);
+    -webkit-mask-image: var(--hero-edge-fade);
+    mask-image: var(--hero-edge-fade);
+}
 
-/* Full-width fluted glass: the subtle grey bevel remains visible on white,
-   while the clear central face lets the flavor artwork show through. */
+/* Keep the full-width flute spacing, but dissolve the bevel around the
+   broad oval silhouette of the cans instead of ending at a hard edge. */
 .backdrop::after {
     content: "";
     position: absolute;
@@ -65,6 +71,11 @@
     z-index: 1;
     pointer-events: none;
     --glass-flute: calc(100% / 18);
+    --glass-envelope: radial-gradient(ellipse 54% 43% at 50% 49%,
+        #000 0%, #000 64%, rgba(0,0,0,.90) 76%,
+        rgba(0,0,0,.53) 88%, rgba(0,0,0,.16) 100%, transparent 112%);
+    -webkit-mask-image: var(--glass-envelope);
+    mask-image: var(--glass-envelope);
     background: repeating-linear-gradient(
         90deg,
         rgba(255,255,255,.64) 0,
