@@ -4,7 +4,7 @@ import ProductHero from "../component/ui/ProductHero";
 export default function Home() {
   return (
     <ProductHero header={
-        <header className="w-full min-h-16">
+        <header className="w-full min-h-16 flow-root">
             <Header />
         </header>
     } />

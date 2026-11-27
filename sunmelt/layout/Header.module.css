@@ -1,35 +1,47 @@
 .header {
     position: relative;
     z-index: 30;
-    width: 100%;
+    width: calc(100% - 48px);
+    max-width: 1000px;
+    margin: 12px auto 4px;
+    box-sizing: border-box;
+    border: 1px solid rgba(120, 120, 130, .13);
+    border-radius: 22px;
+    background: linear-gradient(165deg, rgba(255, 255, 255, .92) 0%, rgba(248, 248, 250, .65) 58%, rgba(237, 237, 241, .74) 100%);
+    -webkit-backdrop-filter: blur(22px) saturate(145%);
+    backdrop-filter: blur(22px) saturate(145%);
+    box-shadow:
+        inset 0 1px 1px rgba(255, 255, 255, .98),
+        inset 0 -1px 2px rgba(75, 75, 90, .06),
+        0 2px 5px rgba(40, 40, 55, .035),
+        0 10px 28px -10px rgba(40, 40, 55, .16);
 }
 
 .transparent {
-    background: transparent;
+    background: linear-gradient(165deg, rgba(255, 255, 255, .18), rgba(255, 255, 255, .07));
+    border-color: rgba(255, 255, 255, .35);
     color: #fff;
 }
 
 .solid {
-    background: #fff;
     color: #000;
 }
 
 .inner {
     width: 100%;
-    max-width: 1600px;
-    height: 80px;
+    height: 62px;
     margin-inline: auto;
-    padding-inline: clamp(32px, 6vw, 96px);
+    padding-inline: clamp(20px, 3vw, 36px);
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
     align-items: center;
-    column-gap: clamp(20px, 4vw, 64px);
+    column-gap: clamp(16px, 2.5vw, 36px);
 }
 
 .leftNav, .rightNav {
     display: flex;
     align-items: center;
-    gap: clamp(20px, 3vw, 44px);
+    gap: clamp(16px, 2.5vw, 32px);
 }
 
 .rightNav { justify-content: flex-end; }
@@ -172,10 +184,16 @@
 }
 
 @media (max-width: 767px) {
+    .header {
+        width: calc(100% - 24px);
+        margin: 7px auto 3px;
+        border-radius: 18px;
+    }
+
     .inner {
-        height: 64px;
-        padding-inline: 16px;
-        column-gap: 8px;
+        height: 52px;
+        padding-inline: 10px;
+        column-gap: 4px;
         grid-template-columns: 44px minmax(0, 1fr) 44px;
     }
 
@@ -217,15 +235,17 @@
     .mobileOverlay {
         display: block;
         position: absolute;
-        top: 100%;
-        inset-inline: 12px;
+        top: calc(100% + 8px);
+        inset-inline: 0;
     }
 
     .mobilePanel {
         overflow: hidden;
         background: #fff;
         color: #25201e;
-        border-radius: 0 0 14px 14px;
+        border-radius: 16px;
+        border: 1px solid rgba(120, 120, 130, .12);
+        box-shadow: 0 12px 28px -12px rgba(40, 40, 55, .20);
     }
 
     .mobileNav {
