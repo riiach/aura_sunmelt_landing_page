@@ -70,7 +70,8 @@
     inset: 0;
     z-index: 1;
     pointer-events: none;
-    --glass-flute: calc(100% / 18);
+    /* Match the desktop reference's 96px pitch at every viewport width. */
+    --glass-flute: 96px;
     --glass-envelope: radial-gradient(ellipse 54% 43% at 50% 49%,
         #000 0%, #000 64%, rgba(0,0,0,.90) 76%,
         rgba(0,0,0,.53) 88%, rgba(0,0,0,.16) 100%, transparent 112%);
