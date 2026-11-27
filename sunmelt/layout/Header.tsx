@@ -74,7 +74,9 @@ const Header = ({ transparent = false }: { transparent?: boolean }) => {
                   className={`${styles.logo} ${transparent ? "" : styles.darkLogo}`}
               />
             </span>
-            <span className={styles.collaboration} aria-hidden="true">×</span>
+            <svg className={styles.collaboration} width="9" height="9" viewBox="0 0 10 10" fill="none" aria-hidden="true">
+              <path d="M2 2 8 8M8 2 2 8" stroke="currentColor" strokeWidth="1" strokeLinecap="round" />
+            </svg>
             <span className={styles.wordmark}>sunmelt</span>
           </Link>
 
