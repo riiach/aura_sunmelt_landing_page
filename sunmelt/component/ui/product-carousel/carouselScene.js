@@ -22,12 +22,54 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
     renderer.toneMapping = THREE.NeutralToneMapping;
     renderer.toneMappingExposure = 1.0;
     renderer.setClearColor(0x000000, 0);
-    renderer.domElement.style.cssText = "display:block;width:100%;height:100%;pointer-events:none";
+    renderer.domElement.style.cssText = "position:absolute;left:0;top:0;display:block;width:100%;height:100%;pointer-events:none";
     renderer.domElement.setAttribute("aria-hidden", "true");
     stage.appendChild(renderer.domElement);
 
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(34, 1, .1, 40);
+    // Keep the hero camera and its pointer/landing projection unchanged.
+    // A second camera renders the same projection into a taller drawing buffer
+    // when the can leaves the sticky hero's original canvas during landing.
+    const landingCamera = new THREE.PerspectiveCamera();
+    const hero = stage.parentElement;
+    const trackElement = hero?.parentElement;
+    const originalOverflow = hero?.style.overflow || "";
+    let canvasWidth = 0, canvasHeight = 0;
+    const sizeCanvas = (width, height) => {
+        if (canvasWidth === width && canvasHeight === height) return;
+        canvasWidth = width;
+        canvasHeight = height;
+        renderer.domElement.style.height = `${height}px`;
+        renderer.setSize(width, height, false);
+    };
+    const renderScene = (landing = false) => {
+        const width = stage.clientWidth, height = stage.clientHeight;
+        if (!width || !height) return;
+        let extra = 0;
+        if (landing && hero && trackElement) {
+            const rect = stage.getBoundingClientRect();
+            const visual = window.visualViewport;
+            const visibleBottom = visual && Math.abs(visual.scale - 1) < .01
+                ? visual.offsetTop + visual.height : window.innerHeight;
+            // Cover the visible space below the small-viewport-height hero
+            // (notably on iPad), without extending the document scroll range.
+            const viewportBottom = Math.max(visibleBottom, window.innerHeight, document.documentElement.clientHeight);
+            const bottom = Math.min(viewportBottom, trackElement.getBoundingClientRect().bottom);
+            extra = Math.max(0, Math.ceil(bottom - rect.bottom));
+        }
+        if (hero) hero.style.overflow = extra > 0 ? "visible" : originalOverflow;
+        sizeCanvas(width, height + extra);
+        if (extra > 0) {
+            landingCamera.copy(camera, false);
+            // Expand below the original frustum rather than stretching it.
+            // The original NDC-to-screen mapping remains exactly the same.
+            landingCamera.setViewOffset(width, height, 0, 0, width, height + extra);
+            renderer.render(scene, landingCamera);
+        } else {
+            renderer.render(scene, camera);
+        }
+    };
     const cameraDistance = 7.8;
     const cameraHeight = 2.05;
     camera.position.set(0, cameraHeight, cameraDistance);
@@ -198,7 +240,7 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
         if ((state?.preparing || state?.progress > 0) && !dismissedRotateHints.has(hintDocument)) {
             dismissRotateHint();
         }
-        if (!ready || !inView) return;
+        if (!ready || (!inView && !(state?.progress > 0 || displayAboutProgress > 0))) return;
         const dt = Math.min(.05, (deltaMs || 16.7) / 1000);
         let preparedNow = false;
         if (introComplete && state?.preparing && mangoIndex >= 0) {
@@ -223,7 +265,7 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
                 updateAboutLayout(progress);
                 lastAboutProgress = progress;
                 dirty = false;
-                renderer.render(scene, camera);
+                renderScene(aboutPhases(progress).land > 0);
             }
             if (preparedNow) {
                 state.preparing = false;
@@ -290,7 +332,7 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
         }
         if (!dirty) return;
         dirty = false;
-        renderer.render(scene, camera);
+        renderScene();
     };
 
     const updateLayout = () => {
@@ -424,7 +466,7 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
         spacing = worldHeight * aspect / worldWidth;
         pixelsPerUnit = width / worldWidth;
         renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, width < 640 ? 1.25 : 1.75));
-        renderer.setSize(width, height, false);
+        sizeCanvas(width, height);
         if (introComplete && aboutProgress() > 0) invalidate();
         else updateLayout();
     };
@@ -718,6 +760,7 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
     // Re-project the can onto its real ice grid as the document continues moving.
     window.addEventListener("scroll", onAboutScroll, { passive: true });
     window.visualViewport?.addEventListener("resize", onAboutScroll, { passive: true });
+    window.visualViewport?.addEventListener("scroll", onAboutScroll, { passive: true });
     const visibility = new IntersectionObserver(entries => {
         inView = entries[0]?.isIntersecting ?? true;
         if (!inView) {
@@ -808,6 +851,8 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
         observer.disconnect();
         window.removeEventListener("scroll", onAboutScroll);
         window.visualViewport?.removeEventListener("resize", onAboutScroll);
+        window.visualViewport?.removeEventListener("scroll", onAboutScroll);
+        if (hero) hero.style.overflow = originalOverflow;
         visibility.disconnect();
         stage.removeEventListener("contextmenu", onStageContextMenu);
         stage.removeEventListener("pointerdown", onPointerDown);
