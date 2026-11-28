@@ -68,7 +68,7 @@ const ProductHero = ({ header }: ProductHeroProps) => {
         let priorOverflow = "", priorGutter = "";
         let safetyTimer: ReturnType<typeof setTimeout> | undefined;
         let touchX = 0, touchY = 0;
-        const contactVisible = () => Boolean(root.querySelector("dialog[data-contact-panel][open]"));
+        const overlayVisible = () => Boolean(root.querySelector("dialog[open]"));
         let slide: Animation | null = null;
         let finishSlide: (() => void) | null = null;
         const top = () => window.scrollY + root.getBoundingClientRect().top;
@@ -188,7 +188,7 @@ const ProductHero = ({ header }: ProductHeroProps) => {
             scheduled = 0;
             state.target = tileRef.current;
             state.ingredientsTarget = ingredientsRef.current;
-            if (slide) return;
+            if (slide || overlayVisible()) return;
             if (locked) {
                 if (Math.abs(root.getBoundingClientRect().top) > 1) pinToHero();
                 return;
@@ -212,7 +212,7 @@ const ProductHero = ({ header }: ProductHeroProps) => {
         };
         const schedule = () => { if (!scheduled) scheduled = requestAnimationFrame(update); };
         const onWheel = (event: WheelEvent) => {
-            if (contactVisible()) return;
+            if (overlayVisible()) return;
             if (event.ctrlKey || Math.abs(event.deltaX) > Math.abs(event.deltaY)) return;
             if ((event.target as Element | null)?.closest?.('nav[aria-label="Mobile navigation"]')) return;
             if (slide || locked) { if (event.cancelable) event.preventDefault(); return; }
@@ -223,7 +223,7 @@ const ProductHero = ({ header }: ProductHeroProps) => {
             }
         };
         const onTouchStart = (event: TouchEvent) => {
-            if (contactVisible()) return;
+            if (overlayVisible()) return;
             if (event.touches.length !== 1) return;
             touchX = event.touches[0].clientX;
             touchY = event.touches[0].clientY;
@@ -232,7 +232,7 @@ const ProductHero = ({ header }: ProductHeroProps) => {
             if (!slide && !locked) cancelNavigation();
         };
         const onTouchMove = (event: TouchEvent) => {
-            if (contactVisible()) return;
+            if (overlayVisible()) return;
             if (event.touches.length !== 1) return;
             if ((event.target as Element | null)?.closest?.("[data-rotate-control], [data-rotating='true']")) return;
             if ((event.target as Element | null)?.closest?.('nav[aria-label="Mobile navigation"]')) return;
@@ -362,7 +362,7 @@ const ProductHero = ({ header }: ProductHeroProps) => {
         const onAboutLink = (event: MouseEvent) => {
             if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
             const target = event.target as Element | null;
-            if (target?.closest?.("dialog[data-contact-panel]")) return;
+            if (target?.closest?.("dialog")) return;
             if (target?.closest?.('a[href="#contact"]')) {
                 event.preventDefault();
                 finishSlide?.();
@@ -432,7 +432,7 @@ const ProductHero = ({ header }: ProductHeroProps) => {
             } else schedule();
         };
         const onScrollKey = (event: KeyboardEvent) => {
-            if (contactVisible()) return;
+            if (overlayVisible()) return;
             if (["ArrowUp", "ArrowDown", "PageUp", "PageDown", "Home", "End", " "].includes(event.key)
                 && !(event.target as Element | null)?.closest?.("button, input, textarea, select, [contenteditable]")) {
                 if (slide) { event.preventDefault(); return; }

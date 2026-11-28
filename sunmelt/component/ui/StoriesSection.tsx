@@ -2,51 +2,28 @@
 
 import { useEffect, useRef, useState } from "react";
 import styles from "./StoriesSection.module.css";
-
-// Editorial concepts only: replace placeholder photography and copy with
-// approved interviews and verified sales figures before publishing case studies.
-const stories = [
-    {
-        category: "Sunmelt Journal",
-        title: "A brighter kind of soda",
-        photo: "photo-1544145945-f90425340c7e",
-        fallback: "mango",
-        position: "50% 50%",
-    },
-    {
-        category: "Founder Stories",
-        title: "Behind the counter: a chicken shop owner's story",
-        photo: "photo-1517248135467-4c7edcad34c4",
-        fallback: "peach",
-        position: "50% 50%",
-    },
-    {
-        category: "Business Stories",
-        title: "Growing sales with Sunmelt on the menu",
-        photo: "photo-1562967914-608f82629710",
-        fallback: "pomegranate",
-        position: "50% 50%",
-    },
-    {
-        category: "Food & Drink",
-        title: "A little sunshine with every bite",
-        photo: "photo-1552566626-52f8b828add9",
-        fallback: "lychee",
-        position: "50% 50%",
-    },
-    {
-        category: "Sunmelt Journal",
-        title: "From nature to your glass",
-        photo: "photo-1546069901-ba9599a7e63c",
-        fallback: "grape",
-        position: "50% 50%",
-    },
-];
+import ArticlePanel from "./ArticlePanel";
+import { stories, storyImage, type Story } from "./stories";
 
 const StoriesSection = ({ className }: { className?: string }) => {
     const railRef = useRef<HTMLDivElement>(null);
     const indicatorRef = useRef<HTMLDivElement>(null);
     const [edges, setEdges] = useState({ start: true, end: false });
+    const [selectedStory, setSelectedStory] = useState<Story | null>(null);
+    const [articleOpen, setArticleOpen] = useState(false);
+    useEffect(() => {
+        const slug = new URLSearchParams(window.location.search).get("story");
+        const story = stories.find(item => item.slug === slug);
+        if (story) { setSelectedStory(story); setArticleOpen(true); }
+    }, []);
+    const closeArticle = () => {
+        setArticleOpen(false);
+        const url = new URL(window.location.href);
+        if (url.searchParams.has("story")) {
+            url.searchParams.delete("story");
+            window.history.replaceState(window.history.state, "", url);
+        }
+    };
 
     useEffect(() => {
         const rail = railRef.current;
@@ -92,6 +69,7 @@ const StoriesSection = ({ className }: { className?: string }) => {
 
     const base = process.env.NEXT_PUBLIC_BASE_PATH || "";
     return (
+        <>
         <section id="section-four" className={`${className || ""} ${styles.stories}`} aria-labelledby="stories-title">
             <div className={styles.heading}>
                 <h2 id="stories-title">Stories &amp; Articles</h2>
@@ -114,22 +92,32 @@ const StoriesSection = ({ className }: { className?: string }) => {
             <div id="stories-rail" ref={railRef} className={styles.rail}
                 tabIndex={0} role="region" aria-label="Sunmelt editorial stories">
                 {stories.map(story => (
-                    <article key={story.title} className={styles.story}
+                    <a key={story.slug} className={styles.story}
+                        href={`?story=${story.slug}`}
+                        aria-haspopup="dialog"
+                        onClick={event => {
+                            if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+                            event.preventDefault();
+                            setSelectedStory(story);
+                            setArticleOpen(true);
+                        }}
                         style={{
-                            backgroundImage: `url("https://images.unsplash.com/${story.photo}?auto=format&fit=crop&w=900&q=80"), url("${base}/backgrounds/${story.fallback}.webp")`,
+                            backgroundImage: `url("${storyImage(story, 900)}"), url("${base}/backgrounds/${story.fallback}.webp")`,
                             backgroundPosition: story.position,
                         }}>
-                        <div className={styles.storyCopy}>
+                        <span className={styles.storyCopy}>
                             <span className={styles.category}>{story.category}</span>
-                            <h3>{story.title}</h3>
-                        </div>
-                    </article>
+                            <span className={styles.storyTitle}>{story.title}</span>
+                        </span>
+                    </a>
                 ))}
             </div>
             <div ref={indicatorRef} className={styles.indicator} aria-hidden="true">
                 <span className={styles.indicatorThumb} />
             </div>
         </section>
+        <ArticlePanel story={selectedStory} open={articleOpen} onClose={closeArticle} />
+        </>
     );
 };
 
