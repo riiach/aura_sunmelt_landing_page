@@ -27,6 +27,7 @@ const Header = ({ transparent = false }: { transparent?: boolean }) => {
   // the carousel performs its scroll-driven About transition.
   useEffect(() => {
     const about = document.getElementById("about");
+    const ingredients = document.getElementById("ingredients");
     if (!about) {
       setActiveSection("home");
       return;
@@ -41,11 +42,13 @@ const Header = ({ transparent = false }: { transparent?: boolean }) => {
       const height = normalScale ? viewport.height : window.innerHeight;
       const midpoint = viewportTop + height / 2;
       const rect = about.getBoundingClientRect();
-      setActiveSection(rect.top <= midpoint && rect.bottom > midpoint ? "about" : "home");
+      const aboutBottom = ingredients?.getBoundingClientRect().bottom ?? rect.bottom;
+      setActiveSection(rect.top <= midpoint && aboutBottom > midpoint ? "about" : "home");
     };
     const schedule = () => { if (!frame) frame = requestAnimationFrame(update); };
     const observer = new ResizeObserver(schedule);
     observer.observe(about);
+    if (ingredients) observer.observe(ingredients);
     window.addEventListener("scroll", schedule, { passive: true });
     window.addEventListener("resize", schedule, { passive: true });
     viewport?.addEventListener("scroll", schedule, { passive: true });

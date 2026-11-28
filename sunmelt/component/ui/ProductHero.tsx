@@ -56,6 +56,11 @@ const ProductHero = ({ header }: ProductHeroProps) => {
         let priorOverflow = "", priorGutter = "";
         let safetyTimer: ReturnType<typeof setTimeout> | undefined;
         let touchX = 0, touchY = 0;
+        // Stop once at About; a fresh gesture, not momentum from the same
+        // gesture, is required to continue toward Ingredients.
+        let aboutStop: "armed" | "holding" | "passed" = "armed";
+        let lastWheelAt = -Infinity, stopAt = -Infinity;
+        let touchCanContinue = false;
         const top = () => window.scrollY + root.getBoundingClientRect().top;
         const aboutTop = () => window.scrollY + about.getBoundingClientRect().top;
         const visualTop = () => visual && Math.abs(visual.scale - 1) < .01 ? visual.offsetTop : 0;
@@ -171,7 +176,16 @@ const ProductHero = ({ header }: ProductHeroProps) => {
                 if (Math.abs(root.getBoundingClientRect().top) > 1) pinToHero();
                 return;
             }
-            const remaining = aboutRemaining();
+            let remaining = aboutRemaining();
+            if (remaining > 24) aboutStop = "armed";
+            if ((prepared || state.failed) && !motion.matches && remaining <= 1 && aboutStop === "armed") {
+                aboutStop = "holding";
+                stopAt = performance.now();
+            }
+            if (aboutStop === "holding" && remaining < -1 && !motion.matches) {
+                window.scrollTo({ top: aboutDestination(), behavior: "instant" });
+                remaining = aboutRemaining();
+            }
             const raw = remaining <= 1 ? 1 : Math.max(0, Math.min(1, 1 - remaining / scrollRange()));
             if (!prepared && raw > .001) {
                 beginPreparation();
@@ -192,8 +206,15 @@ const ProductHero = ({ header }: ProductHeroProps) => {
         const onWheel = (event: WheelEvent) => {
             if (event.ctrlKey || Math.abs(event.deltaX) > Math.abs(event.deltaY)) return;
             if ((event.target as Element | null)?.closest?.('nav[aria-label="Mobile navigation"]')) return;
+            const now = performance.now();
+            const freshWheel = now - lastWheelAt > 180;
+            lastWheelAt = now;
             if (locked) { event.preventDefault(); return; }
             cancelNavigation();
+            if (!motion.matches && aboutStop === "holding" && event.deltaY > 0) {
+                if (freshWheel && now - stopAt >= 180) aboutStop = "passed";
+                else { event.preventDefault(); return; }
+            }
             if (!prepared && event.deltaY > 0 && !state.failed) {
                 event.preventDefault();
                 beginPreparation();
@@ -203,6 +224,7 @@ const ProductHero = ({ header }: ProductHeroProps) => {
             if (event.touches.length !== 1) return;
             touchX = event.touches[0].clientX;
             touchY = event.touches[0].clientY;
+            touchCanContinue = aboutStop === "holding";
         };
         const onTouchMove = (event: TouchEvent) => {
             if (event.touches.length !== 1) return;
@@ -212,12 +234,20 @@ const ProductHero = ({ header }: ProductHeroProps) => {
             const dx = event.touches[0].clientX - touchX;
             if (locked) { if (event.cancelable) event.preventDefault(); return; }
             if (Math.abs(dy) > 8 && Math.abs(dy) > Math.abs(dx)) cancelNavigation();
+            if (!motion.matches && aboutStop === "holding" && dy > 8 && dy > Math.abs(dx)) {
+                if (touchCanContinue) aboutStop = "passed";
+                else {
+                    if (event.cancelable) event.preventDefault();
+                    return;
+                }
+            }
             if (!prepared && !state.failed && dy > 8 && dy > Math.abs(dx)) {
                 if (event.cancelable) event.preventDefault();
                 beginPreparation();
             }
         };
         const scrollToHome = () => {
+            aboutStop = "armed";
             cancelNavigation();
             jumpToAbout = false;
             if (locked || state.preparing) {
@@ -289,7 +319,17 @@ const ProductHero = ({ header }: ProductHeroProps) => {
             if (["ArrowUp", "ArrowDown", "PageUp", "PageDown", "Home", "End", " "].includes(event.key)
                 && !(event.target as Element | null)?.closest?.("button, input, textarea, select, [contenteditable]")) {
                 cancelNavigation();
+                if (!motion.matches && aboutStop === "holding" &&
+                    (["ArrowDown", "PageDown", "End"].includes(event.key) || (event.key === " " && !event.shiftKey))) {
+                    if (!event.repeat) aboutStop = "passed";
+                    else event.preventDefault();
+                }
             }
+        };
+        // Let a deliberate scrollbar drag continue after the stop, too.
+        const onScrollbarDown = (event: PointerEvent) => {
+            if (event.pointerType === "mouse" && aboutStop === "holding" &&
+                (event.clientX >= html.clientWidth || event.clientX < 0)) aboutStop = "passed";
         };
         const observer = new ResizeObserver(onViewportChange);
         observer.observe(root);
@@ -302,6 +342,7 @@ const ProductHero = ({ header }: ProductHeroProps) => {
         visual?.addEventListener("resize", onViewportChange, { passive: true });
         visual?.addEventListener("scroll", onViewportChange, { passive: true });
         window.addEventListener("keydown", onScrollKey);
+        window.addEventListener("pointerdown", onScrollbarDown);
         syncViewport();
         window.addEventListener("wheel", onWheel, { passive: false });
         window.addEventListener("touchstart", onTouchStart, { passive: true });
@@ -327,6 +368,7 @@ const ProductHero = ({ header }: ProductHeroProps) => {
             visual?.removeEventListener("resize", onViewportChange);
             visual?.removeEventListener("scroll", onViewportChange);
             window.removeEventListener("keydown", onScrollKey);
+            window.removeEventListener("pointerdown", onScrollbarDown);
             window.removeEventListener("wheel", onWheel);
             window.removeEventListener("touchstart", onTouchStart);
             window.removeEventListener("touchmove", onTouchMove);
