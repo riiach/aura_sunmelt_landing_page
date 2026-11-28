@@ -22,6 +22,14 @@
     height: var(--screen-height);
     background: #fff;
 }
+.emptySection {
+    /* One full screen of white, above the sticky 3D canvas but below the header. */
+    position: relative;
+    z-index: 3;
+    width: 100%;
+    min-height: max(var(--about-scroll-height, 100dvh), var(--about-view-height, 100dvh));
+    background: #fff;
+}
 .headerReveal {
     position: fixed;
     top: 0;

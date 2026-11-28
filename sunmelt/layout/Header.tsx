@@ -17,7 +17,7 @@ const links = [
 
 const Header = ({ transparent = false }: { transparent?: boolean }) => {
   const pathname = usePathname();
-  const [activeSection, setActiveSection] = useState<"home" | "about">("home");
+  const [activeSection, setActiveSection] = useState<"home" | "about" | null>("home");
   const [menuOpen, setMenuOpen] = useState(false);
   const menuButton = useRef<HTMLButtonElement>(null);
   const headerRef = useRef<HTMLDivElement>(null);
@@ -43,7 +43,8 @@ const Header = ({ transparent = false }: { transparent?: boolean }) => {
       const midpoint = viewportTop + height / 2;
       const rect = about.getBoundingClientRect();
       const aboutBottom = ingredients?.getBoundingClientRect().bottom ?? rect.bottom;
-      setActiveSection(rect.top <= midpoint && aboutBottom > midpoint ? "about" : "home");
+      // The fourth section is intentionally blank and has no navigation label yet.
+      setActiveSection(midpoint < rect.top ? "home" : midpoint < aboutBottom ? "about" : null);
     };
     const schedule = () => { if (!frame) frame = requestAnimationFrame(update); };
     const observer = new ResizeObserver(schedule);

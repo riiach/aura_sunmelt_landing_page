@@ -546,6 +546,7 @@ const ProductHero = ({ header }: ProductHeroProps) => {
                 </div>
                 <AboutSection tileRef={tileRef} interactive={aboutInteractive} />
                 <IngredientsSection tileRef={ingredientsRef} interactive={aboutInteractive} />
+                <section id="section-four" className={styles.emptySection} aria-hidden="true" />
             </main>
             <ProductCarousel
                 onProductChange={setActiveProduct}
