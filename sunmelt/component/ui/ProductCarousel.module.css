@@ -296,3 +296,28 @@
 @media (prefers-reduced-motion: reduce) {
     .gradient, .imageBackground, .rotateControl, .rotateDisc, .rotateDisc > svg, .rotateLabel, .swipeHint { transition: none; }
 }
+
+/* Flavor captions are projected from the same camera as the 3D cans. */
+.flavorLabels {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    visibility: hidden;
+    overflow: hidden;
+    font-family: var(--font-poppins), sans-serif;
+    font-size: clamp(12px, 1.05vw, 15px);
+    font-weight: 400;
+    line-height: 1.4;
+    color: #251b19;
+    text-align: center;
+}
+.flavorLabels > span {
+    position: absolute;
+    transform: translateX(-50%);
+    white-space: nowrap;
+}
+.flavorLabels > span[hidden] { display: none; }
+@media (max-width: 767px) {
+    .flavorLabels { font-size: 12px; }
+}

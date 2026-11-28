@@ -10,7 +10,7 @@ import { aboutPhases, nearestFlavorPosition, preparationDuration, preparationPro
 const dismissedRotateHints = new WeakSet();
 const swipeHintPhases = new WeakMap();
 
-export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase, onIntroProgress, aboutState, rotateControl, rightHint, leftHint }) => {
+export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase, onIntroProgress, aboutState, rotateControl, rightHint, leftHint, flavorLabelClass }) => {
     let renderer;
     try {
         renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true, powerPreference: "high-performance" });
@@ -118,6 +118,47 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
         swipeHintPhases.set(hintDocument, phase === "right" ? "left" : "done");
     };
     const cans = [];
+    const labelPoint = new THREE.Vector3();
+    const heroPose = (pose) => ({
+        ...pose,
+        y: pose.y + .20,
+        scale: pose.scale * (stage.clientWidth < 768 ? 1 : .85),
+    });
+    const labelLayer = document.createElement("div");
+    labelLayer.className = flavorLabelClass;
+    labelLayer.setAttribute("aria-hidden", "true");
+    stage.appendChild(labelLayer);
+    const makeLabel = (name) => {
+        const label = document.createElement("span");
+        label.textContent = name;
+        label.hidden = true;
+        labelLayer.appendChild(label);
+        return label;
+    };
+    const updateFlavorLabels = (opacity) => {
+        const width = stage.clientWidth, height = stage.clientHeight;
+        labelLayer.style.opacity = String(opacity);
+        if (opacity <= .005) { labelLayer.style.visibility = "hidden"; return; }
+        labelLayer.style.visibility = "visible";
+        camera.updateMatrixWorld();
+        for (const { primary, copy, primaryLabel, copyLabel } of cans) {
+            for (const [can, label] of [[primary, primaryLabel], [copy, copyLabel]]) {
+                if (!can.visible) { label.hidden = true; continue; }
+                // Follow each physical can, including its tilt and floating motion.
+                const tilt = can.userData.tilt;
+                labelPoint.set(0, -.83, 0);
+                tilt.localToWorld(labelPoint);
+                labelPoint.project(camera);
+                const x = (labelPoint.x + 1) * width / 2;
+                const y = (1 - labelPoint.y) * height / 2 + 10;
+                label.hidden = x < -70 || x > width + 70 || y > height - 12;
+                if (!label.hidden) {
+                    label.style.left = `${x}px`;
+                    label.style.top = `${y}px`;
+                }
+            }
+        }
+    };
     let assets, snapTween, spinTween, spinningCan, introTween;
     const intro = { spread: 0, progress: 0 };
     let introComplete = false;
@@ -316,6 +357,7 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
             lastContentFade = contentFade;
         }
         if (progress > 0 && mangoIndex >= 0) {
+            updateFlavorLabels(0);
             syncRotateControl();
             const nextIngredientsProgress = ingredientsProgress();
             if (aboutOrigin === null || progress !== lastAboutProgress || nextIngredientsProgress !== lastIngredientsProgress || spinChanged || dirty || aboutState?.current?.returnToMango) {
@@ -391,6 +433,7 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
         if (!dirty) return;
         dirty = false;
         renderScene();
+        updateFlavorLabels(introComplete ? 1 : Math.max(0, (intro.progress - .35) / .65));
     };
 
     const updateLayout = () => {
@@ -398,7 +441,7 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
             const distance = wrap(index - track.position, count);
             const otherDistance = distance + (distance < 0 ? count : -count);
             [[primary, primaryShadow, distance], [copy, copyShadow, otherDistance]].forEach(([can, shadow, x]) => {
-                const pose = introPoseAt(x, intro.progress, intro.spread);
+                const pose = heroPose(introPoseAt(x, intro.progress, intro.spread));
                 const spread = introComplete ? 1 : introSpreadAt(x, intro.spread);
                 const spreadX = x * spread;
                 // The center stays in front while the other cans emerge from behind it.
@@ -487,7 +530,7 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
             const distance = wrap(index - track.position, count);
             const other = distance + (distance < 0 ? count : -count);
             for (const [can, shadow, x, isPrimary] of [[primary, primaryShadow, distance, true], [copy, copyShadow, other, false]]) {
-                const pose = introPoseAt(x, 1 - settle);
+                const pose = heroPose(introPoseAt(x, 1 - settle));
                 const mango = index === mangoIndex && isPrimary;
                 const opacity = mango ? 1 : 1 - fade;
                 const tilt = can.userData.tilt;
@@ -507,9 +550,9 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
                     // The destination is the real tile in the next section's
                     // current viewport position, not a fixed coordinate in the hero.
                     can.position.set(lerp(0, tilePoint.x, land),
-                        lerp(-.11, tilePoint.y, land) - Math.sin(Math.PI * land) * .24,
+                        lerp(heroPose({ y: -.11, scale: .86 }).y, tilePoint.y, land) - Math.sin(Math.PI * land) * .24,
                         lerp(0, tilePoint.z, land));
-                    can.scale.setScalar(lerp(.86, landingScale, land));
+                    can.scale.setScalar(lerp(heroPose({ y: -.11, scale: .86 }).scale, landingScale, land));
                     tilt.rotation.set(-.12 * land, 0, -.43 * land);
                     tilt.quaternion.slerp(ingredientFacing, ingredientTurn);
                     // The original label's ingredients panel is centered at U ≈ .865.
@@ -914,7 +957,9 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
             const primaryShadow = shadows.create();
             const copyShadow = shadows.create();
             scene.add(primary, copy, primaryShadow, copyShadow);
-            cans.push({ index, primary, copy, primaryShadow, copyShadow });
+            const primaryLabel = makeLabel(flavors[index].name);
+            const copyLabel = makeLabel(flavors[index].name);
+            cans.push({ index, primary, copy, primaryShadow, copyShadow, primaryLabel, copyLabel });
         });
         ready = true;
         resize();
@@ -987,5 +1032,6 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
         disposeStudio();
         renderer.dispose();
         renderer.domElement.remove();
+        labelLayer.remove();
     };
 };

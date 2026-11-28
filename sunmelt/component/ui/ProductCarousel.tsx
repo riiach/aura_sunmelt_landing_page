@@ -43,6 +43,7 @@ const ProductCarousel = ({ onProductChange, onIntroPhase, onIntroProgress, about
         return mountCarousel(stage, {
             onReady: () => setReady(true),
             rotateControl: rotateRef.current,
+            flavorLabelClass: styles.flavorLabels,
             rightHint: rightHintRef.current,
             leftHint: leftHintRef.current,
             onIntroProgress,
