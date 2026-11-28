@@ -33,7 +33,7 @@ const AboutSection = ({ tileRef, interactive }: AboutSectionProps) => (
                 <div className={styles.artwork} ref={tileRef} data-about-artwork>
                     <div className={styles.glow} />
                     <div className={styles.tiles}>
-                        {Array.from({ length: 25 }, (_, i) => <div key={i} className={styles.tile} />)}
+                        {Array.from({ length: 20 }, (_, i) => <div key={i} className={styles.tile} />)}
                     </div>
                 </div>
             </div>

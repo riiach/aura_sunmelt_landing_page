@@ -401,19 +401,19 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
         let landingScale = 1.05;
         tilePoint.set(1.3, -.08, .65);
         if (tile && rect.width > 0 && rect.height > 0) {
+            const mobileAbout = window.matchMedia("(max-width: 767px)").matches;
             targetRay.setFromCamera(new THREE.Vector2(
                 (tile.left + tile.width * .5 - rect.left) / rect.width * 2 - 1,
-                1 - (tile.top + tile.height * .46 - rect.top) / rect.height * 2
+                1 - (tile.top + tile.height * .50 - rect.top) / rect.height * 2
             ), camera);
             targetRay.ray.intersectPlane(tilePlane, tilePoint);
             const top = tilePoint.clone().add(new THREE.Vector3(0, .74, 0)).project(camera);
             const bottom = tilePoint.clone().add(new THREE.Vector3(0, -.74, 0)).project(camera);
             const unitHeight = Math.abs(top.y - bottom.y) * rect.height / 2;
-            const mobileAbout = window.matchMedia("(max-width: 767px)").matches;
-            // Mobile art can shrink to the remaining viewport space. Preserve
-            // the same can-to-grid ratio rather than imposing a minimum can size.
-            const relativeScale = tile.height * (mobileAbout ? .96 : .88) / Math.max(1, unitHeight);
-            landingScale = mobileAbout ? relativeScale : THREE.MathUtils.clamp(relativeScale, .30, 1.45);
+            // Keep the tilted can within the 5:4 grid, with more breathing
+            // room on mobile. Derive its scale from the live grid height.
+            const relativeScale = tile.height * (mobileAbout ? .74 : .86) / Math.max(1, unitHeight);
+            landingScale = mobileAbout ? relativeScale : THREE.MathUtils.clamp(relativeScale, .30, 1.65);
         }
         cans.forEach(({index, primary, copy, primaryShadow, copyShadow}) => {
             const distance = wrap(index - track.position, count);

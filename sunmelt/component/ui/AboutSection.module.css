@@ -16,15 +16,15 @@
 .section:not([inert]) { pointer-events: auto; }
 .inner {
     position: relative;
-    width: min(100%, 1440px);
+    width: min(100%, 1560px);
     margin-inline: auto;
     padding: clamp(24px, 5vw, 76px);
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr);
     min-height: max(0px, calc(var(--about-view-height, 100dvh) - var(--header-height, 68px)));
     align-content: center;
     align-items: center;
-    gap: clamp(24px, 5vw, 72px);
+    gap: clamp(24px, 4vw, 60px);
 }
 .copy {
     --sparkle-size: clamp(24px, 2.55vw, 38px);
@@ -90,8 +90,8 @@
 .artworkSlot { display: contents; }
 .artwork {
     position: relative;
-    width: min(100%, 560px, calc(var(--about-view-height, 100dvh) * .66));
-    aspect-ratio: 1;
+    width: min(100%, 760px, calc(var(--about-view-height, 100dvh) * .94));
+    aspect-ratio: 5 / 4;
     justify-self: center;
 }
 .glow {
@@ -120,7 +120,7 @@
     z-index: 2;
     display: grid;
     grid-template-columns: repeat(5, minmax(0, 1fr));
-    grid-template-rows: repeat(5, minmax(0, 1fr));
+    grid-template-rows: repeat(4, minmax(0, 1fr));
     gap: 0;
 }
 .tile {
@@ -149,12 +149,12 @@
     pointer-events: none;
 }
 .tile:nth-child(-n+5),
-.tile:nth-child(n+21),
+.tile:nth-child(n+16),
 .tile:nth-child(5n),
 .tile:nth-child(5n+1) {
     background: linear-gradient(145deg, rgba(255,255,255,.48), rgba(255,255,255,.25) 55%, rgba(255,255,255,.44));
 }
-.tile:nth-child(1), .tile:nth-child(5), .tile:nth-child(21), .tile:nth-child(25) {
+.tile:nth-child(1), .tile:nth-child(5), .tile:nth-child(16), .tile:nth-child(20) {
     background: rgba(255,255,255,.48);
 }
 @media (max-width: 767px) {
@@ -189,24 +189,23 @@
     }
     .actions { margin-top: clamp(14px, 3.7vw, 22px); gap: 8px; }
     .primaryButton { min-height: 40px; padding-inline: 15px; font-size: 12px; }
-    /* The slot receives the actual remaining space after intrinsic text
-       height. Size containment makes its cqh independent of the ice grid. */
+    /* Full-width 5:4 ice grid; let short viewports scroll rather than
+       squeezing the artwork or distorting the square individual cubes. */
     .artworkSlot {
         display: flex;
         position: relative;
-        flex: 1 0 0px;
-        min-height: 170px;
-        padding: 6px clamp(12px, 5vw, 28px) 0;
+        flex: 1 0 auto;
+        min-height: 0;
+        padding: 6px 0 0;
         align-items: center;
         justify-content: center;
-        container-type: size;
     }
     .artwork {
         z-index: 1;
         flex: 0 0 auto;
-        width: min(100%, 100cqh);
+        width: 100%;
         max-width: none;
-        aspect-ratio: 1;
+        aspect-ratio: 5 / 4;
     }
     .glow { inset: -12%; }
 }
