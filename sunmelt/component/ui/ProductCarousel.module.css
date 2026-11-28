@@ -23,7 +23,8 @@
     background: #fff;
 }
 .emptySection {
-    /* One full screen of white, above the sticky 3D canvas but below the header. */
+    /* Keep the fourth section in normal flow: it slides over the sticky
+       ingredients composition and the shared 3D canvas, beneath the header. */
     position: relative;
     z-index: 3;
     width: 100%;

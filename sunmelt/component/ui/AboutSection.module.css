@@ -251,13 +251,17 @@
 
 /* About, part two: a cropped, ingredient-facing can with cool radiant frost. */
 .ingredientsSection {
-    position: relative;
+    /* Pin the third composition while the next section passes in front.
+       Native scrolling drives the overlap in both directions. */
+    position: sticky;
+    top: 0;
+    z-index: 0;
     isolation: isolate;
     overflow: hidden;
     background: #fff;
     color: #251b19;
     padding-top: var(--header-height, 68px);
-    min-height: calc(1.5 * max(var(--about-scroll-height, 100dvh), var(--about-view-height, 100dvh)));
+    min-height: max(var(--about-scroll-height, 100dvh), var(--about-view-height, 100dvh));
 }
 .ingredientsFrost {
     position: absolute;

@@ -42,7 +42,10 @@ const Header = ({ transparent = false }: { transparent?: boolean }) => {
       const height = normalScale ? viewport.height : window.innerHeight;
       const midpoint = viewportTop + height / 2;
       const rect = about.getBoundingClientRect();
-      const aboutBottom = ingredients?.getBoundingClientRect().bottom ?? rect.bottom;
+      // Ingredients is sticky during the cover transition. The fourth
+      // section's moving top is the actual visible boundary of About.
+      const aboutBottom = document.getElementById("section-four")?.getBoundingClientRect().top
+        ?? ingredients?.getBoundingClientRect().bottom ?? rect.bottom;
       // The fourth section is intentionally blank and has no navigation label yet.
       setActiveSection(midpoint < rect.top ? "home" : midpoint < aboutBottom ? "about" : null);
     };
