@@ -347,7 +347,12 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
             const top = tilePoint.clone().add(new THREE.Vector3(0, .74, 0)).project(camera);
             const bottom = tilePoint.clone().add(new THREE.Vector3(0, -.74, 0)).project(camera);
             const unitHeight = Math.abs(top.y - bottom.y) * rect.height / 2;
-            landingScale = THREE.MathUtils.clamp(tile.height * .88 / Math.max(1, unitHeight), .30, 1.45);
+            const mobileAbout = window.matchMedia("(max-width: 767px)").matches;
+            // Match the larger full-width mobile ice grid without changing desktop.
+            landingScale = THREE.MathUtils.clamp(
+                tile.height * (mobileAbout ? .96 : .88) / Math.max(1, unitHeight),
+                .30, mobileAbout ? 2.2 : 1.45
+            );
         }
         cans.forEach(({index, primary, copy, primaryShadow, copyShadow}) => {
             const distance = wrap(index - track.position, count);
@@ -694,6 +699,13 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
 
     const observer = new ResizeObserver(resize);
     observer.observe(stage);
+    const onAboutScroll = () => {
+        if (aboutProgress() > 0) invalidate();
+    };
+    // Short mobile viewports may scroll past the initial About landing point.
+    // Re-project the can onto its real ice grid as the document continues moving.
+    window.addEventListener("scroll", onAboutScroll, { passive: true });
+    window.visualViewport?.addEventListener("resize", onAboutScroll, { passive: true });
     const visibility = new IntersectionObserver(entries => {
         inView = entries[0]?.isIntersecting ?? true;
         if (!inView) {
@@ -782,6 +794,8 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
         });
         gsap.ticker.remove(render);
         observer.disconnect();
+        window.removeEventListener("scroll", onAboutScroll);
+        window.visualViewport?.removeEventListener("resize", onAboutScroll);
         visibility.disconnect();
         stage.removeEventListener("contextmenu", onStageContextMenu);
         stage.removeEventListener("pointerdown", onPointerDown);
