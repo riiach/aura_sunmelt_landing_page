@@ -163,6 +163,10 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
     };
     const targetRay = new THREE.Raycaster();
     const tilePoint = new THREE.Vector3();
+    const ingredientFacing = new THREE.Quaternion();
+    const ingredientFacingMatrix = new THREE.Matrix4();
+    const ingredientUp = new THREE.Vector3();
+    const ingredientWorldUp = new THREE.Vector3(0, 1, 0);
     const tilePlane = new THREE.Plane(new THREE.Vector3(0, 0, 1), -.65);
     const aboutProgress = () => Math.max(displayAboutProgress, aboutState?.current?.progress || 0);
     const ingredientsProgress = () => {
@@ -457,7 +461,16 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
             // grid, allowing margin for the projected rim and tilted silhouette.
             const relativeScale = tile.height * (mobileAbout ? .85 : .90) / Math.max(1, unitHeight);
             const gridScale = mobileAbout ? relativeScale : Math.min(relativeScale, 1.65);
-            const ingredientScale = ingredientTile ? ingredientTile.height * .95 / Math.max(1, unitHeight) : gridScale;
+            // Align the can's local Y axis perpendicular to the camera ray
+            // at its actual position. A zero Euler tilt alone still exposes
+            // the lid because the hero camera looks down from above.
+            ingredientFacingMatrix.lookAt(camera.position, tilePoint, ingredientWorldUp);
+            ingredientFacing.setFromRotationMatrix(ingredientFacingMatrix);
+            ingredientUp.set(0, .74, 0).applyQuaternion(ingredientFacing);
+            const frontTop = tilePoint.clone().add(ingredientUp).project(camera);
+            const frontBottom = tilePoint.clone().sub(ingredientUp).project(camera);
+            const frontUnitHeight = Math.abs(frontTop.y - frontBottom.y) * rect.height / 2;
+            const ingredientScale = ingredientTile ? ingredientTile.height * .96 / Math.max(1, frontUnitHeight) : gridScale;
             landingScale = lerp(gridScale, ingredientScale, ingredientBlend);
         }
         cans.forEach(({index, primary, copy, primaryShadow, copyShadow}) => {
@@ -487,7 +500,8 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
                         lerp(-.11, tilePoint.y, land) - Math.sin(Math.PI * land) * .24,
                         lerp(0, tilePoint.z, land));
                     can.scale.setScalar(lerp(.86, landingScale, land));
-                    tilt.rotation.set(-.12 * land * (1 - ingredientTurn), 0, -.43 * land * (1 - ingredientTurn));
+                    tilt.rotation.set(-.12 * land, 0, -.43 * land);
+                    tilt.quaternion.slerp(ingredientFacing, ingredientTurn);
                     // The original label's ingredients panel is centered at U ≈ .865.
                     // Continue the existing rotation toward that panel, then stop.
                     const labelAngle = lerp(.15, Math.PI * 2 * (.865 - .5), ingredientTurn);

@@ -42,18 +42,23 @@ const AboutSection = ({ tileRef, interactive }: AboutSectionProps) => (
 );
 
 // Reuse the second section's actual glass tile treatment, not an image.
-const scatteredIce = [
-    [6, 23, 92, -13], [-2, 45, 105, -9], [13, 48, 80, -19], [7, 66, 74, 11], [16, 82, 100, -7],
-    [93, 18, 105, -8], [86, 37, 90, 11], [96, 48, 94, -10], [80, 58, 93, -15], [88, 77, 108, 8],
+// Occupied cells follow the sketch; empty cells preserve an even pitch.
+const iceClusters = [
+    { side: "left", cells: [[2, 1], [1, 3], [3, 3], [2, 4], [3, 5]] },
+    { side: "right", cells: [[3, 1], [2, 2], [1, 3], [3, 3], [2, 4]] },
 ];
 
 export const IngredientsSection = ({ tileRef, interactive }: AboutSectionProps) => (
     <section id="ingredients" className={styles.ingredientsSection} aria-labelledby="ingredients-title" inert={!interactive}>
         <div className={styles.ingredientsFrost} aria-hidden="true" />
         <div className={styles.scatteredIce} aria-hidden="true">
-            {scatteredIce.map(([x, y, size, angle], i) => (
-                <div key={i} className={`${styles.tile} ${styles.scatteredCube}`}
-                    style={{ "--cube-x": `${x}%`, "--cube-y": `${y}%`, "--cube-size": `${size}px`, "--cube-angle": `${angle}deg` } as CSSProperties} />
+            {iceClusters.map(({ side, cells }) => (
+                <div key={side} className={`${styles.iceCluster} ${side === "left" ? styles.iceClusterLeft : styles.iceClusterRight}`}>
+                    {cells.map(([column, row]) => (
+                        <div key={`${column}-${row}`} className={`${styles.tile} ${styles.scatteredCube}`}
+                            style={{ gridColumn: column, gridRow: row } as CSSProperties} />
+                    ))}
+                </div>
             ))}
         </div>
         <div className={styles.ingredientsInner}>
