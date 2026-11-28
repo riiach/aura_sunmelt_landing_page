@@ -2,7 +2,13 @@ export function wrap(value,count){return ((value+count/2)%count+count)%count-cou
 
 export function mod(value,count){return ((value%count)+count)%count;}
 
-export function scaleAt(distance){const t=Math.max(0,1-Math.abs(distance));return 0.86+0.26*t*t*(3-2*t);}
+export function scaleAt(distance) {
+    const d = Math.abs(distance);
+    const center = Math.max(0, 1 - d);
+    const outer = Math.max(0, Math.min(1, d - 1));
+    // Keep the selected and adjacent cans; taper the outer pair smoothly.
+    return .86 + .26 * center * center * (3 - 2 * center) - .13 * outer * outer * (3 - 2 * outer);
+}
 
 export function getLayout(width){return width>=1024?4.92:width>=640?3.12:1.76;}
 
@@ -20,13 +26,15 @@ export const rightTilt = -Math.PI / 15;
 export const isSelected = (index, position, count) => index === mod(Math.round(position), count);
 
  
-// All cans start on one plane, at equal size. The existing carousel pose is the endpoint.
-export const introPoseAt = (distance, progress) => {
+// Scale fans out with the opening spread, independently of the later lift/tilt.
+// Calls from the About transition retain their original progress-only behavior.
+export const introPoseAt = (distance, progress, spreadProgress = progress) => {
     const t = Math.max(0, Math.min(1, progress));
+    const scaleProgress = Math.max(t, Math.max(0, Math.min(1, spreadProgress)));
     return {
         y: -.11 + .20 * centerWeight(distance) * t,
         z: depthAt(distance) * t,
-        scale: .86 + (scaleAt(distance) - .86) * t,
+        scale: .86 + (scaleAt(distance) - .86) * scaleProgress,
     };
 };
 

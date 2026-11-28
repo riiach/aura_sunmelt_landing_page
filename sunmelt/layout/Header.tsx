@@ -11,16 +11,91 @@ import styles from "./Header.module.css";
 const links = [
   { label: "Home", href: "/" },
   { label: "About", href: "#about" },
-  { label: "Sales", href: "" },
-  { label: "Contact", href: "" },
+  { label: "Stories", href: "#section-four" },
+  { label: "Contact", href: "#contact" },
 ];
 
 const Header = ({ transparent = false }: { transparent?: boolean }) => {
   const pathname = usePathname();
+  const [activeSection, setActiveSection] = useState<"home" | "about" | "stories" | null>("home");
   const [menuOpen, setMenuOpen] = useState(false);
   const menuButton = useRef<HTMLButtonElement>(null);
   const headerRef = useRef<HTMLDivElement>(null);
   const reduceMotion = useReducedMotion();
+
+  // Follow the visible section instead of the URL, which stays on "/" while
+  // the carousel performs its scroll-driven About transition.
+  useEffect(() => {
+    const about = document.getElementById("about");
+    const ingredients = document.getElementById("ingredients");
+    const stories = document.getElementById("section-four");
+    const track = document.getElementById("home");
+    const storiesSlot = track?.querySelector<HTMLElement>("[data-stories-slot]");
+    if (!about) {
+      setActiveSection("home");
+      return;
+    }
+
+    const viewport = window.visualViewport;
+    let frame = 0;
+    const update = () => {
+      frame = 0;
+      // The sliding panel temporarily leaves document flow. Use the intended
+      // destination during that transition, not the animated panel rectangle.
+      const destination = track?.dataset.storiesDestination;
+      if (destination === "home" || destination === "about" || destination === "stories") {
+        setActiveSection(destination);
+        return;
+      }
+      const normalScale = viewport && Math.abs(viewport.scale - 1) < .01;
+      const viewportTop = normalScale ? viewport.offsetTop : 0;
+      const height = normalScale ? viewport.height : window.innerHeight;
+      const midpoint = viewportTop + height / 2;
+      const rect = about.getBoundingClientRect();
+      // Ingredients is sticky during the cover transition. The fourth
+      // section's moving top is the actual visible boundary of About.
+      const aboutBottom = storiesSlot?.getBoundingClientRect().top
+        ?? stories?.getBoundingClientRect().top
+        ?? ingredients?.getBoundingClientRect().bottom ?? rect.bottom;
+      const storiesBottom = stories?.getBoundingClientRect().bottom ?? aboutBottom;
+      setActiveSection(midpoint < rect.top ? "home" : midpoint < aboutBottom ? "about" : midpoint < storiesBottom ? "stories" : null);
+    };
+    const schedule = () => { if (!frame) frame = requestAnimationFrame(update); };
+    const observer = new ResizeObserver(schedule);
+    observer.observe(about);
+    if (ingredients) observer.observe(ingredients);
+    if (stories) observer.observe(stories);
+    if (storiesSlot) observer.observe(storiesSlot);
+    // A slide can finish without firing scroll/resize when the document is
+    // already aligned. Observe its lifecycle to recompute the active menu.
+    const transitionObserver = new MutationObserver(schedule);
+    if (track) transitionObserver.observe(track, {
+      attributes: true,
+      attributeFilter: ["data-stories-destination", "data-stories-slide"],
+    });
+    window.addEventListener("scroll", schedule, { passive: true });
+    window.addEventListener("resize", schedule, { passive: true });
+    viewport?.addEventListener("scroll", schedule, { passive: true });
+    viewport?.addEventListener("resize", schedule, { passive: true });
+    schedule();
+
+    return () => {
+      cancelAnimationFrame(frame);
+      observer.disconnect();
+      transitionObserver.disconnect();
+      window.removeEventListener("scroll", schedule);
+      window.removeEventListener("resize", schedule);
+      viewport?.removeEventListener("scroll", schedule);
+      viewport?.removeEventListener("resize", schedule);
+    };
+  }, [pathname]);
+
+  const currentLink = (href: string): "location" | undefined => {
+    if (href === "/") return pathname === "/" && activeSection === "home" ? "location" : undefined;
+    if (href === "#about") return pathname === "/" && activeSection === "about" ? "location" : undefined;
+    if (href === "#section-four") return pathname === "/" && activeSection === "stories" ? "location" : undefined;
+    return undefined;
+  };
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -59,13 +134,16 @@ const Header = ({ transparent = false }: { transparent?: boolean }) => {
           <div className={styles.leftNav}>
             {links.slice(0, 3).map(({ label, href }) => (
               <Link key={label} href={href} className={styles.navLink}
-                    aria-current={href && pathname === href ? "page" : undefined}>
+                    data-about-link={href === "#about" ? "" : undefined}
+                    data-home-link={href === "/" ? "" : undefined}
+                    scroll={href !== "#about" && href !== "#section-four" && href !== "#contact" && href !== "/"}
+                    aria-current={currentLink(href)}>
                 <span className={styles.linkLabel}>{label}</span>
               </Link>
             ))}
           </div>
 
-          <Link href="/" className={styles.brand} aria-label="Aura x Sunmelt home"
+          <Link href="/" className={styles.brand} aria-label="Aura x Sunmelt home" data-home-link scroll={false}
                 onClick={() => setMenuOpen(false)}>
             <span className={styles.logoCrop}>
               <Image
@@ -82,7 +160,7 @@ const Header = ({ transparent = false }: { transparent?: boolean }) => {
 
           <div className={styles.rightNav}>
             <span className={styles.contactHint}>Have a question?</span>
-            <Link href={links[3].href} className={styles.contact}>
+            <Link href={links[3].href} className={styles.contact} scroll={false} aria-haspopup="dialog">
               <span className={styles.linkLabel}>{links[3].label}</span>
               <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
                 <path d="M4 12 12 4M5 4h7v7" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round" />
@@ -130,8 +208,11 @@ const Header = ({ transparent = false }: { transparent?: boolean }) => {
                 <nav aria-label="Mobile navigation" className={styles.mobileNav}>
                   {links.map(({ label, href }) => (
                     <Link key={label} href={href}
+                          data-about-link={href === "#about" ? "" : undefined}
+                          data-home-link={href === "/" ? "" : undefined}
+                          scroll={href !== "#about" && href !== "#section-four" && href !== "#contact" && href !== "/"}
                           className={label === "Contact" ? `${styles.mobileLink} ${styles.mobileContact}` : styles.mobileLink}
-                          aria-current={href && pathname === href ? "page" : undefined}
+                          aria-current={currentLink(href)}
                           onClick={() => setMenuOpen(false)}>
                       {label === "Contact" ? (
                         <span className={styles.flipWindow}>

@@ -3,9 +3,14 @@ import { gsap } from "gsap";
 import { createCanAssets, flavors, frontRotation } from "./createCan";
 import { wrap, mod, getLayout, getSnap, rightTilt, isSelected, introPoseAt, introSpreadAt } from "./carouselMath.mjs";
 import { createStudio, createContactShadows } from "./studio";
-import { aboutPhases, nearestFlavorPosition, preparationDuration, preparationProgress, MANGO_READY, advanceAboutProgress } from "./aboutMath.mjs";
+import { aboutPhases, nearestFlavorPosition, preparationDuration, preparationProgress, MANGO_READY, advanceAboutProgress, ingredientsScrollProgress, ingredientsRotationProgress, advanceMobileLandingSpin, reverseLandingTargetY } from "./aboutMath.mjs";
 
-export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase, onIntroProgress, aboutState, rotateControl }) => {
+// Keep the hint dismissed for this document, even if the scene is remounted.
+// A reload creates a new document and starts with a fresh hint.
+const dismissedRotateHints = new WeakSet();
+const swipeHintPhases = new WeakMap();
+
+export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase, onIntroProgress, aboutState, rotateControl, rightHint, leftHint, flavorLabelClass }) => {
     let renderer;
     try {
         renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true, powerPreference: "high-performance" });
@@ -18,12 +23,61 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
     renderer.toneMapping = THREE.NeutralToneMapping;
     renderer.toneMappingExposure = 1.0;
     renderer.setClearColor(0x000000, 0);
-    renderer.domElement.style.cssText = "display:block;width:100%;height:100%;pointer-events:none";
+    renderer.domElement.style.cssText = "position:absolute;left:0;top:0;display:block;width:100%;height:100%;pointer-events:none";
     renderer.domElement.setAttribute("aria-hidden", "true");
     stage.appendChild(renderer.domElement);
 
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(34, 1, .1, 40);
+    // Keep the hero camera and its pointer/landing projection unchanged.
+    // A second camera renders the same projection into a taller drawing buffer
+    // when the can leaves the sticky hero's original canvas during landing.
+    const landingCamera = new THREE.PerspectiveCamera();
+    const hero = stage.parentElement;
+    const trackElement = hero?.parentElement;
+    const originalOverflow = hero?.style.overflow || "";
+    let canvasWidth = 0, canvasHeight = 0;
+    const sizeCanvas = (width, height) => {
+        if (canvasWidth === width && canvasHeight === height) return;
+        canvasWidth = width;
+        canvasHeight = height;
+        renderer.domElement.style.height = `${height}px`;
+        renderer.setSize(width, height, false);
+    };
+    const renderScene = (landing = false) => {
+        const width = stage.clientWidth, height = stage.clientHeight;
+        if (!width || !height) return;
+        let extra = 0;
+        if (landing && hero && trackElement) {
+            const rect = stage.getBoundingClientRect();
+            const visual = window.visualViewport;
+            const visibleBottom = visual && Math.abs(visual.scale - 1) < .01
+                ? visual.offsetTop + visual.height : window.innerHeight;
+            // Cover the visible space below the small-viewport-height hero
+            // (notably on iPad), without extending the document scroll range.
+            const viewportBottom = Math.max(visibleBottom, window.innerHeight, document.documentElement.clientHeight);
+            const bottom = Math.min(viewportBottom, trackElement.getBoundingClientRect().bottom);
+            extra = Math.max(0, Math.ceil(bottom - rect.bottom));
+        }
+        if (width < 768) {
+            // Allocate a stable buffer for the phone, rather than rebuilding
+            // the WebGL drawing buffer each time the browser toolbar moves.
+            const fullHeight = Math.min(height + 180, Math.max(height, window.screen.height));
+            extra = Math.ceil(fullHeight - height);
+        }
+        const overflow = landing && extra > 0 ? "visible" : originalOverflow;
+        if (hero && hero.style.overflow !== overflow) hero.style.overflow = overflow;
+        sizeCanvas(width, height + extra);
+        if (extra > 0) {
+            landingCamera.copy(camera, false);
+            // Expand below the original frustum rather than stretching it.
+            // The original NDC-to-screen mapping remains exactly the same.
+            landingCamera.setViewOffset(width, height, 0, 0, width, height + extra);
+            renderer.render(scene, landingCamera);
+        } else {
+            renderer.render(scene, camera);
+        }
+    };
     const cameraDistance = 7.8;
     const cameraHeight = 2.05;
     camera.position.set(0, cameraHeight, cameraDistance);
@@ -48,18 +102,50 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
     const touchPreference = window.matchMedia("(hover: none) and (pointer: coarse)");
     const rotateAnchor = new THREE.Vector3();
     let heldCan = null, heldPointer = null, heldKey = null;
-    let rotateAvailable = false, hintDismissed = false;
+    const hintDocument = stage.ownerDocument;
+    let rotateAvailable = false;
+    if (dismissedRotateHints.has(hintDocument)) rotateControl?.setAttribute("data-dismissed", "true");
+    else rotateControl?.removeAttribute("data-dismissed");
     let holdStartedAt = 0, heldCapture = null, pendingHold = null;
     const clearPendingHold = () => {
         if (pendingHold !== null) window.clearTimeout(pendingHold);
         pendingHold = null;
     };
     const dismissRotateHint = () => {
-        if (hintDismissed) return;
-        hintDismissed = true;
+        dismissedRotateHints.add(hintDocument);
         rotateControl?.setAttribute("data-dismissed", "true");
+        if (!swipeHintPhases.has(hintDocument)) swipeHintPhases.set(hintDocument, "right");
+    };
+    const advanceSwipeHint = () => {
+        if (!dismissedRotateHints.has(hintDocument)) {
+            dismissRotateHint();
+            return;
+        }
+        const phase = swipeHintPhases.get(hintDocument) || "right";
+        swipeHintPhases.set(hintDocument, phase === "right" ? "left" : "done");
     };
     const cans = [];
+    const heroPose = (pose) => ({
+        ...pose,
+        y: pose.y + (stage.clientWidth < 768 ? .14 : .20),
+        scale: pose.scale * (stage.clientWidth < 768 ? 1 : .85),
+    });
+    const labelLayer = document.createElement("div");
+    labelLayer.className = flavorLabelClass;
+    labelLayer.setAttribute("aria-hidden", "true");
+    stage.appendChild(labelLayer);
+    // A single centered caption identifies the currently selected flavor.
+    // It stays in place while the cans move or tilt.
+    const flavorLabel = document.createElement("span");
+    flavorLabel.textContent = flavors[mod(Math.round(track.position), count)].name;
+    labelLayer.appendChild(flavorLabel);
+    const updateFlavorLabels = (opacity) => {
+        labelLayer.style.opacity = String(opacity);
+        labelLayer.style.visibility = opacity <= .005 ? "hidden" : "visible";
+        if (opacity <= .005) return;
+        const name = flavors[mod(Math.round(track.position), count)].name;
+        if (flavorLabel.textContent !== name) flavorLabel.textContent = name;
+    };
     let assets, snapTween, spinTween, spinningCan, introTween;
     const intro = { spread: 0, progress: 0 };
     let introComplete = false;
@@ -73,6 +159,9 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
     let aboutOrigin = null, aboutTarget = null, lastAboutProgress = -1;
     let prepTime = 0, prepDuration = null;
     let displayAboutProgress = 0;
+    let landingSpin = 0;
+    const mobileLanding = window.matchMedia("(max-width: 767px)");
+    let lastContentFade = -1, lastIngredientsProgress = -1;
     const fadeMaterials = new Map();
     const setCanOpacity = (can, opacity) => {
         let entries = fadeMaterials.get(can);
@@ -103,8 +192,20 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
     };
     const targetRay = new THREE.Raycaster();
     const tilePoint = new THREE.Vector3();
+    const ingredientFacing = new THREE.Quaternion();
+    const ingredientFacingMatrix = new THREE.Matrix4();
+    const ingredientUp = new THREE.Vector3();
+    const ingredientWorldUp = new THREE.Vector3(0, 1, 0);
     const tilePlane = new THREE.Plane(new THREE.Vector3(0, 0, 1), -.65);
     const aboutProgress = () => Math.max(displayAboutProgress, aboutState?.current?.progress || 0);
+    const ingredientsProgress = () => {
+        const first = aboutState?.current?.target?.closest("section");
+        const next = aboutState?.current?.ingredientsTarget?.closest("section");
+        if (!first || !next) return 0;
+        const visual = window.visualViewport;
+        const viewportTop = visual && Math.abs(visual.scale - 1) < .01 ? visual.offsetTop : 0;
+        return ingredientsScrollProgress(first.getBoundingClientRect().top, next.getBoundingClientRect().top, viewportTop);
+    };
     const reduced = () => motionPreference.matches;
     const damp = (from, to, dt) => reduced() ? to : THREE.MathUtils.damp(from, to, 10, dt);
 
@@ -123,19 +224,30 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
         // Deliberately keep the current rotation angle on release.
         invalidate();
     };
-    const canHoldRotate = () => Boolean(rotateControl && touchPreference.matches &&
-        ready && introComplete && inView && !disposed && !drag && !snapTween &&
+    const canBrowse = () => Boolean(ready && introComplete && inView && !disposed && !drag && !snapTween &&
         !aboutState?.current?.preparing && aboutProgress() === 0);
+    const canHoldRotate = () => Boolean(rotateControl && touchPreference.matches && canBrowse());
     const syncRotateControl = () => {
         if (!rotateControl) return;
         const available = canHoldRotate();
         if (!available && heldCan) stopHeldRotation();
-        const showHint = available && (!hintDismissed || heldCapture === rotateControl || heldKey !== null);
+        const showHint = available && (!dismissedRotateHints.has(hintDocument) || heldCapture === rotateControl || heldKey !== null);
         if (showHint !== rotateAvailable) {
             rotateAvailable = showHint;
             rotateControl.dataset.available = String(showHint);
         }
-        if (!showHint) return;
+        // Desktop uses hover to rotate, so it can start at the arrow tutorial
+        // without waiting for a touch-only long press. Keep the same one-time sequence.
+        if (canBrowse() && !touchPreference.matches && !dismissedRotateHints.has(hintDocument)) dismissRotateHint();
+        const phase = swipeHintPhases.get(hintDocument);
+        const showSwipe = canBrowse() && !heldCan && dismissedRotateHints.has(hintDocument);
+        for (const [button, direction] of [[rightHint, "right"], [leftHint, "left"]]) {
+            if (!button) continue;
+            const show = showSwipe && phase === direction;
+            if (button.disabled === show) button.disabled = !show;
+            if (button.dataset.available !== String(show)) button.dataset.available = String(show);
+        }
+        if (!showHint && !showSwipe) return;
         const center = cans[activeIndex]?.primary;
         if (!center) return;
         // Project the actual 3D center so the button follows the floating can.
@@ -144,6 +256,7 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
         rotateAnchor.project(camera);
         rotateControl.style.setProperty("--rotate-x", `${(rotateAnchor.x + 1) * 50}%`);
         rotateControl.style.setProperty("--rotate-y", `${(1 - rotateAnchor.y) * 50}%`);
+        hero?.style.setProperty("--swipe-y", `${(1 - rotateAnchor.y) * 50}%`);
     };
     const beginHeldRotation = () => {
         if (!canHoldRotate() || heldCan) return false;
@@ -167,7 +280,10 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
         rotateControl.setPointerCapture(event.pointerId);
     };
     const onRotateRelease = event => {
-        if (event.pointerId === heldPointer) stopHeldRotation();
+        if (event.pointerId === heldPointer) {
+            if (heldCan && event.type === "pointerup") dismissRotateHint();
+            stopHeldRotation();
+        }
     };
     const onRotateKeyDown = event => {
         if (![" ", "Enter"].includes(event.key)) return;
@@ -177,6 +293,7 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
     const onRotateKeyUp = event => {
         if (heldKey === event.key) {
             event.preventDefault();
+            if (heldCan) dismissRotateHint();
             stopHeldRotation();
         }
     };
@@ -185,9 +302,17 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
     const onRotateVisibility = () => { if (document.hidden) stopHeldRotation(); };
     const onRotatePreference = () => { stopHeldRotation(); syncRotateControl(); };
     const render = (_time, deltaMs) => {
-        if (disposed || !ready || !inView) return;
-        const dt = Math.min(.05, (deltaMs || 16.7) / 1000);
+        if (disposed) return;
         const state = aboutState?.current;
+        // Leaving Home consumes the initial tutorial even without a long press.
+        // Ordinary drag/snap interruptions still allow it during the first visit.
+        if (state?.preparing || state?.progress > 0) {
+            if (!dismissedRotateHints.has(hintDocument)) dismissRotateHint();
+            swipeHintPhases.set(hintDocument, "done");
+            syncRotateControl();
+        }
+        if (!ready || (!inView && !(state?.progress > 0 || displayAboutProgress > 0))) return;
+        const dt = Math.min(.05, (deltaMs || 16.7) / 1000);
         let preparedNow = false;
         if (introComplete && state?.preparing && mangoIndex >= 0) {
             if (!prepDuration) {
@@ -202,16 +327,35 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
         const requestedProgress = introComplete ? state?.progress || 0 : 0;
         displayAboutProgress = advanceAboutProgress(
             displayAboutProgress, requestedProgress, dt,
-            !introComplete || reduced() || Boolean(state?.preparing) || preparedNow
+            mobileLanding.matches || !introComplete || reduced() || Boolean(state?.preparing) || preparedNow || Boolean(state?.snapToProgress)
         );
+        // Both translation and spin share the same scroll phase. On phones
+        // an independent timer used to leave the can rotating after landing.
+        const instantSpin = true;
+        if (state?.snapToProgress) state.snapToProgress = false;
         const progress = displayAboutProgress;
+        const reversing = requestedProgress < progress;
+        const targetSpin = aboutPhases(progress).land;
+        const nextSpin = advanceMobileLandingSpin(landingSpin, targetSpin, dt, instantSpin);
+        const spinChanged = nextSpin !== landingSpin;
+        landingSpin = nextSpin;
+        // Reveal About slightly after the outgoing cans begin fading.
+        // Use rendered (not raw scroll) progress so reverse scrolling stays synced.
+        const contentFade = aboutPhases(progress).reveal;
+        if (!state?.failed && contentFade !== lastContentFade) {
+            trackElement?.style.setProperty("--about-content-fade", String(contentFade));
+            lastContentFade = contentFade;
+        }
         if (progress > 0 && mangoIndex >= 0) {
+            updateFlavorLabels(0);
             syncRotateControl();
-            if (aboutOrigin === null || progress !== lastAboutProgress || dirty || aboutState?.current?.returnToMango) {
-                updateAboutLayout(progress);
+            const nextIngredientsProgress = ingredientsProgress();
+            if (aboutOrigin === null || progress !== lastAboutProgress || nextIngredientsProgress !== lastIngredientsProgress || spinChanged || dirty || aboutState?.current?.returnToMango) {
+                updateAboutLayout(progress, nextIngredientsProgress, reversing);
                 lastAboutProgress = progress;
+                lastIngredientsProgress = nextIngredientsProgress;
                 dirty = false;
-                renderer.render(scene, camera);
+                renderScene(aboutPhases(progress).land > 0);
             }
             if (preparedNow) {
                 state.preparing = false;
@@ -228,9 +372,14 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
             activeIndex = mod(Math.round(track.position), count);
             aboutOrigin = aboutTarget = null;
             lastAboutProgress = -1;
-            cans.forEach(({primary, copy}) => {
+            // Match the exact settled Home pose at the handoff. Resetting
+            // the selected can to upright here makes it visibly snap back
+            // before the normal hero loop tilts it a second time.
+            elapsed = 0;
+            cans.forEach(({index, primary, copy}) => {
                 for (const can of [primary, copy]) {
-                    can.userData.tilt.rotation.set(0, 0, 0);
+                    const selected = can === primary && isSelected(index, track.position, count);
+                    can.userData.tilt.rotation.set(0, 0, selected ? rightTilt * intro.progress : 0);
                     can.userData.tilt.position.y = 0;
                     can.userData.spin.rotation.y = frontRotation;
                     setCanOpacity(can, 1);
@@ -265,8 +414,8 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
                 const emphasis = selected ? intro.progress : 0;
                 const shadowReveal = introComplete || selected ? 1 :
                     introSpreadAt(wrap(index - track.position, count), intro.spread);
-                shadow.material.opacity = (.60 - .12 * emphasis - tilt.position.y * 1.5) * shadowReveal * .72;
-                shadow.scale.setScalar(.82 + .33 * emphasis + tilt.position.y * 2);
+                shadow.material.opacity = Math.max(0, (.60 - .12 * emphasis - tilt.position.y * 1.5) * shadowReveal * .43);
+                shadow.scale.setScalar((.82 + .33 * emphasis + tilt.position.y * 2) * Math.min(1, can.scale.x / .86));
             }
         });
         syncRotateControl();
@@ -278,7 +427,8 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
         }
         if (!dirty) return;
         dirty = false;
-        renderer.render(scene, camera);
+        renderScene();
+        updateFlavorLabels(introComplete ? 1 : Math.max(0, (intro.progress - .35) / .65));
     };
 
     const updateLayout = () => {
@@ -286,7 +436,7 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
             const distance = wrap(index - track.position, count);
             const otherDistance = distance + (distance < 0 ? count : -count);
             [[primary, primaryShadow, distance], [copy, copyShadow, otherDistance]].forEach(([can, shadow, x]) => {
-                const pose = introPoseAt(x, intro.progress);
+                const pose = heroPose(introPoseAt(x, intro.progress, intro.spread));
                 const spread = introComplete ? 1 : introSpreadAt(x, intro.spread);
                 const spreadX = x * spread;
                 // The center stays in front while the other cans emerge from behind it.
@@ -310,7 +460,7 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
     };
 
     // Keep the original procedural mango can and its shared materials.
-    const updateAboutLayout = progress => {
+    const updateAboutLayout = (progress, ingredientProgress = 0, reversing = false) => {
         if (aboutOrigin === null) {
             cancelSnap();
             stopSpin(true);
@@ -330,30 +480,59 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
         const { settle, travel, fade, land } = aboutPhases(progress);
         const lerp = THREE.MathUtils.lerp;
         track.position = lerp(aboutOrigin, aboutTarget, travel);
+        // Once fully centered, return to Mango rather than replaying a
+        // different initial selection on the way back up.
+        if (mobileLanding.matches && travel === 1) aboutOrigin = aboutTarget;
         parallaxX = parallaxY = 0;
         camera.position.set(0, cameraHeight, cameraDistance);
         camera.lookAt(0, 0, 0);
         camera.updateMatrixWorld();
         const tile = aboutState?.current?.target?.getBoundingClientRect();
+        const ingredientTile = aboutState?.current?.ingredientsTarget?.getBoundingClientRect();
+        const ingredientBlend = ingredientTile ? ingredientProgress : 0;
+        const ingredientTurn = ingredientsRotationProgress(ingredientBlend);
         const rect = stage.getBoundingClientRect();
         let landingScale = 1.05;
         tilePoint.set(1.3, -.08, .65);
         if (tile && rect.width > 0 && rect.height > 0) {
+            const mobileAbout = window.matchMedia("(max-width: 767px)").matches;
+            const centerX = tile.left + tile.width * .5;
+            const visual = window.visualViewport;
+            const viewportTop = visual && Math.abs(visual.scale - 1) < .01 ? visual.offsetTop : 0;
+            const aboutSection = aboutState?.current?.target?.closest("section");
+            const centerY = reverseLandingTargetY(tile.top + tile.height * .5,
+                aboutSection?.getBoundingClientRect().top ?? viewportTop, viewportTop, reversing);
+            const nextX = ingredientTile ? ingredientTile.left + ingredientTile.width * .5 : centerX;
+            const nextY = ingredientTile ? ingredientTile.top + ingredientTile.height * .5 : centerY;
             targetRay.setFromCamera(new THREE.Vector2(
-                (tile.left + tile.width * .5 - rect.left) / rect.width * 2 - 1,
-                1 - (tile.top + tile.height * .46 - rect.top) / rect.height * 2
+                (lerp(centerX, nextX, ingredientBlend) - rect.left) / rect.width * 2 - 1,
+                1 - (lerp(centerY, nextY, ingredientBlend) - rect.top) / rect.height * 2
             ), camera);
             targetRay.ray.intersectPlane(tilePlane, tilePoint);
             const top = tilePoint.clone().add(new THREE.Vector3(0, .74, 0)).project(camera);
             const bottom = tilePoint.clone().add(new THREE.Vector3(0, -.74, 0)).project(camera);
             const unitHeight = Math.abs(top.y - bottom.y) * rect.height / 2;
-            landingScale = THREE.MathUtils.clamp(tile.height * .88 / Math.max(1, unitHeight), .30, 1.45);
+            // Keep the tilted can inside the square desktop grid or 5:4 mobile
+            // grid, allowing margin for the projected rim and tilted silhouette.
+            const relativeScale = tile.height * (mobileAbout ? .85 : .90) / Math.max(1, unitHeight);
+            const gridScale = mobileAbout ? relativeScale : Math.min(relativeScale, 1.65);
+            // Align the can's local Y axis perpendicular to the camera ray
+            // at its actual position. A zero Euler tilt alone still exposes
+            // the lid because the hero camera looks down from above.
+            ingredientFacingMatrix.lookAt(camera.position, tilePoint, ingredientWorldUp);
+            ingredientFacing.setFromRotationMatrix(ingredientFacingMatrix);
+            ingredientUp.set(0, .74, 0).applyQuaternion(ingredientFacing);
+            const frontTop = tilePoint.clone().add(ingredientUp).project(camera);
+            const frontBottom = tilePoint.clone().sub(ingredientUp).project(camera);
+            const frontUnitHeight = Math.abs(frontTop.y - frontBottom.y) * rect.height / 2;
+            const ingredientScale = ingredientTile ? ingredientTile.height * .96 / Math.max(1, frontUnitHeight) : gridScale;
+            landingScale = lerp(gridScale, ingredientScale, ingredientBlend);
         }
         cans.forEach(({index, primary, copy, primaryShadow, copyShadow}) => {
             const distance = wrap(index - track.position, count);
             const other = distance + (distance < 0 ? count : -count);
             for (const [can, shadow, x, isPrimary] of [[primary, primaryShadow, distance, true], [copy, copyShadow, other, false]]) {
-                const pose = introPoseAt(x, 1 - settle);
+                const pose = heroPose(introPoseAt(x, 1 - settle));
                 const mango = index === mangoIndex && isPrimary;
                 const opacity = mango ? 1 : 1 - fade;
                 const tilt = can.userData.tilt;
@@ -368,16 +547,22 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
                 shadow.position.z = can.position.z;
                 shadow.visible = can.visible && land < .99;
                 shadow.scale.setScalar(.82);
-                shadow.material.opacity = .43 * opacity * (1 - land);
+                shadow.material.opacity = .26 * opacity * (1 - land);
                 if (mango && land > 0) {
                     // The destination is the real tile in the next section's
                     // current viewport position, not a fixed coordinate in the hero.
                     can.position.set(lerp(0, tilePoint.x, land),
-                        lerp(-.11, tilePoint.y, land) - Math.sin(Math.PI * land) * .24,
+                        lerp(heroPose({ y: -.11, scale: .86 }).y, tilePoint.y, land) - Math.sin(Math.PI * land) * .24,
                         lerp(0, tilePoint.z, land));
-                    can.scale.setScalar(lerp(.86, landingScale, land));
+                    can.scale.setScalar(lerp(heroPose({ y: -.11, scale: .86 }).scale, landingScale, land));
                     tilt.rotation.set(-.12 * land, 0, -.43 * land);
-                    can.userData.spin.rotation.y = frontRotation - Math.PI * 2 * land - .15 * land;
+                    tilt.quaternion.slerp(ingredientFacing, ingredientTurn);
+                    // The original label's ingredients panel is centered at U ≈ .865.
+                    // Continue the existing rotation toward that panel, then stop.
+                    const labelAngle = lerp(.15, Math.PI * 2 * (.865 - .5), ingredientTurn);
+                    // Rate-limit the first full turn on phones, without slowing the
+                    // subsequent ingredients-label alignment or translation.
+                    can.userData.spin.rotation.y = frontRotation - (Math.PI * 2 + .15) * landingSpin - (labelAngle - .15) * land;
                     can.visible = true;
                     shadow.visible = false;
                 }
@@ -406,8 +591,8 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
         camera.updateProjectionMatrix();
         spacing = worldHeight * aspect / worldWidth;
         pixelsPerUnit = width / worldWidth;
-        renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, width < 640 ? 1.25 : 1.75));
-        renderer.setSize(width, height, false);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, width < 768 ? 1.0 : 1.75));
+        sizeCanvas(width, width < 768 ? Math.ceil(Math.min(height + 180, Math.max(height, window.screen.height))) : height);
         if (introComplete && aboutProgress() > 0) invalidate();
         else updateLayout();
     };
@@ -501,6 +686,15 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
             onComplete: finish,
         });
     };
+
+    const onSwipeHint = direction => {
+        if (!canBrowse() || heldCan || swipeHintPhases.get(hintDocument) !== direction) return;
+        advanceSwipeHint();
+        snapTo(Math.round(track.position) + (direction === "right" ? 1 : -1));
+        syncRotateControl();
+    };
+    const onRightHint = () => onSwipeHint("right");
+    const onLeftHint = () => onSwipeHint("left");
 
     const hitsCenterCan = (event) => {
         const center = cans[activeIndex]?.primary;
@@ -604,6 +798,7 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
 
     const release = (event, canceled = false) => {
         if (event.pointerId === heldPointer) {
+            if (heldCan && !canceled) dismissRotateHint();
             stopHeldRotation();
             stage.style.cursor = "grab";
             return;
@@ -620,7 +815,10 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
         const target = previous.moved
             ? getSnap(track.position, previous.origin, velocity, canceled)
             : Math.round(track.position);
+        if (!canceled && previous.axis === "horizontal" && previous.moved &&
+            target !== Math.round(previous.origin)) advanceSwipeHint();
         snapTo(target, velocity);
+        syncRotateControl();
     };
 
     const onPointerUp = event => release(event);
@@ -633,7 +831,9 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
     const onKeyDown = event => {
         if (!ready || !introComplete || aboutState?.current?.preparing || aboutProgress() > 0 || drag || !["ArrowLeft", "ArrowRight"].includes(event.key)) return;
         event.preventDefault();
+        advanceSwipeHint();
         snapTo(Math.round(track.position) + (event.key === "ArrowRight" ? 1 : -1));
+        syncRotateControl();
     };
     const finishIntro = () => {
         if (disposed || introComplete) return;
@@ -694,6 +894,21 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
 
     const observer = new ResizeObserver(resize);
     observer.observe(stage);
+    const onAboutScroll = () => {
+        if (aboutProgress() > 0) invalidate();
+    };
+    // Text wrapping, font loading and viewport changes can resize the ice
+    // independently of the hero canvas. Keep its live landing target in sync.
+    const aboutArtworkObserver = new ResizeObserver(onAboutScroll);
+    const aboutArtwork = trackElement?.querySelector("[data-about-artwork]");
+    if (aboutArtwork) aboutArtworkObserver.observe(aboutArtwork);
+    const ingredientsArtwork = trackElement?.querySelector("[data-ingredients-artwork]");
+    if (ingredientsArtwork) aboutArtworkObserver.observe(ingredientsArtwork);
+    // Short mobile viewports may scroll past the initial About landing point.
+    // Re-project the can onto its real ice grid as the document continues moving.
+    window.addEventListener("scroll", onAboutScroll, { passive: true });
+    window.visualViewport?.addEventListener("resize", onAboutScroll, { passive: true });
+    window.visualViewport?.addEventListener("scroll", onAboutScroll, { passive: true });
     const visibility = new IntersectionObserver(entries => {
         inView = entries[0]?.isIntersecting ?? true;
         if (!inView) {
@@ -707,6 +922,8 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
     });
     visibility.observe(stage);
 
+    rightHint?.addEventListener("click", onRightHint);
+    leftHint?.addEventListener("click", onLeftHint);
     rotateControl?.addEventListener("pointerdown", onRotateDown);
     rotateControl?.addEventListener("pointerup", onRotateRelease);
     rotateControl?.addEventListener("pointercancel", onRotateRelease);
@@ -760,6 +977,14 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
     return () => {
         disposed = true;
         stopHeldRotation();
+        for (const button of [rightHint, leftHint]) {
+            if (!button) continue;
+            button.disabled = true;
+            button.removeAttribute("data-available");
+        }
+        rightHint?.removeEventListener("click", onRightHint);
+        leftHint?.removeEventListener("click", onLeftHint);
+        hero?.style.removeProperty("--swipe-y");
         rotateControl?.removeAttribute("data-available");
         rotateControl?.removeAttribute("data-dismissed");
         rotateControl?.removeEventListener("pointerdown", onRotateDown);
@@ -782,6 +1007,12 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
         });
         gsap.ticker.remove(render);
         observer.disconnect();
+        aboutArtworkObserver.disconnect();
+        window.removeEventListener("scroll", onAboutScroll);
+        window.visualViewport?.removeEventListener("resize", onAboutScroll);
+        window.visualViewport?.removeEventListener("scroll", onAboutScroll);
+        if (hero) hero.style.overflow = originalOverflow;
+        if (!aboutState?.current?.failed) trackElement?.style.removeProperty("--about-content-fade");
         visibility.disconnect();
         stage.removeEventListener("contextmenu", onStageContextMenu);
         stage.removeEventListener("pointerdown", onPointerDown);
@@ -801,5 +1032,6 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
         disposeStudio();
         renderer.dispose();
         renderer.domElement.remove();
+        labelLayer.remove();
     };
 };

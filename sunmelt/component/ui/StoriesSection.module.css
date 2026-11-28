@@ -1,0 +1,152 @@
+.stories {
+    --story-inset: clamp(24px, 13.3vw, 240px);
+    --story-gap: clamp(10px, 1vw, 16px);
+    padding-top: calc(var(--header-height, 68px) + clamp(42px, 8vh, 88px));
+    padding-bottom: clamp(48px, 9vh, 100px);
+    margin-bottom: clamp(32px, 4vw, 64px);
+    color: #251b19;
+    overflow: hidden;
+    background: #fff;
+}
+.heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin: 0 var(--story-inset) clamp(22px, 3vw, 38px);
+}
+.heading h2 {
+    margin: 0;
+    font-size: clamp(24px, 2.45vw, 38px);
+    line-height: 1.15;
+    letter-spacing: -.045em;
+    font-weight: 400;
+}
+.controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+}
+.arrow {
+    display: grid;
+    place-items: center;
+    border: 0;
+    background: transparent;
+    width: 36px;
+    height: 40px;
+    color: #251b19;
+    border-radius: 50%;
+    transition: background-color .18s ease;
+}
+.arrow:disabled { opacity: .22; cursor: default; }
+.arrow:not(:disabled):hover { background: #f3f3f3; }
+.arrow:focus-visible { outline: 2px solid #251b19; outline-offset: -2px; }
+/* Safari/Chrome may restore focus to the scroller after dialog.close().
+   Keep keyboard focus indicators on the actionable cards and arrows only. */
+.rail:focus { outline: none; }
+.rail {
+    display: flex;
+    align-items: stretch;
+    gap: var(--story-gap);
+    overflow-x: auto;
+    overflow-y: hidden;
+    overscroll-behavior-x: contain;
+    /* GSAP settles the native scroll position after the gesture ends. */
+    scroll-snap-type: none;
+    scroll-behavior: auto;
+    scroll-padding-inline: var(--story-inset);
+    padding-inline: var(--story-inset);
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-tap-highlight-color: transparent;
+}
+.rail::-webkit-scrollbar { display: none; }
+
+/* Thin track and rounded black thumb follow the actual horizontal scroll. */
+.indicator {
+    position: relative;
+    height: 12px;
+    width: min(24vw, 280px);
+    margin: clamp(24px, 3.5vw, 48px) var(--story-inset) 0 auto;
+    pointer-events: none;
+}
+.indicator[hidden] { display: none; }
+.indicator::before {
+    content: "";
+    position: absolute;
+    inset-inline: 0;
+    top: 50%;
+    height: 1px;
+    background: #171717;
+    transform: translateY(-50%);
+}
+.indicatorThumb {
+    position: absolute;
+    top: 50%;
+    left: var(--indicator-offset, 0%);
+    width: var(--indicator-width, 20%);
+    height: 3px;
+    border-radius: 999px;
+    background: #000;
+    transform: translateY(-50%);
+}
+.story {
+    position: relative;
+    isolation: isolate;
+    flex: 0 0 calc((100vw - 2 * var(--story-inset) - 2 * var(--story-gap)) / 3);
+    min-width: 0;
+    aspect-ratio: 3 / 4;
+    border-radius: 5px;
+    overflow: hidden;
+    background-color: #c4ac8c;
+    background-size: cover;
+    background-repeat: no-repeat;
+    color: #fff;
+    text-decoration: none;
+    cursor: pointer;
+    -webkit-touch-callout: none;
+}
+.story:focus-visible { outline: 2px solid #251b19; outline-offset: -3px; }
+.story::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(0,0,0,.44), transparent 30%, transparent 50%, rgba(0,0,0,.56));
+    pointer-events: none;
+}
+.storyCopy {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    padding: clamp(14px, 1.35vw, 22px);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+.category { font-size: clamp(11px, .92vw, 14px); font-weight: 400; }
+.storyTitle {
+    margin: 0;
+    max-width: 100%;
+    font-size: clamp(15px, 1.25vw, 20px);
+    line-height: 1.4;
+    font-weight: 400;
+    letter-spacing: -.015em;
+}
+@media (max-width: 1023px) {
+    .stories { --story-inset: clamp(24px, 7vw, 80px); }
+    .story { flex-basis: calc((100vw - 2 * var(--story-inset) - var(--story-gap)) / 2.45); }
+}
+@media (max-width: 767px) {
+    .stories { --story-inset: clamp(16px, 5.5vw, 32px); }
+    .story { flex-basis: min(76vw, 360px); }
+    .indicator { width: min(62vw, 240px); }
+    .heading h2 { font-size: 25px; }
+    .controls { gap: 2px; }
+    .arrow { width: 40px; height: 40px; padding: 0; border-radius: 50%; -webkit-tap-highlight-color: transparent; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .arrow { transition: none; }
+}

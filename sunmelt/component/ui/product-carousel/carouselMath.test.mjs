@@ -37,11 +37,14 @@ test("loop wraps in both directions and duplicates meet at the seam", () => {
     assert.ok(Math.abs(before - after) < 0.003);
 });
 
-test("center scale grows continuously and neighboring cans have equal scale", () => {
+test("center, adjacent and outer cans taper symmetrically with distance", () => {
     assert.ok(scaleAt(0) > scaleAt(0.5));
     assert.ok(scaleAt(0.5) > scaleAt(1));
     assert.equal(scaleAt(-1), scaleAt(1));
-    assert.equal(scaleAt(1), scaleAt(2));
+    assert.ok(scaleAt(1) > scaleAt(1.5));
+    assert.ok(scaleAt(1.5) > scaleAt(2));
+    assert.equal(scaleAt(-2), scaleAt(2));
+    assert.ok(Math.abs(scaleAt(2) - .73) < 1e-9);
 });
 
 test("the center is closer and the sides recede symmetrically", () => {
@@ -86,4 +89,21 @@ test("opening starts with one visible center and spreads symmetrically to five",
         assert.equal(introSpreadAt(x, .5), introSpreadAt(-x, .5));
     }
     assert.ok(introSpreadAt(1, .5) > introSpreadAt(2, .5));
+});
+
+test("the opening fan develops size perspective during spread before lift or tilt", () => {
+    for (const spread of [.1, .25, .5, .75, 1]) {
+        const center = introPoseAt(0, 0, spread);
+        const inner = introPoseAt(1, 0, spread);
+        const outer = introPoseAt(2, 0, spread);
+        assert.ok(center.scale > inner.scale && inner.scale > outer.scale);
+        assert.equal(outer.scale, introPoseAt(-2, 0, spread).scale);
+        assert.equal(center.y, -.11);
+        assert.equal(center.z, 0);
+    }
+    for (const x of [-2, -1, 0, 1, 2]) {
+        assert.ok(Math.abs(introPoseAt(x, 0, 1).scale - scaleAt(x)) < 1e-9);
+        assert.ok(Math.abs(introPoseAt(x, .5, 1).scale - scaleAt(x)) < 1e-9);
+        assert.equal(introPoseAt(x, 0, 0).scale, .86);
+    }
 });

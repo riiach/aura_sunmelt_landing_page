@@ -1,0 +1,48 @@
+.footer {
+    position: relative;
+    z-index: 3;
+    isolation: isolate;
+    width: 100%;
+    background: #fff;
+    color: #251b19;
+    padding: clamp(84px, 13vw, 176px) clamp(24px, 5vw, 80px) clamp(56px, 8vw, 104px);
+}
+.inner { max-width: 1440px; margin-inline: auto; }
+.top {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, .68fr);
+    gap: clamp(32px, 8vw, 112px);
+    align-items: start;
+    padding-bottom: clamp(44px, 6vw, 80px);
+}
+.brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    text-decoration: none;
+    color: inherit;
+}
+.logoCrop { width: 59px; height: 42px; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+.logo { display: block; width: 84px; max-width: none; height: auto; flex-shrink: 0; filter: brightness(0); }
+.cross { font-size: 13px; opacity: .7; }
+.wordmark { font-family: var(--font-fraunces), Georgia, serif; font-weight: 500; font-size: 30px; line-height: 1; letter-spacing: -.04em; }
+.identity p { margin: clamp(22px, 4vw, 44px) 0 0; max-width: 380px; font-size: clamp(13px, 1.2vw, 16px); line-height: 1.65; color: #66635f; }
+.socials { display: flex; flex-wrap: wrap; gap: 16px; margin-top: clamp(28px, 4vw, 50px); }
+.social { display: grid; place-items: center; width: 35px; height: 35px; border-radius: 8px; border: 1px solid rgba(37,27,25,.09); color: #171717; }
+.social svg { width: 20px; height: 20px; }
+.navigation { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: clamp(20px, 5vw, 70px); }
+.column { display: flex; flex-direction: column; align-items: flex-start; gap: 17px; padding-top: 9px; }
+.column a, .column span { font-size: clamp(13px, 1.1vw, 15px); line-height: 1.45; color: inherit; text-decoration: none; }
+.column a:hover { text-decoration: underline; text-underline-offset: 4px; }
+.column span[aria-disabled="true"] { color: #77736f; }
+.bottom { border-top: 1px solid rgba(37,27,25,.22); display: flex; justify-content: space-between; align-items: center; gap: 20px; padding-top: 22px; color: #66635f; font-size: 12px; }
+.bottom p { margin: 0; }
+.legal { display: flex; gap: 20px; flex-wrap: wrap; }
+.footer a:focus-visible { outline: 2px solid currentColor; outline-offset: 4px; }
+@media (max-width: 767px) {
+    .footer { padding: 72px clamp(20px, 5.5vw, 32px) 56px; }
+    .top { grid-template-columns: 1fr; gap: 42px; padding-bottom: 42px; }
+    .navigation { gap: 24px; }
+    .column { gap: 15px; padding-top: 0; }
+    .bottom { flex-direction: column; align-items: flex-start; gap: 14px; }
+}

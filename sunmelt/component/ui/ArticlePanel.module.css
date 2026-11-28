@@ -1,0 +1,32 @@
+.panel {
+    position: fixed; inset: 0; margin: 0; padding: 0; border: 0;
+    width: 100%; max-width: none; height: 100%; max-height: none;
+    background: #fff; color: #251b19; overflow: auto;
+    overscroll-behavior: contain; -webkit-overflow-scrolling: touch;
+}
+.panel::backdrop { background: transparent; }
+.article {
+    width: min(100%, 820px); margin-inline: auto;
+    padding: clamp(40px, 8vh, 96px) clamp(24px, 5vw, 48px) max(80px, env(safe-area-inset-bottom));
+}
+.toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: clamp(28px, 5vw, 54px); }
+.action {
+    display: inline-flex; align-items: center; gap: 7px; padding: 8px 0;
+    min-height: 44px; border: 0; background: transparent; color: inherit;
+    font: inherit; font-size: 13px; font-weight: 400;
+}
+.action:hover { text-decoration: underline; text-underline-offset: 4px; }
+.action:focus-visible { outline: 2px solid currentColor; outline-offset: 4px; }
+.article h1 { margin: 0 0 20px; font-size: clamp(32px, 4vw, 52px); font-weight: 400; line-height: 1.13; letter-spacing: -.045em; overflow-wrap: anywhere; }
+.meta { font-size: 13px; color: #77736f; margin-bottom: 28px; }
+.cover { width: 100%; aspect-ratio: 16 / 9; border-radius: 8px; background-color: #eeeae5; background-size: cover; background-position: center; }
+.body { padding-top: 30px; font-size: clamp(14px, 1.25vw, 16px); line-height: 1.8; color: #55504d; }
+.body p { margin: 0 0 22px; }
+.body h2 { margin: 32px 0 12px; color: #251b19; font-size: clamp(23px, 2.4vw, 30px); line-height: 1.25; font-weight: 400; letter-spacing: -.035em; }
+.shareStatus { font-size: 12px; color: #66635f; text-align: right; overflow-wrap: anywhere; }
+@media (max-width: 767px) { .article { padding-inline: 22px; } .toolbar { margin-bottom: 24px; } }
+
+/* Avoid a visible ring on initial dialog focus while preserving keyboard access. */
+.panel:focus, .article h1:focus { outline: none; }
+.action { -webkit-tap-highlight-color: transparent; }
+.action:focus:not(:focus-visible) { outline: none; }

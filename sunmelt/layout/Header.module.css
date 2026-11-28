@@ -94,7 +94,7 @@
     padding-inline: clamp(10px, 1.15vw, 18px);
     color: inherit;
     font-size: 13px;
-    font-weight: 600;
+    font-weight: 500;
     letter-spacing: .01em;
     white-space: nowrap;
     text-decoration: none;
@@ -155,7 +155,7 @@
     background: var(--nav-hover);
 }
 
-.navLink[aria-current="page"]::before {
+.navLink[aria-current="location"]::before {
     opacity: 1;
     background: var(--nav-selected);
     box-shadow: var(--nav-selected-shadow);
@@ -316,8 +316,8 @@
         min-height: 44px;
         padding-inline: 18px;
         font-size: 15px;
-        font-weight: 600;
-        color: inherit;
+        font-weight: 400;
+        color: #000;
         text-decoration: none;
         box-sizing: border-box;
         background-color: transparent;
@@ -337,13 +337,19 @@
 
     @media (hover: hover) {
         .mobileLink:not(.mobileContact):hover {
-            color: #787878;
+            color: #000;
         }
     }
 
+    .mobileLink:not(.mobileContact)[aria-current="location"],
     .mobileLink:not(.mobileContact):active,
     .mobileLink:not(.mobileContact):focus-visible {
-        color: #787878;
+        color: #000;
+    }
+    .mobileLink:not(.mobileContact)[aria-current="location"] .linkLabel,
+    .mobileLink:not(.mobileContact):active .linkLabel {
+        text-decoration: underline;
+        text-underline-offset: 4px;
     }
 
     .flipWindow {

@@ -1,0 +1,84 @@
+.panel {
+    position: fixed;
+    inset: 0;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    width: 100%;
+    max-width: none;
+    height: 100%;
+    max-height: none;
+    background: #fff;
+    color: #251b19;
+    overflow: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+}
+.panel::backdrop { background: transparent; }
+.page {
+    width: min(100%, 1440px);
+    min-height: 100%;
+    margin-inline: auto;
+    padding: clamp(24px, 4vw, 64px) clamp(24px, 6vw, 96px) max(32px, env(safe-area-inset-bottom));
+    display: flex;
+    flex-direction: column;
+}
+.top { display: flex; justify-content: space-between; align-items: center; gap: 16px; }
+.close {
+    display: inline-flex; align-items: center; gap: 10px; justify-content: center;
+    min-height: 44px; padding: 0 16px; border: 0; border-radius: 999px;
+    background: transparent; color: #251b19; font-size: 13px; font-weight: 500;
+}
+.close:hover { background: transparent; }
+.content {
+    flex: 1;
+    display: grid;
+    grid-template-columns: minmax(0, .85fr) minmax(0, 1fr);
+    gap: clamp(36px, 9vw, 140px);
+    align-content: center;
+    align-items: start;
+    padding-block: clamp(60px, 12vh, 140px);
+}
+.intro h2 {
+    margin: 0; font-size: clamp(38px, 5.2vw, 72px);
+    font-weight: 400; line-height: 1.06; letter-spacing: -.055em;
+}
+.intro p {
+    max-width: 340px; margin-top: 22px;
+    color: #66635f; font-size: clamp(14px, 1.25vw, 17px); line-height: 1.65;
+}
+.form { display: flex; flex-direction: column; gap: 22px; min-width: 0; }
+.fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.field { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.field > span { font-size: 13px; font-weight: 500; }
+.field input, .field textarea {
+    width: 100%; border: 0; border-radius: 10px; background: #f6f6f6;
+    color: #251b19; font: inherit; font-size: 16px; padding: 14px 16px;
+}
+.field input { min-height: 50px; }
+.field textarea { min-height: 180px; resize: vertical; }
+.field input::placeholder, .field textarea::placeholder { color: #8b8885; }
+.field input:focus, .field textarea:focus { outline: 1px solid #a8a39f; outline-offset: 1px; }
+.submit {
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+    min-height: 50px; border: 0; border-radius: 999px; background: #171717; color: white;
+    font-size: 14px; font-weight: 500;
+}
+.submit:hover { background: #333; }
+.submit:disabled { opacity: .5; cursor: wait; }
+.status { min-height: 1.5em; margin: -8px 0 0; font-size: 12px; color: #66635f; line-height: 1.5; }
+.bottom { border-top: 1px solid rgba(37,27,25,.16); padding-top: 22px; color: #66635f; font-size: 12px; }
+.close:focus-visible, .submit:focus-visible { outline: 2px solid #251b19; outline-offset: 4px; }
+@media (max-width: 767px) {
+    .page { padding-inline: clamp(20px, 5.5vw, 32px); }
+    .content { grid-template-columns: 1fr; gap: 32px; padding-block: 54px; }
+    .intro h2 { font-size: 42px; }
+    .intro p { margin-top: 14px; }
+    .fields { grid-template-columns: 1fr; gap: 20px; }
+    .form { gap: 20px; }
+}
+
+/* Initial dialog focus is on the title; keyboard controls retain focus rings. */
+.panel:focus, .intro h2:focus { outline: none; }
+.close, .submit { -webkit-tap-highlight-color: transparent; }
+.close:focus:not(:focus-visible), .submit:focus:not(:focus-visible) { outline: none; }

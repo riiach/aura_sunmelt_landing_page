@@ -1,11 +1,17 @@
 .aboutTrack {
     --header-height: 68px;
+    --rotate-size: 72px;
+    --arrow-button-size: 44px;
+    --arrow-button-padding: 3px;
+    --arrow-disc-size: calc(var(--arrow-button-size) - 2 * var(--arrow-button-padding));
     --stage-height: max(540px, calc(100svh - var(--header-height)));
     --screen-height: calc(var(--header-height) + var(--stage-height));
     position: relative;
     isolation: isolate;
     display: grid;
     grid-template-columns: minmax(0, 1fr);
+    flex-shrink: 0;
+    overflow-anchor: none;
     width: 100%;
     background: #fff;
 }
@@ -20,11 +26,29 @@
     height: var(--screen-height);
     background: #fff;
 }
-.headerReveal {
-    grid-area: 1 / 1;
-    position: sticky;
+.emptySection {
+    /* Keep the fourth section in normal flow: it slides over the sticky
+       ingredients composition and the shared 3D canvas, beneath the header. */
+    position: relative;
+    z-index: 3;
+    width: 100%;
+    min-height: max(var(--about-scroll-height, 100dvh), var(--about-view-height, 100dvh));
+    background: #fff;
+}
+.storiesPanel { position: relative; z-index: 3; background: #fff; }
+.aboutTrack[data-stories-slide="true"] .storiesPanel {
+    position: fixed;
     top: 0;
-    align-self: start;
+    left: var(--stories-slide-left, 0px);
+    width: var(--stories-slide-width, 100%);
+    z-index: 20;
+    will-change: transform;
+    pointer-events: none;
+}
+.headerReveal {
+    position: fixed;
+    top: 0;
+    inset-inline: 0;
     z-index: 30;
     opacity: 1;
 }
@@ -75,8 +99,19 @@
     --glass-envelope: radial-gradient(ellipse 54% 43% at 50% 49%,
         #000 0%, #000 64%, rgba(0,0,0,.90) 76%,
         rgba(0,0,0,.53) 88%, rgba(0,0,0,.16) 100%, transparent 112%);
-    -webkit-mask-image: var(--glass-envelope);
-    mask-image: var(--glass-envelope);
+    /* The backdrop starts behind the fixed header. Keep the glass completely
+       invisible through the header and fade it in over the marked upper band. */
+    --glass-top-fade: linear-gradient(to bottom,
+        transparent 0%,
+        transparent calc(var(--header-height) + 3%),
+        rgba(0,0,0,.10) calc(var(--header-height) + 8%),
+        rgba(0,0,0,.38) calc(var(--header-height) + 15%),
+        rgba(0,0,0,.78) calc(var(--header-height) + 23%),
+        #000 calc(var(--header-height) + 30%));
+    -webkit-mask-image: var(--glass-envelope), var(--glass-top-fade);
+    mask-image: var(--glass-envelope), var(--glass-top-fade);
+    -webkit-mask-composite: source-in;
+    mask-composite: intersect;
     background: repeating-linear-gradient(
         90deg,
         rgba(255,255,255,.64) 0,
@@ -113,8 +148,8 @@
     left: var(--rotate-x, 50%);
     top: var(--rotate-y, 48%);
     transform: translate(-50%, -50%);
-    width: max-content;
-    min-width: 96px;
+    width: var(--rotate-size);
+    height: var(--rotate-size);
     padding: 0;
     border: 0;
     background: transparent;
@@ -129,35 +164,80 @@
     transition: opacity 220ms ease, visibility 220ms;
 }
 .rotateDisc {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background: rgba(255,255,255,.38);
+    color: #fff;
+    pointer-events: none;
+    transform: scale(1);
+    transform-origin: center;
+    transition: background-color 280ms ease, transform 320ms cubic-bezier(.22,1,.36,1), color 280ms ease;
+}
+.rotateDisc > svg, .rotateLabel {
+    opacity: 1;
+    transition: opacity 180ms ease;
+}
+.swipeHint {
+    display: block;
+    position: absolute;
+    z-index: 3;
+    top: var(--swipe-y, 48%);
+    transform: translateY(-50%);
+    width: var(--arrow-button-size);
+    height: var(--arrow-button-size);
+    padding: var(--arrow-button-padding);
+    border: 0;
+    background: transparent;
+    color: #fff;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    touch-action: pan-y;
+    -webkit-tap-highlight-color: transparent;
+    transition: opacity 220ms ease, visibility 220ms;
+}
+.swipeHintRight { right: var(--swipe-inset, clamp(12px, 5vw, 44px)); }
+.swipeHintLeft { left: var(--swipe-inset, clamp(12px, 5vw, 44px)); }
+.swipeHint[data-available="true"]:not(:disabled) {
+    visibility: visible;
+    opacity: 1;
+    pointer-events: auto;
+    cursor: pointer;
+}
+@media (min-width: 768px) {
+    /* Keep the white chevrons within the colored central product field. */
+    .swipeHint { --swipe-inset: 30%; }
+}
+.swipeDisc {
     display: grid;
     place-items: center;
-    width: 58px;
-    height: 58px;
-    margin: 0 auto;
+    width: 100%;
+    height: 100%;
+    border: none;
     border-radius: 50%;
-    background: radial-gradient(circle, transparent 0 13px, rgba(255,255,255,.72) 13.5px 100%);
-    border: 1.5px solid rgba(255,255,255,.92);
-    box-shadow: 0 2px 12px rgba(0,0,0,.06);
+    background: linear-gradient(145deg, rgba(255,255,255,.38), rgba(226,228,232,.23));
+    -webkit-backdrop-filter: blur(14px) saturate(130%);
+    backdrop-filter: blur(14px) saturate(130%);
+    box-shadow: 0 3px 14px rgba(37,27,25,.055);
+    color: #fff;
     pointer-events: none;
 }
-.rotatePulse {
-    width: 22px;
-    height: 22px;
-    border-radius: 50%;
-    background: rgba(255,255,255,.46);
-    pointer-events: none;
-}
+.swipeHint:focus-visible { outline: 2px solid #fff; outline-offset: 2px; border-radius: 50%; }
 .rotateLabel {
     display: block;
-    margin-top: 9px;
-    color: #fff;
     font-family: var(--font-poppins), sans-serif;
-    font-size: 11px;
+    font-size: 10px;
     font-weight: 500;
+    line-height: 1.2;
     letter-spacing: .025em;
     text-align: center;
     white-space: nowrap;
-    text-shadow: 0 1px 6px rgba(0,0,0,.25);
     pointer-events: none;
 }
 @media (hover: none) and (pointer: coarse) {
@@ -167,8 +247,18 @@
         opacity: 1;
         pointer-events: auto;
     }
-    .rotateControl[data-available="true"] .rotatePulse {
-        animation: rotateHintPulse 1.35s ease-in-out infinite;
+    .rotateControl[data-available="true"][data-holding="true"] .rotateDisc,
+    .rotateControl[data-available="true"]:active .rotateDisc {
+        background: rgba(255,255,255,.88);
+        /* Match the visible arrow disc (38px), not its 44px hit area. */
+        transform: scale(.5277777778);
+    }
+    /* Keep the disc and pointer capture while hiding both prompt elements. */
+    .rotateControl[data-holding="true"] .rotateLabel,
+    .rotateControl[data-holding="true"] .rotateDisc > svg,
+    .rotateControl:active .rotateLabel,
+    .rotateControl:active .rotateDisc > svg {
+        opacity: 0;
     }
     /* Keep capture alive during the first hold even after the artwork fades. */
     .rotateControl[data-dismissed="true"] {
@@ -177,11 +267,36 @@
     }
     .stage { -webkit-touch-callout: none; -webkit-user-select: none; }
 }
-.rotateControl:focus-visible { outline: 2px solid #fff; outline-offset: 4px; border-radius: 12px; }
-@keyframes rotateHintPulse {
-    0%, 100% { transform: scale(.84); opacity: .65; }
-    50% { transform: scale(1.26); opacity: 1; }
+@media (any-hover: hover) {
+    .rotateControl[data-available="true"]:hover .rotateDisc {
+        transform: scale(.5277777778);
+    }
+    .rotateControl:hover .rotateLabel,
+    .rotateControl:hover .rotateDisc > svg {
+        opacity: 0;
+    }
 }
+/* Keep the pressed disc visible during the hold. On dismissal, hide
+   immediately without expansion, fade, or a flash of the original prompt. */
+.rotateControl[data-available="true"][data-holding="true"][data-dismissed="true"] {
+    opacity: 1;
+}
+.rotateControl[data-dismissed="true"]:not([data-holding="true"]) {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: none;
+}
+.rotateControl[data-dismissed="true"]:not([data-holding="true"]) .rotateDisc {
+    transform: scale(.5277777778);
+    transition: none;
+}
+.rotateControl[data-dismissed="true"] .rotateLabel,
+.rotateControl[data-dismissed="true"] .rotateDisc > svg {
+    opacity: 0;
+    transition: none;
+}
+.rotateControl:focus-visible { outline: 2px solid #fff; outline-offset: 4px; border-radius: 50%; }
 .status {
     position: absolute;
     inset: 0;
@@ -199,6 +314,38 @@
     .aboutTrack { --stage-height: max(480px, calc(100svh - var(--header-height))); }
 }
 @media (prefers-reduced-motion: reduce) {
-    .gradient, .imageBackground, .rotateControl { transition: none; }
-    .rotateControl[data-available="true"] .rotatePulse { animation: none; }
+    .gradient, .imageBackground, .rotateControl, .rotateDisc, .rotateDisc > svg, .rotateLabel, .swipeHint { transition: none; }
+    .rotateControl[data-dismissed="true"]:not([data-holding="true"]),
+    .rotateControl[data-dismissed="true"]:not([data-holding="true"]) .rotateDisc { transition: none; }
+}
+
+/* Only the selected flavor is shown, centered beneath the hero cans. */
+.flavorLabels {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    visibility: hidden;
+    font-family: var(--font-poppins), sans-serif;
+    font-size: clamp(15px, 1.3vw, 19px);
+    font-weight: 400;
+    line-height: 1.4;
+    color: #fff;
+    text-align: center;
+}
+.flavorLabels > span {
+    position: absolute;
+    left: 50%;
+    top: 85%;
+    transform: translate(-50%, -50%);
+    white-space: nowrap;
+    padding: 10px 24px;
+    border: 0;
+    border-radius: 999px;
+    background: #000;
+    box-shadow: 0 5px 18px rgba(37,27,25,.14), 0 1px 5px rgba(37,27,25,.07);
+}
+@media (max-width: 767px) {
+    .flavorLabels { font-size: 15px; }
+    .flavorLabels > span { top: 88%; padding: 9px 22px; }
 }
