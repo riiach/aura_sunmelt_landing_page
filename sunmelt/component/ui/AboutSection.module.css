@@ -268,11 +268,11 @@
     /* A single circular blue frost field radiates from the section center,
        rather than rising from the bottom edge. */
     background: radial-gradient(circle closest-side at 50% 50%,
-        rgba(155,209,245,.42) 0%,
-        rgba(173,219,249,.34) 24%,
-        rgba(194,230,252,.24) 48%,
-        rgba(221,240,253,.12) 72%,
-        rgba(240,248,254,.035) 90%,
+        rgba(101,183,237,.84) 0%,
+        rgba(124,197,243,.76) 24%,
+        rgba(150,211,248,.61) 48%,
+        rgba(187,228,252,.38) 72%,
+        rgba(219,241,254,.14) 90%,
         transparent 100%);
 }
 .ingredientsFrost::after {
