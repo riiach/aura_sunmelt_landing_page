@@ -41,8 +41,8 @@
     pointer-events: none;
 }
 .sparkleTop {
-    left: 6%;
-    top: calc(-1.27 * var(--sparkle-size));
+    left: 2%;
+    top: calc(-2.35 * var(--sparkle-size));
 }
 .sparkleBottom {
     left: max(65.5%, 185px);
