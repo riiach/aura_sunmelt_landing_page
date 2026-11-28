@@ -1,5 +1,6 @@
 .section {
     position: relative;
+    isolation: isolate;
     /* Reserve enough scrollable height even after mobile browser chrome collapses. */
     min-height: max(var(--screen-height, 100svh), 100lvh);
     padding-top: var(--header-height, 68px);
@@ -21,7 +22,7 @@
     align-items: center;
     gap: clamp(24px, 5vw, 72px);
 }
-.copy { max-width: 570px; }
+.copy { position: relative; z-index: 3; max-width: 570px; }
 .title {
     margin: 0;
     font-family: var(--font-poppins), sans-serif;
@@ -66,10 +67,20 @@
     width: min(100%, 560px, 66svh);
     aspect-ratio: 1;
     justify-self: center;
-    isolation: isolate;
+}
+.ribbon {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    background-image: var(--about-ribbon);
+    background-size: 100% 100%;
+    background-position: center;
+    background-repeat: no-repeat;
 }
 .glow {
     position: absolute;
+    z-index: 0;
     /* Extend the soft color beyond the ice without changing the landing target. */
     inset: -20%;
     background:
@@ -90,6 +101,7 @@
 .tiles {
     position: absolute;
     inset: 0;
+    z-index: 2;
     display: grid;
     grid-template-columns: repeat(5, minmax(0, 1fr));
     grid-template-rows: repeat(5, minmax(0, 1fr));
@@ -130,6 +142,28 @@
     background: rgba(255,255,255,.82);
 }
 @media (max-width: 767px) {
+    /* Keep the original ribbon proportions instead of stretching its texture
+       through the full height of a portrait viewport. */
+    .ribbon { background-image: none; }
+    .ribbon::before,
+    .ribbon::after {
+        content: "";
+        position: absolute;
+        inset-inline: 0;
+        background-image: var(--about-ribbon);
+        background-size: 100% auto;
+        background-repeat: no-repeat;
+    }
+    .ribbon::before {
+        top: 0;
+        height: 19vw;
+        background-position: center top;
+    }
+    .ribbon::after {
+        bottom: 0;
+        height: 28vw;
+        background-position: center bottom;
+    }
     .inner {
         grid-template-columns: minmax(0,1fr);
         gap: 16px;

@@ -1,6 +1,6 @@
 "use client";
 
-import type { RefObject } from "react";
+import type { CSSProperties, RefObject } from "react";
 import styles from "./AboutSection.module.css";
 
 interface AboutSectionProps {
@@ -10,6 +10,8 @@ interface AboutSectionProps {
 
 const AboutSection = ({ tileRef, interactive }: AboutSectionProps) => (
     <section id="about" className={styles.section} aria-labelledby="about-title" inert={!interactive}>
+        <div className={styles.ribbon} aria-hidden="true"
+             style={{ "--about-ribbon": `url("${process.env.NEXT_PUBLIC_BASE_PATH || ""}/backgrounds/about-ribbon.png")` } as CSSProperties} />
         <div className={styles.inner}>
             <div className={styles.copy}>
                 <h2 id="about-title" className={styles.title}>A taste of sunshine, melted into a brighter kind of soda.</h2>
