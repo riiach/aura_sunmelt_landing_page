@@ -70,12 +70,21 @@
 }
 .glow {
     position: absolute;
-    inset: 3%;
+    /* Extend the soft color beyond the ice without changing the landing target. */
+    inset: -20%;
     background:
-        radial-gradient(ellipse 43% 40% at 60% 62%, #ffcd42 0%, rgba(255,194,31,.9) 32%, rgba(255,195,42,.42) 63%, transparent 100%),
-        radial-gradient(ellipse 43% 40% at 40% 41%, #f49a35 0%, rgba(245,144,39,.76) 38%, rgba(255,172,56,.28) 70%, transparent 100%),
-        radial-gradient(ellipse 44% 46% at 54% 50%, rgba(255,215,121,.68), transparent 100%);
-    filter: blur(clamp(12px, 1.6vw, 24px));
+        radial-gradient(ellipse 51% 50% at 57% 58%,
+            #ffcd42 0%, rgba(255,194,31,.9) 20%,
+            rgba(255,195,42,.48) 42%, rgba(255,195,42,.17) 65%,
+            rgba(255,195,42,.035) 85%, rgba(255,195,42,0) 100%),
+        radial-gradient(ellipse 52% 51% at 43% 44%,
+            #f49a35 0%, rgba(245,144,39,.76) 23%,
+            rgba(255,172,56,.34) 45%, rgba(255,172,56,.12) 67%,
+            rgba(255,172,56,.025) 86%, rgba(255,172,56,0) 100%),
+        radial-gradient(ellipse 53% 54% at 53% 51%,
+            rgba(255,215,121,.68) 0%, rgba(255,215,121,.31) 34%,
+            rgba(255,215,121,.09) 65%, rgba(255,215,121,0) 100%);
+    filter: blur(clamp(16px, 2.2vw, 32px));
     pointer-events: none;
 }
 .tiles {
