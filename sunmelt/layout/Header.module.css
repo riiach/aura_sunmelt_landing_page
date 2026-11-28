@@ -317,7 +317,7 @@
         padding-inline: 18px;
         font-size: 15px;
         font-weight: 400;
-        color: inherit;
+        color: #000;
         text-decoration: none;
         box-sizing: border-box;
         background-color: transparent;
@@ -337,14 +337,14 @@
 
     @media (hover: hover) {
         .mobileLink:not(.mobileContact):hover {
-            color: #787878;
+            color: #000;
         }
     }
 
     .mobileLink:not(.mobileContact)[aria-current="location"],
     .mobileLink:not(.mobileContact):active,
     .mobileLink:not(.mobileContact):focus-visible {
-        color: #787878;
+        color: #000;
     }
     .mobileLink:not(.mobileContact)[aria-current="location"] .linkLabel,
     .mobileLink:not(.mobileContact):active .linkLabel {
