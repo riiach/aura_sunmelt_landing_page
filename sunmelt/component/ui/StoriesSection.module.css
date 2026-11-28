@@ -52,7 +52,9 @@
     overflow-x: auto;
     overflow-y: hidden;
     overscroll-behavior-x: contain;
-    scroll-snap-type: x mandatory;
+    /* GSAP settles the native scroll position after the gesture ends. */
+    scroll-snap-type: none;
+    scroll-behavior: auto;
     scroll-padding-inline: var(--story-inset);
     padding-inline: var(--story-inset);
     scrollbar-width: none;
@@ -99,7 +101,6 @@
     aspect-ratio: 3 / 4;
     border-radius: 5px;
     overflow: hidden;
-    scroll-snap-align: start;
     background-color: #c4ac8c;
     background-size: cover;
     background-repeat: no-repeat;
