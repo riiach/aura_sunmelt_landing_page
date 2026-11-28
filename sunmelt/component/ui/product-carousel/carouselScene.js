@@ -410,9 +410,9 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
             const top = tilePoint.clone().add(new THREE.Vector3(0, .74, 0)).project(camera);
             const bottom = tilePoint.clone().add(new THREE.Vector3(0, -.74, 0)).project(camera);
             const unitHeight = Math.abs(top.y - bottom.y) * rect.height / 2;
-            // Keep the tilted can within the 5:4 grid, with more breathing
-            // room on mobile. Derive its scale from the live grid height.
-            const relativeScale = tile.height * (mobileAbout ? .74 : .86) / Math.max(1, unitHeight);
+            // Keep the tilted can inside the square desktop grid or 5:4 mobile
+            // grid, allowing margin for the projected rim and tilted silhouette.
+            const relativeScale = tile.height * (mobileAbout ? .74 : .80) / Math.max(1, unitHeight);
             landingScale = mobileAbout ? relativeScale : THREE.MathUtils.clamp(relativeScale, .30, 1.65);
         }
         cans.forEach(({index, primary, copy, primaryShadow, copyShadow}) => {

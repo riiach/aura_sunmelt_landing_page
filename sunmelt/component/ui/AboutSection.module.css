@@ -90,8 +90,8 @@
 .artworkSlot { display: contents; }
 .artwork {
     position: relative;
-    width: min(100%, 760px, calc(var(--about-view-height, 100dvh) * .94));
-    aspect-ratio: 5 / 4;
+    width: min(100%, 760px, max(0px, calc(var(--about-view-height, 100dvh) - var(--header-height, 68px) - 2 * clamp(24px, 5vw, 76px))));
+    aspect-ratio: 1;
     justify-self: center;
 }
 .glow {
@@ -120,7 +120,7 @@
     z-index: 2;
     display: grid;
     grid-template-columns: repeat(5, minmax(0, 1fr));
-    grid-template-rows: repeat(4, minmax(0, 1fr));
+    grid-template-rows: repeat(5, minmax(0, 1fr));
     gap: 0;
 }
 .tile {
@@ -149,12 +149,12 @@
     pointer-events: none;
 }
 .tile:nth-child(-n+5),
-.tile:nth-child(n+16),
+.tile:nth-child(n+21),
 .tile:nth-child(5n),
 .tile:nth-child(5n+1) {
     background: linear-gradient(145deg, rgba(255,255,255,.48), rgba(255,255,255,.25) 55%, rgba(255,255,255,.44));
 }
-.tile:nth-child(1), .tile:nth-child(5), .tile:nth-child(16), .tile:nth-child(20) {
+.tile:nth-child(1), .tile:nth-child(5), .tile:nth-child(21), .tile:nth-child(25) {
     background: rgba(255,255,255,.48);
 }
 @media (max-width: 767px) {
@@ -207,6 +207,12 @@
         max-width: none;
         aspect-ratio: 5 / 4;
     }
+    .tiles { grid-template-rows: repeat(4, minmax(0, 1fr)); }
+    .tile:nth-child(n+21) { display: none; }
+    .tile:nth-child(n+16):nth-child(-n+20) {
+        background: linear-gradient(145deg, rgba(255,255,255,.48), rgba(255,255,255,.25) 55%, rgba(255,255,255,.44));
+    }
+    .tile:nth-child(16), .tile:nth-child(20) { background: rgba(255,255,255,.48); }
     .glow { inset: -12%; }
 }
 @media (max-width: 767px) and (max-height: 700px) {
