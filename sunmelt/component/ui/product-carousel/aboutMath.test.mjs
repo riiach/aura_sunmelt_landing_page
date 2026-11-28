@@ -108,3 +108,13 @@ test("mobile landing spin is rate limited even when scroll jumps to the destinat
     assert.equal(advanceMobileLandingSpin(.8, .4, 1 / 60), .4);
     assert.equal(advanceMobileLandingSpin(0, 1, 1 / 60, true), 1);
 });
+
+test("reverse landing does not follow an About tile downward after leaving its section", async () => {
+    const { reverseLandingTargetY } = await import("./aboutMath.mjs");
+    assert.equal(reverseLandingTargetY(550, 0, 0, true), 550);
+    assert.equal(reverseLandingTargetY(950, 400, 0, true), 550);
+    assert.equal(reverseLandingTargetY(1250, 700, 0, true), 550);
+    assert.equal(reverseLandingTargetY(950, 400, 0, false), 950);
+    assert.equal(reverseLandingTargetY(450, -100, 0, true), 450);
+    assert.equal(reverseLandingTargetY(970, 420, 20, true), 570);
+});

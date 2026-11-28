@@ -3,7 +3,7 @@ import { gsap } from "gsap";
 import { createCanAssets, flavors, frontRotation } from "./createCan";
 import { wrap, mod, getLayout, getSnap, rightTilt, isSelected, introPoseAt, introSpreadAt } from "./carouselMath.mjs";
 import { createStudio, createContactShadows } from "./studio";
-import { aboutPhases, nearestFlavorPosition, preparationDuration, preparationProgress, MANGO_READY, advanceAboutProgress, ingredientsScrollProgress, ingredientsRotationProgress, advanceMobileLandingSpin } from "./aboutMath.mjs";
+import { aboutPhases, nearestFlavorPosition, preparationDuration, preparationProgress, MANGO_READY, advanceAboutProgress, ingredientsScrollProgress, ingredientsRotationProgress, advanceMobileLandingSpin, reverseLandingTargetY } from "./aboutMath.mjs";
 
 // Keep the hint dismissed for this document, even if the scene is remounted.
 // A reload creates a new document and starts with a fresh hint.
@@ -325,6 +325,7 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
         const instantSpin = !mobileLanding.matches || reduced() || Boolean(state?.snapToProgress);
         if (state?.snapToProgress) state.snapToProgress = false;
         const progress = displayAboutProgress;
+        const reversing = requestedProgress < progress;
         const targetSpin = aboutPhases(progress).land;
         const nextSpin = advanceMobileLandingSpin(landingSpin, targetSpin, dt, instantSpin);
         const spinChanged = nextSpin !== landingSpin;
@@ -341,7 +342,7 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
             syncRotateControl();
             const nextIngredientsProgress = ingredientsProgress();
             if (aboutOrigin === null || progress !== lastAboutProgress || nextIngredientsProgress !== lastIngredientsProgress || spinChanged || dirty || aboutState?.current?.returnToMango) {
-                updateAboutLayout(progress, nextIngredientsProgress);
+                updateAboutLayout(progress, nextIngredientsProgress, reversing);
                 lastAboutProgress = progress;
                 lastIngredientsProgress = nextIngredientsProgress;
                 dirty = false;
@@ -445,7 +446,7 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
     };
 
     // Keep the original procedural mango can and its shared materials.
-    const updateAboutLayout = (progress, ingredientProgress = 0) => {
+    const updateAboutLayout = (progress, ingredientProgress = 0, reversing = false) => {
         if (aboutOrigin === null) {
             cancelSnap();
             stopSpin(true);
@@ -479,7 +480,11 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
         if (tile && rect.width > 0 && rect.height > 0) {
             const mobileAbout = window.matchMedia("(max-width: 767px)").matches;
             const centerX = tile.left + tile.width * .5;
-            const centerY = tile.top + tile.height * .5;
+            const visual = window.visualViewport;
+            const viewportTop = visual && Math.abs(visual.scale - 1) < .01 ? visual.offsetTop : 0;
+            const aboutSection = aboutState?.current?.target?.closest("section");
+            const centerY = reverseLandingTargetY(tile.top + tile.height * .5,
+                aboutSection?.getBoundingClientRect().top ?? viewportTop, viewportTop, reversing);
             const nextX = ingredientTile ? ingredientTile.left + ingredientTile.width * .5 : centerX;
             const nextY = ingredientTile ? ingredientTile.top + ingredientTile.height * .5 : centerY;
             targetRay.setFromCamera(new THREE.Vector2(

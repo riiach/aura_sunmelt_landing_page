@@ -72,3 +72,8 @@ export const advanceMobileLandingSpin = (current, target, dt, immediate = false)
     if (immediate || next <= current) return next;
     return Math.min(next, current + 1.1 * Math.max(0, dt));
 };
+
+// During reverse animation, the scroll position can reach Home before the
+// eased can pose does. Do not keep chasing an offscreen About tile downward.
+export const reverseLandingTargetY = (centerY, sectionTop, viewportTop, reversing) =>
+    reversing ? centerY - Math.max(0, sectionTop - viewportTop) : centerY;
