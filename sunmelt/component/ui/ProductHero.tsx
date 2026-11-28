@@ -5,7 +5,7 @@ import type { ReactNode } from "react";
 import ProductCarousel from "./ProductCarousel";
 import type { AboutSceneState, IntroPhase } from "./ProductCarousel";
 import AboutSection from "./AboutSection";
-import { aboutPhases, aboutScrollProgress, MANGO_READY } from "./product-carousel/aboutMath.mjs";
+import { aboutPhases, aboutScrollProgress, aboutNavigationEase, MANGO_READY } from "./product-carousel/aboutMath.mjs";
 import styles from "./ProductCarousel.module.css";
 
 /* Temporarily disabled for the white-background preview.
@@ -43,17 +43,52 @@ const ProductHero = ({ header }: ProductHeroProps) => {
     useEffect(() => {
         const root = trackRef.current, frame = frameRef.current;
         if (!root || !frame) return;
+        const about = root.querySelector<HTMLElement>("#about");
+        if (!about) return;
         const motion = window.matchMedia("(prefers-reduced-motion: reduce)");
         const state = aboutState.current;
         const html = document.documentElement;
-        let scheduled = 0;
+        let scheduled = 0, navigationFrame = 0;
         let locked = false, prepared = false, entered = false, jumpToAbout = false;
         let priorOverflow = "", priorGutter = "";
         let safetyTimer: ReturnType<typeof setTimeout> | undefined;
         let touchX = 0, touchY = 0;
         const top = () => window.scrollY + root.getBoundingClientRect().top;
-        const scrollRange = () => Math.max(1, frame.offsetHeight);
+        const aboutTop = () => window.scrollY + about.getBoundingClientRect().top;
+        const scrollRange = () => Math.max(1, aboutTop() - top());
         const pinToHero = () => window.scrollTo({ top: top(), behavior: "instant" });
+        const cancelNavigation = () => {
+            if (navigationFrame) cancelAnimationFrame(navigationFrame);
+            navigationFrame = 0;
+        };
+        const scrollToAbout = () => {
+            cancelNavigation();
+            const from = window.scrollY;
+            if (motion.matches || Math.abs(aboutTop() - from) <= 1) {
+                window.scrollTo({ top: aboutTop(), behavior: "instant" });
+                schedule();
+                return;
+            }
+            const started = performance.now();
+            const duration = 1450;
+            const step = (now: number) => {
+                const progress = Math.min(1, (now - started) / duration);
+                // Read the live section position to account for responsive layout changes.
+                const target = aboutTop();
+                window.scrollTo({
+                    top: from + (target - from) * aboutNavigationEase(progress),
+                    behavior: "instant",
+                });
+                schedule();
+                if (progress < 1) navigationFrame = requestAnimationFrame(step);
+                else {
+                    navigationFrame = 0;
+                    window.scrollTo({ top: aboutTop(), behavior: "instant" });
+                    schedule();
+                }
+            };
+            navigationFrame = requestAnimationFrame(step);
+        };
         const unlock = () => {
             clearTimeout(safetyTimer);
             if (!locked) return;
@@ -80,7 +115,7 @@ const ProductHero = ({ header }: ProductHeroProps) => {
             unlock();
             if (jumpToAbout) {
                 jumpToAbout = false;
-                window.scrollTo({ top: top() + scrollRange(), behavior: motion.matches ? "instant" : "smooth" });
+                scrollToAbout();
             }
         };
         state.onPrepared = completePreparation;
@@ -107,7 +142,8 @@ const ProductHero = ({ header }: ProductHeroProps) => {
                 if (Math.abs(root.getBoundingClientRect().top) > 1) pinToHero();
                 return;
             }
-            const raw = Math.max(0, Math.min(1, -root.getBoundingClientRect().top / scrollRange()));
+            const remaining = about.getBoundingClientRect().top;
+            const raw = remaining <= 1 ? 1 : Math.max(0, Math.min(1, -root.getBoundingClientRect().top / scrollRange()));
             if (!prepared && raw > .001) {
                 beginPreparation();
                 if (locked) return;
@@ -128,6 +164,7 @@ const ProductHero = ({ header }: ProductHeroProps) => {
             if (event.ctrlKey || Math.abs(event.deltaX) > Math.abs(event.deltaY)) return;
             if ((event.target as Element | null)?.closest?.('nav[aria-label="Mobile navigation"]')) return;
             if (locked) { event.preventDefault(); return; }
+            cancelNavigation();
             if (!prepared && event.deltaY > 0 && !state.failed) {
                 event.preventDefault();
                 beginPreparation();
@@ -145,15 +182,28 @@ const ProductHero = ({ header }: ProductHeroProps) => {
             const dy = touchY - event.touches[0].clientY;
             const dx = event.touches[0].clientX - touchX;
             if (locked) { if (event.cancelable) event.preventDefault(); return; }
+            if (Math.abs(dy) > 8 && Math.abs(dy) > Math.abs(dx)) cancelNavigation();
             if (!prepared && !state.failed && dy > 8 && dy > Math.abs(dx)) {
                 if (event.cancelable) event.preventDefault();
                 beginPreparation();
             }
         };
         const onAboutLink = (event: MouseEvent) => {
-            const anchor = (event.target as Element | null)?.closest?.('a[href="#about"]');
-            if (!anchor || prepared || state.failed) return;
+            if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+            const anchor = (event.target as Element | null)?.closest?.("a[data-about-link]");
+            if (!anchor) {
+                if ((event.target as Element | null)?.closest?.('a[href="#home"], a[data-home-link]')) {
+                    cancelNavigation();
+                    jumpToAbout = false;
+                }
+                return;
+            }
             event.preventDefault();
+            if (prepared || state.failed) {
+                prepared = true;
+                scrollToAbout();
+                return;
+            }
             jumpToAbout = true;
             beginPreparation();
         };
@@ -165,21 +215,28 @@ const ProductHero = ({ header }: ProductHeroProps) => {
         window.addEventListener("wheel", onWheel, { passive: false });
         window.addEventListener("touchstart", onTouchStart, { passive: true });
         window.addEventListener("touchmove", onTouchMove, { passive: false });
-        root.addEventListener("click", onAboutLink);
+        root.addEventListener("click", onAboutLink, true);
         motion.addEventListener("change", schedule);
+        // The layout's early script clears reload anchors before hydration.
+        // Pin once more before deriving the initial 3D scene from scroll position.
+        const navigation = performance.getEntriesByType("navigation")[0] as PerformanceNavigationTiming | undefined;
+        if (navigation?.type === "reload" || (!navigation && performance.navigation?.type === 1)) {
+            window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+        }
         update();
         return () => {
             unlock();
             state.preparing = false;
             state.onPrepared = undefined;
             cancelAnimationFrame(scheduled);
+            cancelNavigation();
             observer.disconnect();
             window.removeEventListener("scroll", schedule);
             window.removeEventListener("resize", schedule);
             window.removeEventListener("wheel", onWheel);
             window.removeEventListener("touchstart", onTouchStart);
             window.removeEventListener("touchmove", onTouchMove);
-            root.removeEventListener("click", onAboutLink);
+            root.removeEventListener("click", onAboutLink, true);
             motion.removeEventListener("change", schedule);
         };
     }, []);

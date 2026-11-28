@@ -1,6 +1,7 @@
 .section {
     position: relative;
-    min-height: var(--screen-height, 100svh);
+    /* Reserve enough scrollable height even after mobile browser chrome collapses. */
+    min-height: max(var(--screen-height, 100svh), 100lvh);
     padding-top: var(--header-height, 68px);
     overflow: hidden;
     display: grid;

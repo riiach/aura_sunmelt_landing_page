@@ -30,6 +30,9 @@ export const preparationProgress = (elapsed, duration) => {
 };
 export const aboutScrollProgress = raw => MANGO_READY + (1 - MANGO_READY) * clamp(raw);
 
+// Smooth, symmetric easing for menu-triggered scrolling; manual scroll is unchanged.
+export const aboutNavigationEase = progress => ease(progress, 0, 1);
+
 // Forward scroll stays directly responsive. Returning toward the hero is
 // rate-limited and eases into its final pose even after a large wheel delta.
 export const advanceAboutProgress = (current, target, dt, immediate = false) => {

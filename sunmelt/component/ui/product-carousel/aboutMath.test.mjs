@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { aboutPhases, nearestFlavorPosition, preparationDuration, preparationProgress, aboutScrollProgress, MANGO_READY, advanceAboutProgress } from "./aboutMath.mjs";
+import { aboutPhases, nearestFlavorPosition, preparationDuration, preparationProgress, aboutScrollProgress, aboutNavigationEase, MANGO_READY, advanceAboutProgress } from "./aboutMath.mjs";
 
 test("the four phases follow the requested order", () => {
     assert.deepEqual(aboutPhases(0), {settle:0,travel:0,fade:0,land:0,reveal:0});
@@ -57,4 +57,15 @@ test("reverse scroll limits speed and restores the hero smoothly", () => {
 test("forward scroll and reduced motion do not inherit reverse lag", () => {
     assert.equal(advanceAboutProgress(.2, .9, 1/60), .9);
     assert.equal(advanceAboutProgress(.9, 0, 1/60, true), 0);
+});
+
+
+test("menu navigation eases from the exact start to the exact destination", () => {
+    assert.equal(aboutNavigationEase(-1), 0);
+    assert.equal(aboutNavigationEase(0), 0);
+    assert.ok(aboutNavigationEase(.25) < .25);
+    assert.equal(aboutNavigationEase(.5), .5);
+    assert.ok(aboutNavigationEase(.75) > .75);
+    assert.equal(aboutNavigationEase(1), 1);
+    assert.equal(aboutNavigationEase(2), 1);
 });

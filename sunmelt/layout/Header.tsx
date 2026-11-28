@@ -59,13 +59,16 @@ const Header = ({ transparent = false }: { transparent?: boolean }) => {
           <div className={styles.leftNav}>
             {links.slice(0, 3).map(({ label, href }) => (
               <Link key={label} href={href} className={styles.navLink}
+                    data-about-link={href === "#about" ? "" : undefined}
+                    data-home-link={href === "/" ? "" : undefined}
+                    scroll={href !== "#about"}
                     aria-current={href && pathname === href ? "page" : undefined}>
                 <span className={styles.linkLabel}>{label}</span>
               </Link>
             ))}
           </div>
 
-          <Link href="/" className={styles.brand} aria-label="Aura x Sunmelt home"
+          <Link href="/" className={styles.brand} aria-label="Aura x Sunmelt home" data-home-link
                 onClick={() => setMenuOpen(false)}>
             <span className={styles.logoCrop}>
               <Image
@@ -130,6 +133,9 @@ const Header = ({ transparent = false }: { transparent?: boolean }) => {
                 <nav aria-label="Mobile navigation" className={styles.mobileNav}>
                   {links.map(({ label, href }) => (
                     <Link key={label} href={href}
+                          data-about-link={href === "#about" ? "" : undefined}
+                          data-home-link={href === "/" ? "" : undefined}
+                          scroll={href !== "#about"}
                           className={label === "Contact" ? `${styles.mobileLink} ${styles.mobileContact}` : styles.mobileLink}
                           aria-current={href && pathname === href ? "page" : undefined}
                           onClick={() => setMenuOpen(false)}>
