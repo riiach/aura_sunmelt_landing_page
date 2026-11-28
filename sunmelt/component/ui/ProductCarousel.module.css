@@ -148,7 +148,7 @@
     transition: background-color 160ms ease, transform 160ms ease, color 160ms ease;
 }
 .swipeHint {
-    display: none;
+    display: block;
     position: absolute;
     z-index: 3;
     top: var(--swipe-y, 48%);
@@ -166,8 +166,19 @@
     -webkit-tap-highlight-color: transparent;
     transition: opacity 220ms ease, visibility 220ms;
 }
-.swipeHintRight { right: clamp(12px, 5vw, 44px); }
-.swipeHintLeft { left: clamp(12px, 5vw, 44px); }
+.swipeHintRight { right: var(--swipe-inset, clamp(12px, 5vw, 44px)); }
+.swipeHintLeft { left: var(--swipe-inset, clamp(12px, 5vw, 44px)); }
+.swipeHint[data-available="true"]:not(:disabled) {
+    visibility: visible;
+    opacity: 1;
+    pointer-events: auto;
+    cursor: pointer;
+}
+@media (min-width: 768px) {
+    /* Keep the white chevrons within the colored central product field. */
+    .swipeHint { --swipe-inset: 30%; }
+    .swipeDisc { box-shadow: inset 0 0 0 1px rgba(255,255,255,.48), 0 2px 12px rgba(37,27,25,.10); }
+}
 .swipeDisc {
     display: grid;
     place-items: center;
@@ -190,12 +201,7 @@
     pointer-events: none;
 }
 @media (hover: none) and (pointer: coarse) {
-    .rotateControl, .swipeHint { display: block; }
-    .swipeHint[data-available="true"]:not(:disabled) {
-        visibility: visible;
-        opacity: 1;
-        pointer-events: auto;
-    }
+    .rotateControl { display: block; }
     .rotateControl[data-available="true"] {
         visibility: visible;
         opacity: 1;

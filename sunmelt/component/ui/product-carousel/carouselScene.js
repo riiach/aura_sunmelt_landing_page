@@ -110,7 +110,6 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
         if (!swipeHintPhases.has(hintDocument)) swipeHintPhases.set(hintDocument, "right");
     };
     const advanceSwipeHint = () => {
-        if (!touchPreference.matches) return;
         if (!dismissedRotateHints.has(hintDocument)) {
             dismissRotateHint();
             return;
@@ -195,9 +194,9 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
         // Deliberately keep the current rotation angle on release.
         invalidate();
     };
-    const canHoldRotate = () => Boolean(rotateControl && touchPreference.matches &&
-        ready && introComplete && inView && !disposed && !drag && !snapTween &&
+    const canBrowse = () => Boolean(ready && introComplete && inView && !disposed && !drag && !snapTween &&
         !aboutState?.current?.preparing && aboutProgress() === 0);
+    const canHoldRotate = () => Boolean(rotateControl && touchPreference.matches && canBrowse());
     const syncRotateControl = () => {
         if (!rotateControl) return;
         const available = canHoldRotate();
@@ -207,8 +206,11 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
             rotateAvailable = showHint;
             rotateControl.dataset.available = String(showHint);
         }
+        // Desktop uses hover to rotate, so it can start at the arrow tutorial
+        // without waiting for a touch-only long press. Keep the same one-time sequence.
+        if (canBrowse() && !touchPreference.matches && !dismissedRotateHints.has(hintDocument)) dismissRotateHint();
         const phase = swipeHintPhases.get(hintDocument);
-        const showSwipe = available && !heldCan && dismissedRotateHints.has(hintDocument);
+        const showSwipe = canBrowse() && !heldCan && dismissedRotateHints.has(hintDocument);
         for (const [button, direction] of [[rightHint, "right"], [leftHint, "left"]]) {
             if (!button) continue;
             const show = showSwipe && phase === direction;
@@ -631,7 +633,7 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
     };
 
     const onSwipeHint = direction => {
-        if (!canHoldRotate() || heldCan || swipeHintPhases.get(hintDocument) !== direction) return;
+        if (!canBrowse() || heldCan || swipeHintPhases.get(hintDocument) !== direction) return;
         advanceSwipeHint();
         snapTo(Math.round(track.position) + (direction === "right" ? 1 : -1));
         syncRotateControl();
