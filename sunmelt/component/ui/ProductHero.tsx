@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import ProductCarousel from "./ProductCarousel";
+import StoriesSection from "./StoriesSection";
 import type { AboutSceneState, IntroPhase } from "./ProductCarousel";
 import AboutSection, { IngredientsSection } from "./AboutSection";
 import { aboutPhases, aboutScrollProgress, aboutNavigationEase, aboutViewportMetrics, MANGO_READY } from "./product-carousel/aboutMath.mjs";
@@ -356,7 +357,7 @@ const ProductHero = ({ header }: ProductHeroProps) => {
                 </div>
                 <AboutSection tileRef={tileRef} interactive={aboutInteractive} />
                 <IngredientsSection tileRef={ingredientsRef} interactive={aboutInteractive} />
-                <section id="section-four" className={styles.emptySection} aria-hidden="true" />
+                <StoriesSection className={styles.emptySection} />
             </main>
             <ProductCarousel
                 onProductChange={setActiveProduct}
