@@ -257,6 +257,9 @@
     .stage { -webkit-touch-callout: none; -webkit-user-select: none; }
 }
 @media (any-hover: hover) {
+    .rotateControl[data-available="true"]:hover .rotateDisc {
+        transform: scale(.68);
+    }
     .rotateControl:hover .rotateLabel,
     .rotateControl:hover .rotateDisc > svg {
         visibility: hidden;
