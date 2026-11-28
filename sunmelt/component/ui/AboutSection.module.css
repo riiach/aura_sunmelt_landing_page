@@ -253,6 +253,11 @@
        composition, independent of the extended section's height. */
     --frost-radius: max(68vw, calc(var(--about-view-height, 100dvh) * .90));
     --frost-inner-radius: calc(var(--frost-radius) * .56);
+    /* On wide/short viewports the radius reaches above the section.
+       Fade the entire frost layer (including blurred highlights) to fully
+       transparent at the top so its clipped edge never creates a seam. */
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0%, rgba(0,0,0,.16) 3%, rgba(0,0,0,.68) 12%, #000 24%, #000 100%);
+    mask-image: linear-gradient(to bottom, transparent 0%, rgba(0,0,0,.16) 3%, rgba(0,0,0,.68) 12%, #000 24%, #000 100%);
     background:
         /* A smaller, bluer half-circle nested inside the outer halo. */
         radial-gradient(circle var(--frost-inner-radius) at 50% 100%,
