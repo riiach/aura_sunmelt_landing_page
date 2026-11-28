@@ -5,6 +5,7 @@ import type { ReactNode } from "react";
 import ProductCarousel from "./ProductCarousel";
 import StoriesSection from "./StoriesSection";
 import Footer from "../../layout/Footer";
+import ContactPanel from "../../layout/ContactPanel";
 import type { AboutSceneState, IntroPhase } from "./ProductCarousel";
 import AboutSection, { IngredientsSection } from "./AboutSection";
 import { aboutPhases, aboutScrollProgress, aboutNavigationEase, aboutViewportMetrics, MANGO_READY } from "./product-carousel/aboutMath.mjs";
@@ -45,6 +46,8 @@ const ProductHero = ({ header }: ProductHeroProps) => {
     const ingredientsRef = useRef<HTMLDivElement>(null);
     const aboutState = useRef<AboutSceneState>({ progress: 0, target: null, ingredientsTarget: null, returnToMango: false, preparing: false, failed: false });
     const [aboutInteractive, setAboutInteractive] = useState(false);
+    const [contactOpen, setContactOpen] = useState(false);
+    const closeContact = useCallback(() => setContactOpen(false), []);
     useEffect(() => {
         const root = trackRef.current, frame = frameRef.current;
         if (!root || !frame) return;
@@ -65,6 +68,7 @@ const ProductHero = ({ header }: ProductHeroProps) => {
         let priorOverflow = "", priorGutter = "";
         let safetyTimer: ReturnType<typeof setTimeout> | undefined;
         let touchX = 0, touchY = 0;
+        const contactVisible = () => Boolean(root.querySelector("dialog[data-contact-panel][open]"));
         let slide: Animation | null = null;
         let finishSlide: (() => void) | null = null;
         const top = () => window.scrollY + root.getBoundingClientRect().top;
@@ -208,6 +212,7 @@ const ProductHero = ({ header }: ProductHeroProps) => {
         };
         const schedule = () => { if (!scheduled) scheduled = requestAnimationFrame(update); };
         const onWheel = (event: WheelEvent) => {
+            if (contactVisible()) return;
             if (event.ctrlKey || Math.abs(event.deltaX) > Math.abs(event.deltaY)) return;
             if ((event.target as Element | null)?.closest?.('nav[aria-label="Mobile navigation"]')) return;
             if (slide || locked) { if (event.cancelable) event.preventDefault(); return; }
@@ -218,6 +223,7 @@ const ProductHero = ({ header }: ProductHeroProps) => {
             }
         };
         const onTouchStart = (event: TouchEvent) => {
+            if (contactVisible()) return;
             if (event.touches.length !== 1) return;
             touchX = event.touches[0].clientX;
             touchY = event.touches[0].clientY;
@@ -226,6 +232,7 @@ const ProductHero = ({ header }: ProductHeroProps) => {
             if (!slide && !locked) cancelNavigation();
         };
         const onTouchMove = (event: TouchEvent) => {
+            if (contactVisible()) return;
             if (event.touches.length !== 1) return;
             if ((event.target as Element | null)?.closest?.("[data-rotate-control], [data-rotating='true']")) return;
             if ((event.target as Element | null)?.closest?.('nav[aria-label="Mobile navigation"]')) return;
@@ -350,8 +357,18 @@ const ProductHero = ({ header }: ProductHeroProps) => {
         };
         const onAboutLink = (event: MouseEvent) => {
             if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+            const target = event.target as Element | null;
+            if (target?.closest?.("dialog[data-contact-panel]")) return;
+            if (target?.closest?.('a[href="#contact"]')) {
+                event.preventDefault();
+                finishSlide?.();
+                cancelNavigation();
+                pendingSection = null;
+                setContactOpen(true);
+                return;
+            }
             finishSlide?.();
-            const anchor = (event.target as Element | null)?.closest?.('a[data-about-link], a[href="#section-four"]');
+            const anchor = target?.closest?.('a[data-about-link], a[href="#section-four"]');
             if (!anchor) {
                 if ((event.target as Element | null)?.closest?.('a[href="#home"], a[data-home-link]')) {
                     event.preventDefault();
@@ -411,6 +428,7 @@ const ProductHero = ({ header }: ProductHeroProps) => {
             } else schedule();
         };
         const onScrollKey = (event: KeyboardEvent) => {
+            if (contactVisible()) return;
             if (["ArrowUp", "ArrowDown", "PageUp", "PageDown", "Home", "End", " "].includes(event.key)
                 && !(event.target as Element | null)?.closest?.("button, input, textarea, select, [contenteditable]")) {
                 if (slide) { event.preventDefault(); return; }
@@ -511,6 +529,7 @@ const ProductHero = ({ header }: ProductHeroProps) => {
             <div className={styles.headerReveal} inert={introPhase !== "active"}>
                 {header}
             </div>
+            <ContactPanel open={contactOpen} onClose={closeContact} />
         </div>
     );
 };

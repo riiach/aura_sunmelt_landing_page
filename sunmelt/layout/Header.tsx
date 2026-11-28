@@ -12,7 +12,7 @@ const links = [
   { label: "Home", href: "/" },
   { label: "About", href: "#about" },
   { label: "Stories", href: "#section-four" },
-  { label: "Contact", href: "" },
+  { label: "Contact", href: "#contact" },
 ];
 
 const Header = ({ transparent = false }: { transparent?: boolean }) => {
@@ -117,7 +117,7 @@ const Header = ({ transparent = false }: { transparent?: boolean }) => {
               <Link key={label} href={href} className={styles.navLink}
                     data-about-link={href === "#about" ? "" : undefined}
                     data-home-link={href === "/" ? "" : undefined}
-                    scroll={href !== "#about" && href !== "#section-four" && href !== "/"}
+                    scroll={href !== "#about" && href !== "#section-four" && href !== "#contact" && href !== "/"}
                     aria-current={currentLink(href)}>
                 <span className={styles.linkLabel}>{label}</span>
               </Link>
@@ -141,7 +141,7 @@ const Header = ({ transparent = false }: { transparent?: boolean }) => {
 
           <div className={styles.rightNav}>
             <span className={styles.contactHint}>Have a question?</span>
-            <Link href={links[3].href} className={styles.contact}>
+            <Link href={links[3].href} className={styles.contact} scroll={false} aria-haspopup="dialog">
               <span className={styles.linkLabel}>{links[3].label}</span>
               <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
                 <path d="M4 12 12 4M5 4h7v7" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round" />
@@ -191,7 +191,7 @@ const Header = ({ transparent = false }: { transparent?: boolean }) => {
                     <Link key={label} href={href}
                           data-about-link={href === "#about" ? "" : undefined}
                           data-home-link={href === "/" ? "" : undefined}
-                          scroll={href !== "#about" && href !== "#section-four" && href !== "/"}
+                          scroll={href !== "#about" && href !== "#section-four" && href !== "#contact" && href !== "/"}
                           className={label === "Contact" ? `${styles.mobileLink} ${styles.mobileContact}` : styles.mobileLink}
                           aria-current={currentLink(href)}
                           onClick={() => setMenuOpen(false)}>

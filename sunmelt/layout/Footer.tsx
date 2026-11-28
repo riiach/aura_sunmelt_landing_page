@@ -11,9 +11,9 @@ const columns = [
     ],
     [
         { label: "Stories & articles", href: "#section-four" },
-        { label: "Business inquiries", href: null },
+        { label: "Business inquiries", href: "#contact" },
         { label: "Sales", href: null },
-        { label: "Contact us", href: null },
+        { label: "Contact us", href: "#contact" },
     ],
 ];
 
