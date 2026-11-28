@@ -363,9 +363,14 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
             activeIndex = mod(Math.round(track.position), count);
             aboutOrigin = aboutTarget = null;
             lastAboutProgress = -1;
-            cans.forEach(({primary, copy}) => {
+            // Match the exact settled Home pose at the handoff. Resetting
+            // the selected can to upright here makes it visibly snap back
+            // before the normal hero loop tilts it a second time.
+            elapsed = 0;
+            cans.forEach(({index, primary, copy}) => {
                 for (const can of [primary, copy]) {
-                    can.userData.tilt.rotation.set(0, 0, 0);
+                    const selected = can === primary && isSelected(index, track.position, count);
+                    can.userData.tilt.rotation.set(0, 0, selected ? rightTilt * intro.progress : 0);
                     can.userData.tilt.position.y = 0;
                     can.userData.spin.rotation.y = frontRotation;
                     setCanOpacity(can, 1);
