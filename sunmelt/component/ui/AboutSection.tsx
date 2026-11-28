@@ -44,8 +44,8 @@ const AboutSection = ({ tileRef, interactive }: AboutSectionProps) => (
 // Reuse the second section's actual glass tile treatment, not an image.
 // Occupied cells follow the sketch; empty cells preserve an even pitch.
 const iceClusters = [
-    { side: "left", cells: [[2, 1], [1, 3], [3, 3], [2, 4], [3, 5]] },
-    { side: "right", cells: [[3, 1], [2, 2], [1, 3], [3, 3], [2, 4]] },
+    { side: "left", cells: [[2, 1], [1, 2], [1, 3], [3, 3], [2, 4], [1, 5], [3, 5]] },
+    { side: "right", cells: [[3, 1], [2, 2], [1, 3], [3, 3], [2, 4], [3, 4], [1, 5]] },
 ];
 
 export const IngredientsSection = ({ tileRef, interactive }: AboutSectionProps) => (

@@ -268,7 +268,17 @@
     /* Center the oversized circular halo at the bottom of the can.
        The section clips the lower half, leaving an upward-facing semicircle. */
     --frost-radius: max(68vw, calc(var(--about-view-height, 100dvh) * .90));
-    background: radial-gradient(circle var(--frost-radius) at 50% 100%,
+    --frost-inner-radius: calc(var(--frost-radius) * .56);
+    background:
+        /* A smaller, bluer half-circle nested inside the outer halo. */
+        radial-gradient(circle var(--frost-inner-radius) at 50% 100%,
+            rgba(53,148,219,.86) 0%,
+            rgba(72,166,232,.77) 27%,
+            rgba(102,188,241,.56) 52%,
+            rgba(151,216,249,.27) 76%,
+            rgba(195,234,254,.09) 91%,
+            transparent 100%),
+        radial-gradient(circle var(--frost-radius) at 50% 100%,
         rgba(101,183,237,.84) 0%,
         rgba(124,197,243,.76) 24%,
         rgba(150,211,248,.61) 48%,
@@ -282,7 +292,13 @@
     inset: 0;
     pointer-events: none;
     /* Frost highlights follow the same oversized semicircular geometry. */
-    background: radial-gradient(circle var(--frost-radius) at 50% 100%,
+    background:
+        radial-gradient(circle var(--frost-inner-radius) at 50% 100%,
+            rgba(239,249,255,.08) 0%,
+            rgba(239,249,255,.18) 34%,
+            rgba(244,251,255,.08) 58%,
+            transparent 100%),
+        radial-gradient(circle var(--frost-radius) at 50% 100%,
         rgba(255,255,255,.16) 0%,
         transparent 20%,
         rgba(245,251,255,.26) 31%,
