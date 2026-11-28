@@ -83,7 +83,7 @@
     display: grid;
     grid-template-columns: repeat(5, minmax(0, 1fr));
     grid-template-rows: repeat(5, minmax(0, 1fr));
-    gap: clamp(5px, .8vw, 11px);
+    gap: 0;
 }
 .tile {
     position: relative;
