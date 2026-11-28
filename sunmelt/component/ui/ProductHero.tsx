@@ -60,7 +60,15 @@ const ProductHero = ({ header }: ProductHeroProps) => {
         // gesture, is required to continue toward Ingredients.
         let aboutStop: "armed" | "holding" | "passed" = "armed";
         let lastWheelAt = -Infinity, stopAt = -Infinity;
-        let touchCanContinue = false;
+        // A bounded pause prevents Safari's momentum/uncancelable scroll
+        // events from trapping the reader indefinitely at the checkpoint.
+        const aboutPauseMs = 480;
+        const releaseAboutStop = () => {
+            if (aboutStop === "holding") aboutStop = "passed";
+        };
+        const expireAboutStop = () => {
+            if (aboutStop === "holding" && performance.now() - stopAt >= aboutPauseMs) releaseAboutStop();
+        };
         const top = () => window.scrollY + root.getBoundingClientRect().top;
         const aboutTop = () => window.scrollY + about.getBoundingClientRect().top;
         const visualTop = () => visual && Math.abs(visual.scale - 1) < .01 ? visual.offsetTop : 0;
@@ -178,11 +186,12 @@ const ProductHero = ({ header }: ProductHeroProps) => {
             }
             let remaining = aboutRemaining();
             if (remaining > 24) aboutStop = "armed";
-            if ((prepared || state.failed) && !motion.matches && remaining <= 1 && aboutStop === "armed") {
+            expireAboutStop();
+            if ((prepared || state.failed) && !motion.matches && remaining <= 2 && aboutStop === "armed") {
                 aboutStop = "holding";
                 stopAt = performance.now();
             }
-            if (aboutStop === "holding" && remaining < -1 && !motion.matches) {
+            if (aboutStop === "holding" && remaining < -2 && !motion.matches) {
                 window.scrollTo({ top: aboutDestination(), behavior: "instant" });
                 remaining = aboutRemaining();
             }
@@ -207,13 +216,14 @@ const ProductHero = ({ header }: ProductHeroProps) => {
             if (event.ctrlKey || Math.abs(event.deltaX) > Math.abs(event.deltaY)) return;
             if ((event.target as Element | null)?.closest?.('nav[aria-label="Mobile navigation"]')) return;
             const now = performance.now();
-            const freshWheel = now - lastWheelAt > 180;
+            const freshWheel = now - lastWheelAt > 140;
             lastWheelAt = now;
             if (locked) { event.preventDefault(); return; }
             cancelNavigation();
+            expireAboutStop();
             if (!motion.matches && aboutStop === "holding" && event.deltaY > 0) {
-                if (freshWheel && now - stopAt >= 180) aboutStop = "passed";
-                else { event.preventDefault(); return; }
+                if (freshWheel) releaseAboutStop();
+                else { if (event.cancelable) event.preventDefault(); return; }
             }
             if (!prepared && event.deltaY > 0 && !state.failed) {
                 event.preventDefault();
@@ -224,7 +234,9 @@ const ProductHero = ({ header }: ProductHeroProps) => {
             if (event.touches.length !== 1) return;
             touchX = event.touches[0].clientX;
             touchY = event.touches[0].clientY;
-            touchCanContinue = aboutStop === "holding";
+            // Release on a new single-finger gesture before Safari commits
+            // to native scrolling, instead of waiting for touchmove.
+            if (!(event.target as Element | null)?.closest?.('nav[aria-label="Mobile navigation"]')) releaseAboutStop();
         };
         const onTouchMove = (event: TouchEvent) => {
             if (event.touches.length !== 1) return;
@@ -234,12 +246,10 @@ const ProductHero = ({ header }: ProductHeroProps) => {
             const dx = event.touches[0].clientX - touchX;
             if (locked) { if (event.cancelable) event.preventDefault(); return; }
             if (Math.abs(dy) > 8 && Math.abs(dy) > Math.abs(dx)) cancelNavigation();
+            expireAboutStop();
             if (!motion.matches && aboutStop === "holding" && dy > 8 && dy > Math.abs(dx)) {
-                if (touchCanContinue) aboutStop = "passed";
-                else {
-                    if (event.cancelable) event.preventDefault();
-                    return;
-                }
+                if (event.cancelable) event.preventDefault();
+                return;
             }
             if (!prepared && !state.failed && dy > 8 && dy > Math.abs(dx)) {
                 if (event.cancelable) event.preventDefault();
@@ -321,7 +331,7 @@ const ProductHero = ({ header }: ProductHeroProps) => {
                 cancelNavigation();
                 if (!motion.matches && aboutStop === "holding" &&
                     (["ArrowDown", "PageDown", "End"].includes(event.key) || (event.key === " " && !event.shiftKey))) {
-                    if (!event.repeat) aboutStop = "passed";
+                    if (!event.repeat) releaseAboutStop();
                     else event.preventDefault();
                 }
             }
