@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import { gsap } from "gsap";
 import { createCanAssets, flavors, frontRotation } from "./createCan";
-import { wrap, mod, getLayout, getSnap, rightTilt, isSelected, introPoseAt, introSpreadAt } from "./carouselMath.mjs";
+import { wrap, mod, getLayout, getTabletLift, getSnap, rightTilt, isSelected, introPoseAt, introSpreadAt } from "./carouselMath.mjs";
 import { createStudio, createContactShadows } from "./studio";
 import { aboutPhases, nearestFlavorPosition, preparationDuration, preparationProgress, MANGO_READY, advanceAboutProgress } from "./aboutMath.mjs";
 
@@ -183,7 +183,7 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
     const onRotateContextMenu = event => event.preventDefault();
     const onStageContextMenu = event => { if (touchPreference.matches) event.preventDefault(); };
     const onRotateVisibility = () => { if (document.hidden) stopHeldRotation(); };
-    const onRotatePreference = () => { stopHeldRotation(); syncRotateControl(); };
+    const onRotatePreference = () => { stopHeldRotation(); resize(); syncRotateControl(); };
     const render = (_time, deltaMs) => {
         if (disposed || !ready || !inView) return;
         const dt = Math.min(.05, (deltaMs || 16.7) / 1000);
@@ -403,6 +403,11 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
         const worldHeight = Math.max(2.65, worldWidth / aspect);
         camera.aspect = aspect;
         camera.fov = THREE.MathUtils.radToDeg(2 * Math.atan(worldHeight / (2 * distance)));
+        const lift = getTabletLift(width, height, touchPreference.matches);
+        // A positive vertical view offset raises the rendered composition without
+        // changing can size, depth, contact shadows, or world-space hit targets.
+        if (lift) camera.setViewOffset(width, height, 0, lift, width, height);
+        else camera.clearViewOffset();
         camera.updateProjectionMatrix();
         spacing = worldHeight * aspect / worldWidth;
         pixelsPerUnit = width / worldWidth;

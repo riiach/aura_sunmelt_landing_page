@@ -6,6 +6,13 @@ export function scaleAt(distance){const t=Math.max(0,1-Math.abs(distance));retur
 
 export function getLayout(width){return width>=1024?4.92:width>=640?3.12:1.76;}
 
+// Shift the camera framing, not the individual meshes, on wide touch tablets.
+export function getTabletLift(width, height, touch) {
+    return touch && width >= 768 && width <= 1440 && width / height >= 1.2
+        ? Math.round(height * .11)
+        : 0;
+}
+
 export function getSnap(position,origin,velocity,canceled=false){if(canceled)return Math.round(origin);const delta=position-origin;if(Math.abs(delta)<0.17&&Math.abs(velocity)<0.0011)return Math.round(origin);const projected=position+Math.max(-1.25,Math.min(1.25,velocity*180));let target=Math.round(projected);if(target===Math.round(origin)&&Math.abs(delta)>=0.2)target+=Math.sign(delta);return Math.max(Math.round(origin)-3,Math.min(Math.round(origin)+3,target));}
 
 export const centerWeight = distance => {
