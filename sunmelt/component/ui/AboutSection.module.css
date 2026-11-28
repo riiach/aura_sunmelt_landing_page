@@ -257,7 +257,7 @@
     background: #fff;
     color: #251b19;
     padding-top: var(--header-height, 68px);
-    min-height: max(var(--about-scroll-height, 100dvh), var(--about-view-height, 100dvh));
+    min-height: calc(1.5 * max(var(--about-scroll-height, 100dvh), var(--about-view-height, 100dvh)));
 }
 .ingredientsFrost {
     position: absolute;
