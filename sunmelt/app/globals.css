@@ -28,10 +28,13 @@
 
   html {
     scroll-behavior: smooth;
+    /* Prevent iOS/Safari rubber-band movement at the document boundaries. */
+    overscroll-behavior-y: none;
   }
 
   body {
     min-height: 100dvh;
+    overscroll-behavior-y: none;
     font-family: var(--font-poppins), sans-serif;
   }
 

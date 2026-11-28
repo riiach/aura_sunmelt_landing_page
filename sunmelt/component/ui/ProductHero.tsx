@@ -53,6 +53,7 @@ const ProductHero = ({ header }: ProductHeroProps) => {
         const html = document.documentElement;
         let scheduled = 0, navigationFrame = 0;
         let followSection: HTMLElement | null = null;
+        let alignedScrollY: number | null = null;
         let pendingSection: HTMLElement | null = null;
         const visual = window.visualViewport;
         let locked = false, prepared = false, entered = false;
@@ -85,12 +86,14 @@ const ProductHero = ({ header }: ProductHeroProps) => {
             if (Math.abs(window.scrollY - target) > 1) {
                 window.scrollTo({ top: target, behavior: "instant" });
             }
+            alignedScrollY = window.scrollY;
             schedule();
         };
         const cancelNavigation = () => {
             if (navigationFrame) cancelAnimationFrame(navigationFrame);
             navigationFrame = 0;
             followSection = null;
+            alignedScrollY = null;
         };
         const scrollToSection = (section: HTMLElement) => {
             cancelNavigation();
@@ -210,6 +213,9 @@ const ProductHero = ({ header }: ProductHeroProps) => {
             if (event.touches.length !== 1) return;
             touchX = event.touches[0].clientX;
             touchY = event.touches[0].clientY;
+            // A new touch relinquishes the previous menu alignment immediately,
+            // including native gestures whose touchmove events Safari coalesces.
+            if (!locked) cancelNavigation();
         };
         const onTouchMove = (event: TouchEvent) => {
             if (event.touches.length !== 1) return;
@@ -288,13 +294,31 @@ const ProductHero = ({ header }: ProductHeroProps) => {
             pendingSection = section;
             beginPreparation();
         };
-        // iPad browser chrome changes the visible height independently of layout.
-        // Re-align a menu-selected About section after that change, but never
-        // fight a deliberate wheel/touch/keyboard scroll back toward Home.
+        // Only correct an explicit menu arrival if the user is still there.
+        // VisualViewport scroll events include Safari rubber-band offsets;
+        // they must not resize sections or trigger another document scroll.
+        const onDocumentScroll = () => {
+            if (!navigationFrame && followSection && alignedScrollY !== null &&
+                Math.abs(window.scrollY - alignedScrollY) > 4) {
+                followSection = null;
+                alignedScrollY = null;
+            }
+            schedule();
+        };
         const onViewportChange = () => {
+            const stillAtArrival = alignedScrollY !== null &&
+                Math.abs(window.scrollY - alignedScrollY) <= 4;
+            // Do not recalculate the section dimensions during out-of-bounds
+            // elastic scrolling on older Safari versions.
+            const maxY = Math.max(0, html.scrollHeight - html.clientHeight);
+            if (window.scrollY < -1 || window.scrollY > maxY + 1) {
+                schedule();
+                return;
+            }
             syncViewport();
-            if (followSection && !navigationFrame && !locked) alignSection(followSection);
-            else schedule();
+            if (followSection && !navigationFrame && !locked && stillAtArrival) {
+                alignSection(followSection);
+            } else schedule();
         };
         const onScrollKey = (event: KeyboardEvent) => {
             if (["ArrowUp", "ArrowDown", "PageUp", "PageDown", "Home", "End", " "].includes(event.key)
@@ -308,10 +332,10 @@ const ProductHero = ({ header }: ProductHeroProps) => {
         observer.observe(about);
         const ingredients = root.querySelector<HTMLElement>("#ingredients");
         if (ingredients) observer.observe(ingredients);
-        window.addEventListener("scroll", schedule, { passive: true });
+        window.addEventListener("scroll", onDocumentScroll, { passive: true });
         window.addEventListener("resize", onViewportChange, { passive: true });
         visual?.addEventListener("resize", onViewportChange, { passive: true });
-        visual?.addEventListener("scroll", onViewportChange, { passive: true });
+        visual?.addEventListener("scroll", schedule, { passive: true });
         window.addEventListener("keydown", onScrollKey);
         syncViewport();
         window.addEventListener("wheel", onWheel, { passive: false });
@@ -333,10 +357,10 @@ const ProductHero = ({ header }: ProductHeroProps) => {
             cancelAnimationFrame(scheduled);
             cancelNavigation();
             observer.disconnect();
-            window.removeEventListener("scroll", schedule);
+            window.removeEventListener("scroll", onDocumentScroll);
             window.removeEventListener("resize", onViewportChange);
             visual?.removeEventListener("resize", onViewportChange);
-            visual?.removeEventListener("scroll", onViewportChange);
+            visual?.removeEventListener("scroll", schedule);
             window.removeEventListener("keydown", onScrollKey);
             window.removeEventListener("wheel", onWheel);
             window.removeEventListener("touchstart", onTouchStart);
