@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { lockPageScroll } from "../component/ui/lockPageScroll";
 import type { FormEvent } from "react";
 import Image from "next/image";
 import auraLogo from "../public/aura_logo.png";
@@ -15,6 +16,8 @@ interface ContactPanelProps {
 const ContactPanel = ({ open, onClose }: ContactPanelProps) => {
     const dialogRef = useRef<HTMLDialogElement>(null);
     const titleRef = useRef<HTMLHeadingElement>(null);
+    const releaseScroll = useRef<(() => void) | null>(null);
+    useEffect(() => () => { releaseScroll.current?.(); releaseScroll.current = null; }, []);
     const [status, setStatus] = useState("");
     const [sending, setSending] = useState(false);
     const endpoint = process.env.NEXT_PUBLIC_CONTACT_FORM_ENDPOINT;
@@ -24,9 +27,17 @@ const ContactPanel = ({ open, onClose }: ContactPanelProps) => {
         if (!dialog) return;
         const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
         let animation: Animation | undefined;
+        const closeDialog = () => {
+            dialog.close();
+            releaseScroll.current?.();
+            releaseScroll.current = null;
+        };
         if (open) {
             const wasOpen = dialog.open;
-            if (!wasOpen) dialog.showModal();
+            if (!wasOpen) {
+                releaseScroll.current ??= lockPageScroll();
+                dialog.showModal();
+            }
             const from = wasOpen ? getComputedStyle(dialog).transform : "translateY(100%)";
             // Focus the heading, not the Close control, when opening the dialog.
             if (!wasOpen) titleRef.current?.focus({ preventScroll: true });
@@ -38,14 +49,14 @@ const ContactPanel = ({ open, onClose }: ContactPanelProps) => {
             }
         } else if (dialog.open) {
             if (reduced || typeof dialog.animate !== "function") {
-                dialog.close();
+                closeDialog();
             } else {
                 animation = dialog.animate(
                     [{ transform: getComputedStyle(dialog).transform }, { transform: "translateY(100%)" }],
                     { duration: 420, easing: "cubic-bezier(.4,0,.8,1)", fill: "forwards" },
                 );
                 animation.onfinish = () => {
-                    dialog.close();
+                    closeDialog();
                     animation?.cancel();
                 };
             }
