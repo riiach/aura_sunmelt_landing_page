@@ -48,7 +48,17 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
     const touchPreference = window.matchMedia("(hover: none) and (pointer: coarse)");
     const rotateAnchor = new THREE.Vector3();
     let heldCan = null, heldPointer = null, heldKey = null;
-    let rotateAvailable = false;
+    let rotateAvailable = false, hintDismissed = false;
+    let holdStartedAt = 0, heldCapture = null, pendingHold = null;
+    const clearPendingHold = () => {
+        if (pendingHold !== null) window.clearTimeout(pendingHold);
+        pendingHold = null;
+    };
+    const dismissRotateHint = () => {
+        if (hintDismissed) return;
+        hintDismissed = true;
+        rotateControl?.setAttribute("data-dismissed", "true");
+    };
     const cans = [];
     let assets, snapTween, spinTween, spinningCan, introTween;
     const intro = { spread: 0, progress: 0 };
@@ -100,15 +110,16 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
 
     const invalidate = () => { dirty = true; };
     const stopHeldRotation = () => {
+        clearPendingHold();
         const id = heldPointer;
+        const capture = heldCapture;
+        if (heldCan && performance.now() - holdStartedAt >= 1000) dismissRotateHint();
         heldCan = null;
+        heldCapture = null;
         heldPointer = heldKey = null;
-        if (rotateControl) {
-            rotateControl.removeAttribute("data-holding");
-            if (id !== null && rotateControl.hasPointerCapture(id)) {
-                rotateControl.releasePointerCapture(id);
-            }
-        }
+        stage.removeAttribute("data-rotating");
+        rotateControl?.removeAttribute("data-holding");
+        if (id !== null && capture?.hasPointerCapture(id)) capture.releasePointerCapture(id);
         // Deliberately keep the current rotation angle on release.
         invalidate();
     };
@@ -119,11 +130,12 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
         if (!rotateControl) return;
         const available = canHoldRotate();
         if (!available && heldCan) stopHeldRotation();
-        if (available !== rotateAvailable) {
-            rotateAvailable = available;
-            rotateControl.dataset.available = String(available);
+        const showHint = available && (!hintDismissed || heldCapture === rotateControl || heldKey !== null);
+        if (showHint !== rotateAvailable) {
+            rotateAvailable = showHint;
+            rotateControl.dataset.available = String(showHint);
         }
-        if (!available) return;
+        if (!showHint) return;
         const center = cans[activeIndex]?.primary;
         if (!center) return;
         // Project the actual 3D center so the button follows the floating can.
@@ -141,6 +153,8 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
         stopSpin(true);
         gsap.killTweensOf(center.userData.spin.rotation);
         heldCan = center;
+        holdStartedAt = performance.now();
+        stage.dataset.rotating = "true";
         rotateControl.dataset.holding = "true";
         invalidate();
         return true;
@@ -149,6 +163,7 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
         if (!event.isPrimary || event.button !== 0 || !beginHeldRotation()) return;
         event.preventDefault();
         heldPointer = event.pointerId;
+        heldCapture = rotateControl;
         rotateControl.setPointerCapture(event.pointerId);
     };
     const onRotateRelease = event => {
@@ -166,6 +181,7 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
         }
     };
     const onRotateContextMenu = event => event.preventDefault();
+    const onStageContextMenu = event => { if (touchPreference.matches) event.preventDefault(); };
     const onRotateVisibility = () => { if (document.hidden) stopHeldRotation(); };
     const onRotatePreference = () => { stopHeldRotation(); syncRotateControl(); };
     const render = (_time, deltaMs) => {
@@ -255,6 +271,7 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
         });
         syncRotateControl();
         if (heldCan) {
+            if (performance.now() - holdStartedAt >= 1000) dismissRotateHint();
             // User-controlled rotation: one full turn every six seconds.
             heldCan.userData.spin.rotation.y -= dt * Math.PI * 2 / 6;
             dirty = true;
@@ -485,13 +502,28 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
         });
     };
 
+    const hitsCenterCan = (event) => {
+        const center = cans[activeIndex]?.primary;
+        if (!center) return false;
+        const rect = stage.getBoundingClientRect();
+        if (!rect.width || !rect.height) return false;
+        pointer.set((event.clientX - rect.left) / rect.width * 2 - 1,
+            1 - (event.clientY - rect.top) / rect.height * 2);
+        scene.updateMatrixWorld(true);
+        camera.updateMatrixWorld();
+        raycaster.setFromCamera(pointer, camera);
+        return raycaster.intersectObject(center, true).length > 0;
+    };
+
     const onPointerDown = (event) => {
         if (!ready || !introComplete || aboutState?.current?.preparing || drag || aboutProgress() >= .985 || !event.isPrimary || event.button !== 0) return;
+        if (heldCan) return;
+        const directHold = event.pointerType !== "mouse" && canHoldRotate() && hitsCenterCan(event);
         stopHeldRotation();
         cancelSnap();
         stopSpin(true);
-        // Reset any earlier front-return tween before the cans start sliding.
-        if (aboutProgress() === 0) cans.forEach(({ primary, copy }) => {
+        // Keep the angle for a new hold. Reset only when a carousel drag begins.
+        if (!directHold && aboutProgress() === 0) cans.forEach(({ primary, copy }) => {
             returnToFront(primary, true);
             returnToFront(copy, true);
         });
@@ -500,12 +532,29 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
             origin: track.position, lastPosition: track.position,
             lastTime: performance.now(), velocity: 0, moved: false,
             axis: null, scrollY: event.clientY, aboutOnly: aboutProgress() > 0,
+            directHold,
         };
         stage.setPointerCapture(event.pointerId);
         stage.style.cursor = "grabbing";
+        if (directHold) {
+            // Brief intent delay lets normal swipes win over a stationary press.
+            const candidate = drag;
+            pendingHold = window.setTimeout(() => {
+                pendingHold = null;
+                if (drag !== candidate || drag.axis) return;
+                drag = null;
+                if (beginHeldRotation()) {
+                    heldPointer = candidate.id;
+                    heldCapture = stage;
+                } else {
+                    drag = candidate;
+                }
+            }, 160);
+        }
     };
 
     const onPointerMove = (event) => {
+        if (heldCan) return;
         if (event.pointerType === "mouse") {
             lastMouse = { x: event.clientX, y: event.clientY };
             const rect = stage.getBoundingClientRect();
@@ -525,7 +574,12 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
         const dy = event.clientY - drag.y;
         if (!drag.axis) {
             if (Math.max(Math.abs(dx), Math.abs(dy)) < 5) return;
+            clearPendingHold();
             drag.axis = drag.aboutOnly || Math.abs(dy) > Math.abs(dx) ? "vertical" : "horizontal";
+            if (drag.directHold && drag.axis === "horizontal") cans.forEach(({ primary, copy }) => {
+                returnToFront(primary, true);
+                returnToFront(copy, true);
+            });
         }
         if (drag.axis === "vertical") {
             if (event.pointerType === "mouse") {
@@ -549,12 +603,18 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
     };
 
     const release = (event, canceled = false) => {
+        if (event.pointerId === heldPointer) {
+            stopHeldRotation();
+            stage.style.cursor = "grab";
+            return;
+        }
         if (!drag || event.pointerId !== drag.id) return;
+        clearPendingHold();
         const previous = drag;
         drag = null;
         if (stage.hasPointerCapture(event.pointerId)) stage.releasePointerCapture(event.pointerId);
         stage.style.cursor = "grab";
-        if (aboutState?.current?.preparing || aboutProgress() > 0 || previous.axis === "vertical") return;
+        if (aboutState?.current?.preparing || aboutProgress() > 0 || previous.axis === "vertical" || (previous.directHold && !previous.axis)) return;
         const velocity = performance.now() - previous.lastTime > 100 ? 0 : previous.velocity;
         if (event.pointerType !== "mouse" || canceled) lastMouse = null;
         const target = previous.moved
@@ -658,6 +718,7 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
     window.addEventListener("blur", stopHeldRotation);
     document.addEventListener("visibilitychange", onRotateVisibility);
     touchPreference.addEventListener("change", onRotatePreference);
+    stage.addEventListener("contextmenu", onStageContextMenu);
     stage.addEventListener("pointerdown", onPointerDown);
     stage.addEventListener("pointermove", onPointerMove);
     stage.addEventListener("pointerup", onPointerUp);
@@ -700,6 +761,7 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
         disposed = true;
         stopHeldRotation();
         rotateControl?.removeAttribute("data-available");
+        rotateControl?.removeAttribute("data-dismissed");
         rotateControl?.removeEventListener("pointerdown", onRotateDown);
         rotateControl?.removeEventListener("pointerup", onRotateRelease);
         rotateControl?.removeEventListener("pointercancel", onRotateRelease);
@@ -721,6 +783,7 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
         gsap.ticker.remove(render);
         observer.disconnect();
         visibility.disconnect();
+        stage.removeEventListener("contextmenu", onStageContextMenu);
         stage.removeEventListener("pointerdown", onPointerDown);
         stage.removeEventListener("pointermove", onPointerMove);
         stage.removeEventListener("pointerup", onPointerUp);

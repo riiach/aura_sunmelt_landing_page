@@ -75,12 +75,10 @@ const ProductCarousel = ({ onProductChange, onIntroPhase, onIntroProgress, about
             />
             <button ref={rotateRef} type="button" className={styles.rotateControl}
                     data-rotate-control aria-label="Press and hold to rotate the selected can">
-                <span className={styles.rotateDisc}>
-                    <svg width="19" height="19" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                        <path d="M20 11a8 8 0 1 0-2.3 5.7M20 5v6h-6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                    <span>Press to<br />rotate</span>
+                <span className={styles.rotateDisc} aria-hidden="true">
+                    <span className={styles.rotatePulse} />
                 </span>
+                <span className={styles.rotateLabel}>Press to rotate</span>
             </button>
             {!ready && !aboutInteractive && (
                 <div className={styles.status}>
