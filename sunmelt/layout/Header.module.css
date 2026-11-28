@@ -316,7 +316,7 @@
         min-height: 44px;
         padding-inline: 18px;
         font-size: 15px;
-        font-weight: 500;
+        font-weight: 400;
         color: inherit;
         text-decoration: none;
         box-sizing: border-box;
@@ -345,6 +345,11 @@
     .mobileLink:not(.mobileContact):active,
     .mobileLink:not(.mobileContact):focus-visible {
         color: #787878;
+    }
+    .mobileLink:not(.mobileContact)[aria-current="location"] .linkLabel,
+    .mobileLink:not(.mobileContact):active .linkLabel {
+        text-decoration: underline;
+        text-underline-offset: 4px;
     }
 
     .flipWindow {
