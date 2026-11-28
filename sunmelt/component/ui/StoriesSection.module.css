@@ -3,6 +3,7 @@
     --story-gap: clamp(10px, 1vw, 16px);
     padding-top: calc(var(--header-height, 68px) + clamp(42px, 8vh, 88px));
     padding-bottom: clamp(48px, 9vh, 100px);
+    margin-bottom: clamp(32px, 4vw, 64px);
     color: #251b19;
     overflow: hidden;
     background: #fff;
