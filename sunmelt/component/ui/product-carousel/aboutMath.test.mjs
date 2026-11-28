@@ -97,3 +97,18 @@ test("ingredients scroll is reversible and respects the viewport offset", () => 
     assert.equal(ingredientsRotationProgress(.86), 1);
     assert.ok(ingredientsRotationProgress(.45) > 0 && ingredientsRotationProgress(.45) < 1);
 });
+
+test("the middle checkpoint catches large forward and reverse scroll deltas", async () => {
+    const { checkpointSide, crossesAboutCheckpoint } = await import("./aboutMath.mjs");
+    assert.equal(checkpointSide(300), 1);
+    assert.equal(checkpointSide(-300), -1);
+    assert.equal(checkpointSide(24), 0);
+    assert.equal(checkpointSide(-24), 0);
+    assert.equal(crossesAboutCheckpoint(1, 300, 900), true);
+    assert.equal(crossesAboutCheckpoint(-1, -300, -900), true);
+    assert.equal(crossesAboutCheckpoint(-1, -300, -100), false);
+    assert.equal(crossesAboutCheckpoint(1, 300, 100), false);
+    assert.equal(crossesAboutCheckpoint(-1, -300, 900), false);
+    assert.equal(crossesAboutCheckpoint(1, 300, -900), false);
+    assert.equal(crossesAboutCheckpoint(-1, -1, -1), true);
+});

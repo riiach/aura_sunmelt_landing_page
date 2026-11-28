@@ -64,3 +64,9 @@ export const ingredientsScrollProgress = (aboutTop, ingredientsTop, viewportTop 
     return distance > 0 ? clamp((viewportTop - aboutTop) / distance) : 0;
 };
 export const ingredientsRotationProgress = progress => ease(progress, .08, .86);
+
+// Rearm only after departing the middle checkpoint, on either side.
+// remaining = About top minus the visible viewport top, dy = scroll delta.
+export const checkpointSide = remaining => remaining > 24 ? 1 : remaining < -24 ? -1 : 0;
+export const crossesAboutCheckpoint = (side, remaining, dy) =>
+    side * dy > 0 && side * (remaining - dy) <= 1;

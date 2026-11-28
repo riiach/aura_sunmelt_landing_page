@@ -5,7 +5,7 @@ import type { ReactNode } from "react";
 import ProductCarousel from "./ProductCarousel";
 import type { AboutSceneState, IntroPhase } from "./ProductCarousel";
 import AboutSection, { IngredientsSection } from "./AboutSection";
-import { aboutPhases, aboutScrollProgress, aboutNavigationEase, aboutViewportMetrics, MANGO_READY } from "./product-carousel/aboutMath.mjs";
+import { aboutPhases, aboutScrollProgress, aboutNavigationEase, aboutViewportMetrics, checkpointSide, crossesAboutCheckpoint, MANGO_READY } from "./product-carousel/aboutMath.mjs";
 import styles from "./ProductCarousel.module.css";
 
 /* Temporarily disabled for the white-background preview.
@@ -59,6 +59,8 @@ const ProductHero = ({ header }: ProductHeroProps) => {
         // Stop once at About; a fresh gesture, not momentum from the same
         // gesture, is required to continue toward Ingredients.
         let aboutStop: "armed" | "holding" | "passed" = "armed";
+        // Positive: Hero side. Negative: Ingredients side.
+        let approachSide = 1;
         let lastWheelAt = -Infinity, stopAt = -Infinity;
         let checkpointStyles: { htmlOverflow: string; htmlOverscroll: string; bodyOverscroll: string; gutter: string } | null = null;
         let freshCheckpointTouch = false, controlledTouch = false, touchLastY = 0;
@@ -107,10 +109,17 @@ const ProductHero = ({ header }: ProductHeroProps) => {
             publish(1);
             schedule();
         };
+        const refreshCheckpoint = (remaining: number) => {
+            const side = checkpointSide(remaining);
+            if (aboutStop === "passed" && side !== 0) {
+                approachSide = side;
+                aboutStop = "armed";
+            }
+        };
         const advanceTowardAbout = (dy: number) => {
-            if (dy <= 0 || aboutStop !== "armed" || !prepared) return false;
             const remaining = aboutRemaining();
-            if (dy + 1 < remaining) return false;
+            refreshCheckpoint(remaining);
+            if (aboutStop !== "armed" || !prepared || !crossesAboutCheckpoint(approachSide, remaining, dy)) return false;
             holdAtAbout();
             return true;
         };
@@ -140,6 +149,7 @@ const ProductHero = ({ header }: ProductHeroProps) => {
         const scrollToAbout = () => {
             unlockCheckpoint();
             aboutStop = "armed";
+            approachSide = aboutRemaining() < -1 ? -1 : 1;
             cancelNavigation();
             followAbout = true;
             syncViewport();
@@ -230,8 +240,11 @@ const ProductHero = ({ header }: ProductHeroProps) => {
                 return;
             }
             const remaining = aboutRemaining();
-            if (remaining > 24) aboutStop = "armed";
-            if ((prepared || state.failed) && remaining <= 1 && aboutStop === "armed" && !navigationFrame) {
+            refreshCheckpoint(remaining);
+            if ((prepared || state.failed) && aboutStop === "armed" && !navigationFrame &&
+                approachSide * remaining <= 1) {
+                // Catch native scrollbar, keyboard or residual compositor
+                // scroll in either direction before updating the scene.
                 holdAtAbout();
                 return;
             }
@@ -245,6 +258,8 @@ const ProductHero = ({ header }: ProductHeroProps) => {
             if (entered && raw <= .001) {
                 entered = false;
                 prepared = false;
+                aboutStop = "armed";
+                approachSide = 1;
                 state.returnToMango = true;
                 publish(0);
                 return;
@@ -270,9 +285,9 @@ const ProductHero = ({ header }: ProductHeroProps) => {
                 return;
             }
             const dy = event.deltaY * (event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? window.innerHeight : 1);
-            if (dy > 0 && prepared && aboutStop === "armed" && event.cancelable) {
-                // Handle downward approach explicitly: no momentum may carry
-                // this wheel gesture past the checkpoint.
+            if (dy !== 0 && prepared && event.cancelable) {
+                // Own both directions through the About track. Native momentum
+                // must never be allowed to cross the middle checkpoint.
                 event.preventDefault();
                 if (!advanceTowardAbout(dy)) window.scrollBy({ top: dy, behavior: "instant" });
                 schedule();
@@ -312,7 +327,7 @@ const ProductHero = ({ header }: ProductHeroProps) => {
                 beginPreparation();
                 return;
             }
-            if (controlledTouch || (prepared && aboutStop === "armed" && dy > 5 && vertical && event.cancelable)) {
+            if (controlledTouch || (prepared && vertical && event.cancelable)) {
                 if (event.cancelable) event.preventDefault();
                 const delta = touchLastY - currentY;
                 controlledTouch = true;
@@ -350,6 +365,7 @@ const ProductHero = ({ header }: ProductHeroProps) => {
                 entered = false;
                 prepared = false;
                 aboutStop = "armed";
+                approachSide = 1;
                 state.returnToMango = true;
                 publish(0);
                 schedule();
