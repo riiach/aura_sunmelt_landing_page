@@ -264,23 +264,33 @@
     z-index: 0;
     inset: 0;
     pointer-events: none;
-    background:
-        radial-gradient(ellipse 38% 52% at 50% 99%, rgba(190,225,248,.62), rgba(209,234,250,.38) 38%, rgba(229,243,252,.17) 68%, transparent 100%),
-        radial-gradient(ellipse 66% 77% at 50% 111%, rgba(208,232,249,.24), transparent 75%);
+    overflow: hidden;
+    /* A single circular blue frost field radiates from the section center,
+       rather than rising from the bottom edge. */
+    background: radial-gradient(circle closest-side at 50% 50%,
+        rgba(155,209,245,.42) 0%,
+        rgba(173,219,249,.34) 24%,
+        rgba(194,230,252,.24) 48%,
+        rgba(221,240,253,.12) 72%,
+        rgba(240,248,254,.035) 90%,
+        transparent 100%);
 }
 .ingredientsFrost::after {
     content: "";
     position: absolute;
-    left: 50%;
-    bottom: -60%;
-    width: min(120vw, 1700px);
-    aspect-ratio: 1;
-    transform: translateX(-50%);
-    border-radius: 50%;
-    background: radial-gradient(circle,
-        transparent 31%, rgba(199,230,250,.20) 38%, rgba(235,246,253,.13) 44%, transparent 51%,
-        rgba(210,234,250,.12) 57%, transparent 68%);
-    filter: blur(9px);
+    inset: 0;
+    pointer-events: none;
+    /* Diffused concentric frost highlights share the exact same center. */
+    background: radial-gradient(circle closest-side at 50% 50%,
+        rgba(255,255,255,.16) 0%,
+        transparent 20%,
+        rgba(245,251,255,.26) 31%,
+        transparent 42%,
+        rgba(207,234,252,.15) 52%,
+        transparent 61%,
+        rgba(242,249,254,.22) 72%,
+        transparent 90%);
+    filter: blur(14px);
 }
 .scatteredIce {
     position: absolute;
