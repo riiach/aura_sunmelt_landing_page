@@ -113,11 +113,10 @@
     left: var(--rotate-x, 50%);
     top: var(--rotate-y, 48%);
     transform: translate(-50%, -50%);
-    width: 90px;
-    height: 90px;
+    width: max-content;
+    min-width: 96px;
     padding: 0;
     border: 0;
-    border-radius: 50%;
     background: transparent;
     visibility: hidden;
     opacity: 0;
@@ -127,26 +126,38 @@
     -webkit-user-select: none;
     -webkit-touch-callout: none;
     -webkit-tap-highlight-color: transparent;
-    transition: opacity 240ms ease, visibility 240ms;
+    transition: opacity 220ms ease, visibility 220ms;
 }
 .rotateDisc {
-    display: flex;
-    width: 100%;
-    height: 100%;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 5px;
-    border-radius: inherit;
-    background: #292929;
+    display: grid;
+    place-items: center;
+    width: 58px;
+    height: 58px;
+    margin: 0 auto;
+    border-radius: 50%;
+    background: radial-gradient(circle, transparent 0 13px, rgba(255,255,255,.72) 13.5px 100%);
+    border: 1.5px solid rgba(255,255,255,.92);
+    box-shadow: 0 2px 12px rgba(0,0,0,.06);
+    pointer-events: none;
+}
+.rotatePulse {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: rgba(255,255,255,.46);
+    pointer-events: none;
+}
+.rotateLabel {
+    display: block;
+    margin-top: 9px;
     color: #fff;
     font-family: var(--font-poppins), sans-serif;
     font-size: 11px;
     font-weight: 500;
-    line-height: 1.25;
-    letter-spacing: .015em;
+    letter-spacing: .025em;
     text-align: center;
-    box-shadow: 0 5px 18px rgba(0,0,0,.17);
+    white-space: nowrap;
+    text-shadow: 0 1px 6px rgba(0,0,0,.25);
     pointer-events: none;
 }
 @media (hover: none) and (pointer: coarse) {
@@ -156,18 +167,20 @@
         opacity: 1;
         pointer-events: auto;
     }
-    .rotateControl[data-available="true"] .rotateDisc {
-        animation: rotateHintFloat 2.2s ease-in-out infinite;
+    .rotateControl[data-available="true"] .rotatePulse {
+        animation: rotateHintPulse 1.35s ease-in-out infinite;
     }
-    .rotateControl[data-holding="true"] .rotateDisc {
-        animation: none;
-        transform: scale(.93);
+    /* Keep capture alive during the first hold even after the artwork fades. */
+    .rotateControl[data-dismissed="true"] {
+        opacity: 0;
+        pointer-events: none;
     }
+    .stage { -webkit-touch-callout: none; -webkit-user-select: none; }
 }
-.rotateControl:focus-visible { outline: 2px solid #fff; outline-offset: 4px; }
-@keyframes rotateHintFloat {
-    0%, 100% { transform: translateY(0) scale(1); }
-    50% { transform: translateY(-4px) scale(1.055); }
+.rotateControl:focus-visible { outline: 2px solid #fff; outline-offset: 4px; border-radius: 12px; }
+@keyframes rotateHintPulse {
+    0%, 100% { transform: scale(.84); opacity: .65; }
+    50% { transform: scale(1.26); opacity: 1; }
 }
 .status {
     position: absolute;
@@ -187,5 +200,5 @@
 }
 @media (prefers-reduced-motion: reduce) {
     .gradient, .imageBackground, .rotateControl { transition: none; }
-    .rotateControl[data-available="true"] .rotateDisc { animation: none; }
+    .rotateControl[data-available="true"] .rotatePulse { animation: none; }
 }
