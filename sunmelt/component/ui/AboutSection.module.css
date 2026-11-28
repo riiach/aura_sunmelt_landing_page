@@ -22,7 +22,28 @@
     align-items: center;
     gap: clamp(24px, 5vw, 72px);
 }
-.copy { position: relative; z-index: 3; max-width: 570px; }
+.copy {
+    --sparkle-size: clamp(24px, 2.55vw, 38px);
+    position: relative;
+    z-index: 3;
+    max-width: 570px;
+}
+.sparkle {
+    position: absolute;
+    display: block;
+    width: var(--sparkle-size);
+    height: var(--sparkle-size);
+    color: #000;
+    pointer-events: none;
+}
+.sparkleTop {
+    left: 3.5%;
+    top: calc(-1.14 * var(--sparkle-size));
+}
+.sparkleBottom {
+    left: max(63.5%, 185px);
+    top: calc(-.12 * var(--sparkle-size));
+}
 .title {
     margin: 0;
     font-family: var(--font-poppins), sans-serif;
@@ -39,7 +60,7 @@
     line-height: 1.6;
     color: #646464;
 }
-.actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 20px; }
+.actions { position: relative; display: flex; flex-wrap: wrap; gap: 10px; margin-top: 20px; }
 .primaryButton {
     display: inline-flex;
     align-items: center;
@@ -171,6 +192,8 @@
         align-content: center;
         justify-items: start;
     }
+    .copy { --sparkle-size: 24px; margin-top: 28px; }
+    .sparkleBottom { left: min(78%, max(63.5%, 172px)); }
     .title { font-size: clamp(29px, 7.8vw, 43px); }
     .description { margin-top: 10px; font-size: 12px; line-height: 1.5; }
     .actions { margin-top: 14px; gap: 8px; }
