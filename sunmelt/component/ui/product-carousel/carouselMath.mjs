@@ -2,7 +2,13 @@ export function wrap(value,count){return ((value+count/2)%count+count)%count-cou
 
 export function mod(value,count){return ((value%count)+count)%count;}
 
-export function scaleAt(distance){const t=Math.max(0,1-Math.abs(distance));return 0.86+0.26*t*t*(3-2*t);}
+export function scaleAt(distance) {
+    const d = Math.abs(distance);
+    const center = Math.max(0, 1 - d);
+    const outer = Math.max(0, Math.min(1, d - 1));
+    // Keep the selected and adjacent cans; taper the outer pair smoothly.
+    return .86 + .26 * center * center * (3 - 2 * center) - .13 * outer * outer * (3 - 2 * outer);
+}
 
 export function getLayout(width){return width>=1024?4.92:width>=640?3.12:1.76;}
 

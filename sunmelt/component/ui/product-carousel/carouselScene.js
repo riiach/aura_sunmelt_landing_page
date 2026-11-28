@@ -370,8 +370,8 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
                 const emphasis = selected ? intro.progress : 0;
                 const shadowReveal = introComplete || selected ? 1 :
                     introSpreadAt(wrap(index - track.position, count), intro.spread);
-                shadow.material.opacity = (.60 - .12 * emphasis - tilt.position.y * 1.5) * shadowReveal * .72;
-                shadow.scale.setScalar(.82 + .33 * emphasis + tilt.position.y * 2);
+                shadow.material.opacity = Math.max(0, (.60 - .12 * emphasis - tilt.position.y * 1.5) * shadowReveal * .43);
+                shadow.scale.setScalar((.82 + .33 * emphasis + tilt.position.y * 2) * Math.min(1, can.scale.x / .86));
             }
         });
         syncRotateControl();
@@ -495,7 +495,7 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
                 shadow.position.z = can.position.z;
                 shadow.visible = can.visible && land < .99;
                 shadow.scale.setScalar(.82);
-                shadow.material.opacity = .43 * opacity * (1 - land);
+                shadow.material.opacity = .26 * opacity * (1 - land);
                 if (mango && land > 0) {
                     // The destination is the real tile in the next section's
                     // current viewport position, not a fixed coordinate in the hero.

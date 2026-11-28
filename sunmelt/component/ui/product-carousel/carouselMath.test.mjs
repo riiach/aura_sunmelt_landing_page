@@ -37,11 +37,14 @@ test("loop wraps in both directions and duplicates meet at the seam", () => {
     assert.ok(Math.abs(before - after) < 0.003);
 });
 
-test("center scale grows continuously and neighboring cans have equal scale", () => {
+test("center, adjacent and outer cans taper symmetrically with distance", () => {
     assert.ok(scaleAt(0) > scaleAt(0.5));
     assert.ok(scaleAt(0.5) > scaleAt(1));
     assert.equal(scaleAt(-1), scaleAt(1));
-    assert.equal(scaleAt(1), scaleAt(2));
+    assert.ok(scaleAt(1) > scaleAt(1.5));
+    assert.ok(scaleAt(1.5) > scaleAt(2));
+    assert.equal(scaleAt(-2), scaleAt(2));
+    assert.ok(Math.abs(scaleAt(2) - .73) < 1e-9);
 });
 
 test("the center is closer and the sides recede symmetrically", () => {
