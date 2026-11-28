@@ -3,7 +3,7 @@
     z-index: 3;
     isolation: isolate;
     width: 100%;
-    background: linear-gradient(180deg, #f4f4f2 0%, #efefec 68%, #e2e2de 100%);
+    background: #fff;
     color: #251b19;
     padding: clamp(84px, 13vw, 176px) clamp(24px, 5vw, 80px) clamp(56px, 8vw, 104px);
 }
