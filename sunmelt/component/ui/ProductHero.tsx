@@ -60,14 +60,13 @@ const ProductHero = ({ header }: ProductHeroProps) => {
         // gesture, is required to continue toward Ingredients.
         let aboutStop: "armed" | "holding" | "passed" = "armed";
         let lastWheelAt = -Infinity, stopAt = -Infinity;
-        let checkpointStyles: { htmlOverflow: string; bodyOverflow: string; htmlOverscroll: string; bodyOverscroll: string; gutter: string } | null = null;
+        let checkpointStyles: { htmlOverflow: string; htmlOverscroll: string; bodyOverscroll: string; gutter: string } | null = null;
         let freshCheckpointTouch = false, controlledTouch = false, touchLastY = 0;
         const unlockCheckpoint = () => {
             if (!checkpointStyles) return;
             const saved = checkpointStyles;
             checkpointStyles = null;
             html.style.overflowY = saved.htmlOverflow;
-            document.body.style.overflowY = saved.bodyOverflow;
             html.style.overscrollBehaviorY = saved.htmlOverscroll;
             document.body.style.overscrollBehaviorY = saved.bodyOverscroll;
             html.style.scrollbarGutter = saved.gutter;
@@ -92,16 +91,15 @@ const ProductHero = ({ header }: ProductHeroProps) => {
             aboutStop = "holding";
             stopAt = performance.now();
             checkpointStyles = {
-                htmlOverflow: html.style.overflowY, bodyOverflow: document.body.style.overflowY,
+                htmlOverflow: html.style.overflowY,
                 htmlOverscroll: html.style.overscrollBehaviorY, bodyOverscroll: document.body.style.overscrollBehaviorY,
                 gutter: html.style.scrollbarGutter,
             };
             // Native overflow lock stops compositor-driven momentum on iOS.
-            // Keep the document scroll container (no fixed body) so the sticky
-            // WebGL canvas and the section's projected target stay aligned.
+            // Lock the actual document scroller only. Making body a second
+            // overflow container would break the sticky WebGL canvas.
             html.style.scrollbarGutter = "stable";
             html.style.overflowY = "hidden";
-            document.body.style.overflowY = "hidden";
             html.style.overscrollBehaviorY = "none";
             document.body.style.overscrollBehaviorY = "none";
             root.dataset.aboutCheckpoint = "true";
