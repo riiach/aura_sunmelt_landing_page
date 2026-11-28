@@ -118,7 +118,6 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
         swipeHintPhases.set(hintDocument, phase === "right" ? "left" : "done");
     };
     const cans = [];
-    const labelPoint = new THREE.Vector3();
     const heroPose = (pose) => ({
         ...pose,
         y: pose.y + .20,
@@ -128,36 +127,17 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
     labelLayer.className = flavorLabelClass;
     labelLayer.setAttribute("aria-hidden", "true");
     stage.appendChild(labelLayer);
-    const makeLabel = (name) => {
-        const label = document.createElement("span");
-        label.textContent = name;
-        label.hidden = true;
-        labelLayer.appendChild(label);
-        return label;
-    };
+    // A single centered caption identifies the currently selected flavor.
+    // It stays in place while the cans move or tilt.
+    const flavorLabel = document.createElement("span");
+    flavorLabel.textContent = flavors[mod(Math.round(track.position), count)].name;
+    labelLayer.appendChild(flavorLabel);
     const updateFlavorLabels = (opacity) => {
-        const width = stage.clientWidth, height = stage.clientHeight;
         labelLayer.style.opacity = String(opacity);
-        if (opacity <= .005) { labelLayer.style.visibility = "hidden"; return; }
-        labelLayer.style.visibility = "visible";
-        camera.updateMatrixWorld();
-        for (const { primary, copy, primaryLabel, copyLabel } of cans) {
-            for (const [can, label] of [[primary, primaryLabel], [copy, copyLabel]]) {
-                if (!can.visible) { label.hidden = true; continue; }
-                // Follow each physical can, including its tilt and floating motion.
-                const tilt = can.userData.tilt;
-                labelPoint.set(0, -.83, 0);
-                tilt.localToWorld(labelPoint);
-                labelPoint.project(camera);
-                const x = (labelPoint.x + 1) * width / 2;
-                const y = (1 - labelPoint.y) * height / 2 + 10;
-                label.hidden = x < -70 || x > width + 70 || y > height - 12;
-                if (!label.hidden) {
-                    label.style.left = `${x}px`;
-                    label.style.top = `${y}px`;
-                }
-            }
-        }
+        labelLayer.style.visibility = opacity <= .005 ? "hidden" : "visible";
+        if (opacity <= .005) return;
+        const name = flavors[mod(Math.round(track.position), count)].name;
+        if (flavorLabel.textContent !== name) flavorLabel.textContent = name;
     };
     let assets, snapTween, spinTween, spinningCan, introTween;
     const intro = { spread: 0, progress: 0 };
@@ -957,9 +937,7 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
             const primaryShadow = shadows.create();
             const copyShadow = shadows.create();
             scene.add(primary, copy, primaryShadow, copyShadow);
-            const primaryLabel = makeLabel(flavors[index].name);
-            const copyLabel = makeLabel(flavors[index].name);
-            cans.push({ index, primary, copy, primaryShadow, copyShadow, primaryLabel, copyLabel });
+            cans.push({ index, primary, copy, primaryShadow, copyShadow });
         });
         ready = true;
         resize();
