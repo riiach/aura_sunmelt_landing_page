@@ -187,7 +187,8 @@
        separate full-width two-color wave between the copy and ice grid.
        Crop the original transparent artwork independently for each layer. */
     .ribbon {
-        inset: var(--header-height, 62px) 0 auto;
+        /* Start behind the fixed glass header, not below its bottom edge. */
+        inset: 0 0 auto;
         height: 38vw;
         background-size: 195% auto;
         background-position: left top;
