@@ -129,35 +129,30 @@
     transition: opacity 220ms ease, visibility 220ms;
 }
 .rotateDisc {
-    display: grid;
-    place-items: center;
-    width: 58px;
-    height: 58px;
+    display: block;
+    width: 54px;
+    height: 54px;
     margin: 0 auto;
     border-radius: 50%;
-    background: radial-gradient(circle, transparent 0 13px, rgba(255,255,255,.72) 13.5px 100%);
-    border: 1.5px solid rgba(255,255,255,.92);
-    box-shadow: 0 2px 12px rgba(0,0,0,.06);
+    background: rgba(255,255,255,.38);
     pointer-events: none;
-}
-.rotatePulse {
-    width: 22px;
-    height: 22px;
-    border-radius: 50%;
-    background: rgba(255,255,255,.46);
-    pointer-events: none;
+    transition: background-color 160ms ease, transform 160ms ease;
 }
 .rotateLabel {
     display: block;
-    margin-top: 9px;
-    color: #fff;
+    width: max-content;
+    margin: 10px auto 0;
+    padding: 5px 10px;
+    border-radius: 8px;
+    background: rgba(255,255,255,.78);
+    color: #292929;
     font-family: var(--font-poppins), sans-serif;
     font-size: 11px;
     font-weight: 500;
+    line-height: 1.4;
     letter-spacing: .025em;
     text-align: center;
     white-space: nowrap;
-    text-shadow: 0 1px 6px rgba(0,0,0,.25);
     pointer-events: none;
 }
 @media (hover: none) and (pointer: coarse) {
@@ -167,8 +162,13 @@
         opacity: 1;
         pointer-events: auto;
     }
-    .rotateControl[data-available="true"] .rotatePulse {
+    .rotateControl[data-available="true"] .rotateDisc {
         animation: rotateHintPulse 1.35s ease-in-out infinite;
+    }
+    .rotateControl[data-available="true"][data-holding="true"] .rotateDisc {
+        animation: none;
+        background: rgba(255,255,255,.88);
+        transform: scale(.92);
     }
     /* Keep capture alive during the first hold even after the artwork fades. */
     .rotateControl[data-dismissed="true"] {
@@ -179,8 +179,8 @@
 }
 .rotateControl:focus-visible { outline: 2px solid #fff; outline-offset: 4px; border-radius: 12px; }
 @keyframes rotateHintPulse {
-    0%, 100% { transform: scale(.84); opacity: .65; }
-    50% { transform: scale(1.26); opacity: 1; }
+    0%, 100% { transform: scale(.90); opacity: .78; }
+    50% { transform: scale(1.12); opacity: 1; }
 }
 .status {
     position: absolute;
@@ -199,6 +199,6 @@
     .aboutTrack { --stage-height: max(480px, calc(100svh - var(--header-height))); }
 }
 @media (prefers-reduced-motion: reduce) {
-    .gradient, .imageBackground, .rotateControl { transition: none; }
-    .rotateControl[data-available="true"] .rotatePulse { animation: none; }
+    .gradient, .imageBackground, .rotateControl, .rotateDisc { transition: none; }
+    .rotateControl[data-available="true"] .rotateDisc { animation: none; }
 }

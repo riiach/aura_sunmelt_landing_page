@@ -75,9 +75,7 @@ const ProductCarousel = ({ onProductChange, onIntroPhase, onIntroProgress, about
             />
             <button ref={rotateRef} type="button" className={styles.rotateControl}
                     data-rotate-control aria-label="Press and hold to rotate the selected can">
-                <span className={styles.rotateDisc} aria-hidden="true">
-                    <span className={styles.rotatePulse} />
-                </span>
+                <span className={styles.rotateDisc} aria-hidden="true" />
                 <span className={styles.rotateLabel}>Press to rotate</span>
             </button>
             {!ready && !aboutInteractive && (
