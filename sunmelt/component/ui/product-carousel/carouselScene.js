@@ -120,7 +120,7 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
     const cans = [];
     const heroPose = (pose) => ({
         ...pose,
-        y: pose.y + .20,
+        y: pose.y + (stage.clientWidth < 768 ? .14 : .20),
         scale: pose.scale * (stage.clientWidth < 768 ? 1 : .85),
     });
     const labelLayer = document.createElement("div");

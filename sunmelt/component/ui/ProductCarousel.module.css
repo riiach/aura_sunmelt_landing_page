@@ -345,5 +345,5 @@
 }
 @media (max-width: 767px) {
     .flavorLabels { font-size: 15px; }
-    .flavorLabels > span { top: 86%; padding: 9px 22px; }
+    .flavorLabels > span { top: 88%; padding: 9px 22px; }
 }
