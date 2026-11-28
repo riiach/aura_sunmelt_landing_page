@@ -391,7 +391,7 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
             const distance = wrap(index - track.position, count);
             const otherDistance = distance + (distance < 0 ? count : -count);
             [[primary, primaryShadow, distance], [copy, copyShadow, otherDistance]].forEach(([can, shadow, x]) => {
-                const pose = introPoseAt(x, intro.progress);
+                const pose = introPoseAt(x, intro.progress, intro.spread);
                 const spread = introComplete ? 1 : introSpreadAt(x, intro.spread);
                 const spreadX = x * spread;
                 // The center stays in front while the other cans emerge from behind it.

@@ -90,3 +90,20 @@ test("opening starts with one visible center and spreads symmetrically to five",
     }
     assert.ok(introSpreadAt(1, .5) > introSpreadAt(2, .5));
 });
+
+test("the opening fan develops size perspective during spread before lift or tilt", () => {
+    for (const spread of [.1, .25, .5, .75, 1]) {
+        const center = introPoseAt(0, 0, spread);
+        const inner = introPoseAt(1, 0, spread);
+        const outer = introPoseAt(2, 0, spread);
+        assert.ok(center.scale > inner.scale && inner.scale > outer.scale);
+        assert.equal(outer.scale, introPoseAt(-2, 0, spread).scale);
+        assert.equal(center.y, -.11);
+        assert.equal(center.z, 0);
+    }
+    for (const x of [-2, -1, 0, 1, 2]) {
+        assert.ok(Math.abs(introPoseAt(x, 0, 1).scale - scaleAt(x)) < 1e-9);
+        assert.ok(Math.abs(introPoseAt(x, .5, 1).scale - scaleAt(x)) < 1e-9);
+        assert.equal(introPoseAt(x, 0, 0).scale, .86);
+    }
+});
