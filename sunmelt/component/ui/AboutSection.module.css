@@ -320,7 +320,7 @@
     --ice-gap: clamp(4px, .55vw, 9px);
     position: absolute;
     display: grid;
-    grid-template-columns: repeat(3, var(--ice-cell));
+    grid-template-columns: repeat(4, var(--ice-cell));
     grid-template-rows: repeat(5, var(--ice-cell));
     gap: var(--ice-gap);
 }
