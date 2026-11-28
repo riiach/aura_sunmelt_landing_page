@@ -52,9 +52,10 @@ const ProductHero = ({ header }: ProductHeroProps) => {
         const state = aboutState.current;
         const html = document.documentElement;
         let scheduled = 0, navigationFrame = 0;
-        let followAbout = false;
+        let followSection: HTMLElement | null = null;
+        let pendingSection: HTMLElement | null = null;
         const visual = window.visualViewport;
-        let locked = false, prepared = false, entered = false, jumpToAbout = false;
+        let locked = false, prepared = false, entered = false;
         let priorOverflow = "", priorGutter = "";
         let safetyTimer: ReturnType<typeof setTimeout> | undefined;
         let touchX = 0, touchY = 0;
@@ -62,7 +63,9 @@ const ProductHero = ({ header }: ProductHeroProps) => {
         const aboutTop = () => window.scrollY + about.getBoundingClientRect().top;
         const visualTop = () => visual && Math.abs(visual.scale - 1) < .01 ? visual.offsetTop : 0;
         const aboutRemaining = () => about.getBoundingClientRect().top - visualTop();
-        const aboutDestination = () => Math.max(0, aboutTop() - visualTop());
+        const sectionDestination = (section: HTMLElement) =>
+            Math.max(0, Math.min(html.scrollHeight - html.clientHeight,
+                window.scrollY + section.getBoundingClientRect().top - visualTop()));
         const scrollRange = () => Math.max(1, aboutTop() - top());
         const pinToHero = () => window.scrollTo({ top: top(), behavior: "instant" });
         const syncViewport = () => {
@@ -77,24 +80,25 @@ const ProductHero = ({ header }: ProductHeroProps) => {
                 if (root.style.getPropertyValue(key) !== value) root.style.setProperty(key, value);
             }
         };
-        const alignAbout = () => {
-            if (Math.abs(aboutRemaining()) > 1) {
-                window.scrollTo({ top: aboutDestination(), behavior: "instant" });
+        const alignSection = (section: HTMLElement) => {
+            const target = sectionDestination(section);
+            if (Math.abs(window.scrollY - target) > 1) {
+                window.scrollTo({ top: target, behavior: "instant" });
             }
             schedule();
         };
         const cancelNavigation = () => {
             if (navigationFrame) cancelAnimationFrame(navigationFrame);
             navigationFrame = 0;
-            followAbout = false;
+            followSection = null;
         };
-        const scrollToAbout = () => {
+        const scrollToSection = (section: HTMLElement) => {
             cancelNavigation();
-            followAbout = true;
+            followSection = section;
             syncViewport();
             const from = window.scrollY;
-            if (motion.matches || Math.abs(aboutRemaining()) <= 1) {
-                alignAbout();
+            if (motion.matches || Math.abs(from - sectionDestination(section)) <= 1) {
+                alignSection(section);
                 return;
             }
             const started = performance.now();
@@ -102,7 +106,7 @@ const ProductHero = ({ header }: ProductHeroProps) => {
             const step = (now: number) => {
                 const progress = Math.min(1, (now - started) / duration);
                 // Read the live section position to account for responsive layout changes.
-                const target = aboutDestination();
+                const target = sectionDestination(section);
                 window.scrollTo({
                     top: from + (target - from) * aboutNavigationEase(progress),
                     behavior: "instant",
@@ -111,7 +115,7 @@ const ProductHero = ({ header }: ProductHeroProps) => {
                 if (progress < 1) navigationFrame = requestAnimationFrame(step);
                 else {
                     navigationFrame = 0;
-                    alignAbout();
+                    alignSection(section);
                 }
             };
             navigationFrame = requestAnimationFrame(step);
@@ -143,9 +147,10 @@ const ProductHero = ({ header }: ProductHeroProps) => {
             publish(MANGO_READY);
             pinToHero();
             unlock();
-            if (jumpToAbout) {
-                jumpToAbout = false;
-                scrollToAbout();
+            if (pendingSection) {
+                const section = pendingSection;
+                pendingSection = null;
+                scrollToSection(section);
             }
         };
         state.onPrepared = completePreparation;
@@ -221,7 +226,7 @@ const ProductHero = ({ header }: ProductHeroProps) => {
         };
         const scrollToHome = () => {
             cancelNavigation();
-            jumpToAbout = false;
+            pendingSection = null;
             if (locked || state.preparing) {
                 unlock();
                 state.preparing = false;
@@ -262,7 +267,7 @@ const ProductHero = ({ header }: ProductHeroProps) => {
         };
         const onAboutLink = (event: MouseEvent) => {
             if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
-            const anchor = (event.target as Element | null)?.closest?.("a[data-about-link]");
+            const anchor = (event.target as Element | null)?.closest?.('a[data-about-link], a[href="#section-four"]');
             if (!anchor) {
                 if ((event.target as Element | null)?.closest?.('a[href="#home"], a[data-home-link]')) {
                     event.preventDefault();
@@ -270,13 +275,17 @@ const ProductHero = ({ header }: ProductHeroProps) => {
                 }
                 return;
             }
+            const section = anchor.getAttribute("href") === "#section-four"
+                ? root.querySelector<HTMLElement>("#section-four") : about;
+            if (!section) return;
             event.preventDefault();
             if (prepared || state.failed) {
                 prepared = true;
-                scrollToAbout();
+                pendingSection = null;
+                scrollToSection(section);
                 return;
             }
-            jumpToAbout = true;
+            pendingSection = section;
             beginPreparation();
         };
         // iPad browser chrome changes the visible height independently of layout.
@@ -284,7 +293,7 @@ const ProductHero = ({ header }: ProductHeroProps) => {
         // fight a deliberate wheel/touch/keyboard scroll back toward Home.
         const onViewportChange = () => {
             syncViewport();
-            if (followAbout && !navigationFrame && !locked) alignAbout();
+            if (followSection && !navigationFrame && !locked) alignSection(followSection);
             else schedule();
         };
         const onScrollKey = (event: KeyboardEvent) => {

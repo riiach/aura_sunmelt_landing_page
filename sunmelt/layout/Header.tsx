@@ -117,7 +117,7 @@ const Header = ({ transparent = false }: { transparent?: boolean }) => {
               <Link key={label} href={href} className={styles.navLink}
                     data-about-link={href === "#about" ? "" : undefined}
                     data-home-link={href === "/" ? "" : undefined}
-                    scroll={href !== "#about" && href !== "/"}
+                    scroll={href !== "#about" && href !== "#section-four" && href !== "/"}
                     aria-current={currentLink(href)}>
                 <span className={styles.linkLabel}>{label}</span>
               </Link>
@@ -191,7 +191,7 @@ const Header = ({ transparent = false }: { transparent?: boolean }) => {
                     <Link key={label} href={href}
                           data-about-link={href === "#about" ? "" : undefined}
                           data-home-link={href === "/" ? "" : undefined}
-                          scroll={href !== "#about" && href !== "/"}
+                          scroll={href !== "#about" && href !== "#section-four" && href !== "/"}
                           className={label === "Contact" ? `${styles.mobileLink} ${styles.mobileContact}` : styles.mobileLink}
                           aria-current={currentLink(href)}
                           onClick={() => setMenuOpen(false)}>
