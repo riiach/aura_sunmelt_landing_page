@@ -303,6 +303,7 @@ const ProductHero = ({ header }: ProductHeroProps) => {
             storiesSlot.style.height = `${panelRect.height}px`;
             storiesPanel.style.setProperty("--stories-slide-width", `${panelRect.width}px`);
             storiesPanel.style.setProperty("--stories-slide-left", `${panelRect.left}px`);
+            root.dataset.storiesDestination = opening ? "stories" : returnTo;
             root.dataset.storiesSlide = "true";
             storiesPanel.style.transform = `translate3d(0,${startY}px,0)`;
 
@@ -342,6 +343,9 @@ const ProductHero = ({ header }: ProductHeroProps) => {
                     if (returnTo === "about") followSection = about;
                 }
                 syncViewport();
+                // Clear the navigation override only after the real panel
+                // has returned to flow and the destination has been aligned.
+                root.removeAttribute("data-stories-destination");
                 schedule();
             };
             finishSlide = finish;
@@ -467,6 +471,7 @@ const ProductHero = ({ header }: ProductHeroProps) => {
             }
             finishSlide = null;
             root.removeAttribute("data-stories-slide");
+            root.removeAttribute("data-stories-destination");
             storiesPanel.style.removeProperty("transform");
             storiesPanel.style.removeProperty("--stories-slide-width");
             storiesPanel.style.removeProperty("--stories-slide-left");

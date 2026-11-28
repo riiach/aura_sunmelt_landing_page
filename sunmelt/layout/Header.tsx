@@ -29,6 +29,8 @@ const Header = ({ transparent = false }: { transparent?: boolean }) => {
     const about = document.getElementById("about");
     const ingredients = document.getElementById("ingredients");
     const stories = document.getElementById("section-four");
+    const track = document.getElementById("home");
+    const storiesSlot = track?.querySelector<HTMLElement>("[data-stories-slot]");
     if (!about) {
       setActiveSection("home");
       return;
@@ -38,6 +40,13 @@ const Header = ({ transparent = false }: { transparent?: boolean }) => {
     let frame = 0;
     const update = () => {
       frame = 0;
+      // The sliding panel temporarily leaves document flow. Use the intended
+      // destination during that transition, not the animated panel rectangle.
+      const destination = track?.dataset.storiesDestination;
+      if (destination === "home" || destination === "about" || destination === "stories") {
+        setActiveSection(destination);
+        return;
+      }
       const normalScale = viewport && Math.abs(viewport.scale - 1) < .01;
       const viewportTop = normalScale ? viewport.offsetTop : 0;
       const height = normalScale ? viewport.height : window.innerHeight;
@@ -45,7 +54,8 @@ const Header = ({ transparent = false }: { transparent?: boolean }) => {
       const rect = about.getBoundingClientRect();
       // Ingredients is sticky during the cover transition. The fourth
       // section's moving top is the actual visible boundary of About.
-      const aboutBottom = stories?.getBoundingClientRect().top
+      const aboutBottom = storiesSlot?.getBoundingClientRect().top
+        ?? stories?.getBoundingClientRect().top
         ?? ingredients?.getBoundingClientRect().bottom ?? rect.bottom;
       const storiesBottom = stories?.getBoundingClientRect().bottom ?? aboutBottom;
       setActiveSection(midpoint < rect.top ? "home" : midpoint < aboutBottom ? "about" : midpoint < storiesBottom ? "stories" : null);
@@ -55,6 +65,14 @@ const Header = ({ transparent = false }: { transparent?: boolean }) => {
     observer.observe(about);
     if (ingredients) observer.observe(ingredients);
     if (stories) observer.observe(stories);
+    if (storiesSlot) observer.observe(storiesSlot);
+    // A slide can finish without firing scroll/resize when the document is
+    // already aligned. Observe its lifecycle to recompute the active menu.
+    const transitionObserver = new MutationObserver(schedule);
+    if (track) transitionObserver.observe(track, {
+      attributes: true,
+      attributeFilter: ["data-stories-destination", "data-stories-slide"],
+    });
     window.addEventListener("scroll", schedule, { passive: true });
     window.addEventListener("resize", schedule, { passive: true });
     viewport?.addEventListener("scroll", schedule, { passive: true });
@@ -64,6 +82,7 @@ const Header = ({ transparent = false }: { transparent?: boolean }) => {
     return () => {
       cancelAnimationFrame(frame);
       observer.disconnect();
+      transitionObserver.disconnect();
       window.removeEventListener("scroll", schedule);
       window.removeEventListener("resize", schedule);
       viewport?.removeEventListener("scroll", schedule);
