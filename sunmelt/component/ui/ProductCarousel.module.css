@@ -259,3 +259,7 @@
 @media (prefers-reduced-motion: reduce) {
     .gradient, .imageBackground, .rotateControl, .rotateDisc, .swipeHint { transition: none; }
 }
+
+/* Block native vertical panning during the real About checkpoint lock.
+   The next intentional swipe is handled explicitly by ProductHero. */
+.aboutTrack[data-about-checkpoint="true"] { touch-action: none; }
