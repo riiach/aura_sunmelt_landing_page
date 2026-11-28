@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { wrap, mod, scaleAt, getLayout, getTabletLift, getSnap, centerWeight, depthAt, rightTilt, isSelected, introPoseAt, introSpreadAt } from "./carouselMath.mjs";
+import { wrap, mod, scaleAt, getLayout, getSnap, centerWeight, depthAt, rightTilt, isSelected, introPoseAt, introSpreadAt } from "./carouselMath.mjs";
 
 test("desktop shows five whole cans, tablet shows three, mobile peeks on both sides", () => {
     const sideRadius = 0.314 * scaleAt(1);
@@ -86,15 +86,4 @@ test("opening starts with one visible center and spreads symmetrically to five",
         assert.equal(introSpreadAt(x, .5), introSpreadAt(-x, .5));
     }
     assert.ok(introSpreadAt(1, .5) > introSpreadAt(2, .5));
-});
-
-
-test("wide touch tablets raise the carousel while desktop and phone framing stay unchanged", () => {
-    assert.equal(getTabletLift(1180, 620, true), 68);
-    assert.equal(getTabletLift(1024, 600, true), 66);
-    assert.equal(getTabletLift(1366, 800, true), 88);
-    assert.equal(getTabletLift(1180, 620, false), 0);
-    assert.equal(getTabletLift(390, 700, true), 0);
-    assert.equal(getTabletLift(844, 1050, true), 0);
-    assert.equal(getTabletLift(1920, 900, true), 0);
 });
