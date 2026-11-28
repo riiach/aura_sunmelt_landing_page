@@ -276,23 +276,25 @@
         opacity: 0;
     }
 }
-/* Keep the small pressed disc visible until release, even after the
-   one-time tutorial is marked dismissed. Never expand back to 72px
-   during its exit: 38px -> 44px, then fade away. */
+/* Keep the pressed disc visible during the hold. On dismissal, hide
+   immediately without expansion, fade, or a flash of the original prompt. */
 .rotateControl[data-available="true"][data-holding="true"][data-dismissed="true"] {
     opacity: 1;
 }
 .rotateControl[data-dismissed="true"]:not([data-holding="true"]) {
     opacity: 0;
-    transition: opacity 280ms linear, visibility 280ms;
+    visibility: hidden;
+    pointer-events: none;
+    transition: none;
 }
 .rotateControl[data-dismissed="true"]:not([data-holding="true"]) .rotateDisc {
-    transform: scale(.6111111111);
-    transition: background-color 280ms ease, transform 280ms cubic-bezier(.42,0,.75,.75), color 280ms ease;
+    transform: scale(.5277777778);
+    transition: none;
 }
 .rotateControl[data-dismissed="true"] .rotateLabel,
 .rotateControl[data-dismissed="true"] .rotateDisc > svg {
     opacity: 0;
+    transition: none;
 }
 .rotateControl:focus-visible { outline: 2px solid #fff; outline-offset: 4px; border-radius: 50%; }
 .status {
