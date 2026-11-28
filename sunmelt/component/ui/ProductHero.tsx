@@ -20,6 +20,7 @@ const palettes = [
 ];
 */
 
+/* Temporarily disabled for the plain white hero preview.
 // Uploaded background artwork is stored in public/backgrounds.
 // Keep the existing grapefruit can until its replacement lychee artwork is supplied.
 const imageBackgrounds = ["mango", "grape", "peach", "pomegranate", "lychee"] as const;
@@ -28,14 +29,15 @@ const backgroundFor = (name: string) => {
     const flavor = name.toLowerCase().split(" ")[0];
     return flavor === "grapefruit" ? "lychee" : flavor;
 };
+*/
 
 interface ProductHeroProps {
     header: ReactNode;
 }
 
 const ProductHero = ({ header }: ProductHeroProps) => {
-    const [activeProduct, setActiveProduct] = useState("Grapefruit Fizz");
-    const activeBackground = backgroundFor(activeProduct);
+    // const [activeProduct, setActiveProduct] = useState("Grapefruit Fizz");
+    // const activeBackground = backgroundFor(activeProduct);
     const [introPhase, setIntroPhase] = useState<IntroPhase>("lineup");
     const frameRef = useRef<HTMLDivElement>(null);
     const trackRef = useRef<HTMLDivElement>(null);
@@ -467,6 +469,7 @@ const ProductHero = ({ header }: ProductHeroProps) => {
         <div id="home" ref={trackRef} className={styles.aboutTrack} data-intro-phase={introPhase}>
             <main className={styles.sections}>
                 <div ref={frameRef} className={styles.frame}>
+                    {/* Hero background preview: artwork and glass flutes disabled together.
                     <div className={styles.backdrop} aria-hidden="true">
                         {imageBackgrounds.map(flavor => (
                             <div key={flavor}
@@ -478,6 +481,7 @@ const ProductHero = ({ header }: ProductHeroProps) => {
                             />
                         ))}
                     </div>
+                    */}
                 </div>
                 <AboutSection tileRef={tileRef} interactive={aboutInteractive} />
                 <IngredientsSection tileRef={ingredientsRef} interactive={aboutInteractive} />
@@ -489,7 +493,6 @@ const ProductHero = ({ header }: ProductHeroProps) => {
                 </div>
             </main>
             <ProductCarousel
-                onProductChange={setActiveProduct}
                 onIntroPhase={setIntroPhase}
                 onIntroProgress={syncIntroProgress}
                 aboutState={aboutState}
