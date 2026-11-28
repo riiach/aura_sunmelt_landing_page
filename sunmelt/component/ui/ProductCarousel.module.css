@@ -143,6 +143,37 @@
     pointer-events: none;
     transition: background-color 160ms ease, transform 160ms ease, color 160ms ease;
 }
+.swipeHint {
+    display: none;
+    position: absolute;
+    z-index: 3;
+    top: var(--swipe-y, 48%);
+    transform: translateY(-50%);
+    width: 44px;
+    height: 44px;
+    padding: 3px;
+    border: 0;
+    background: transparent;
+    color: #fff;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    touch-action: pan-y;
+    -webkit-tap-highlight-color: transparent;
+    transition: opacity 220ms ease, visibility 220ms;
+}
+.swipeHintRight { right: clamp(12px, 5vw, 44px); }
+.swipeHintLeft { left: clamp(12px, 5vw, 44px); }
+.swipeDisc {
+    display: grid;
+    place-items: center;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background: rgba(255,255,255,.38);
+    pointer-events: none;
+}
+.swipeHint:focus-visible { outline: 2px solid #fff; outline-offset: 2px; border-radius: 50%; }
 .rotateLabel {
     display: block;
     font-family: var(--font-poppins), sans-serif;
@@ -155,7 +186,12 @@
     pointer-events: none;
 }
 @media (hover: none) and (pointer: coarse) {
-    .rotateControl { display: block; }
+    .rotateControl, .swipeHint { display: block; }
+    .swipeHint[data-available="true"]:not(:disabled) {
+        visibility: visible;
+        opacity: 1;
+        pointer-events: auto;
+    }
     .rotateControl[data-available="true"] {
         visibility: visible;
         opacity: 1;
@@ -204,5 +240,5 @@
     .aboutTrack { --stage-height: max(480px, calc(100svh - var(--header-height))); }
 }
 @media (prefers-reduced-motion: reduce) {
-    .gradient, .imageBackground, .rotateControl, .rotateDisc { transition: none; }
+    .gradient, .imageBackground, .rotateControl, .rotateDisc, .swipeHint { transition: none; }
 }

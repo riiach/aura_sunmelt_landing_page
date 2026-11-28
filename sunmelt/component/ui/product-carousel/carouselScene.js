@@ -8,8 +8,9 @@ import { aboutPhases, nearestFlavorPosition, preparationDuration, preparationPro
 // Keep the hint dismissed for this document, even if the scene is remounted.
 // A reload creates a new document and starts with a fresh hint.
 const dismissedRotateHints = new WeakSet();
+const swipeHintPhases = new WeakMap();
 
-export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase, onIntroProgress, aboutState, rotateControl }) => {
+export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase, onIntroProgress, aboutState, rotateControl, rightHint, leftHint }) => {
     let renderer;
     try {
         renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true, powerPreference: "high-performance" });
@@ -106,6 +107,16 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
     const dismissRotateHint = () => {
         dismissedRotateHints.add(hintDocument);
         rotateControl?.setAttribute("data-dismissed", "true");
+        if (!swipeHintPhases.has(hintDocument)) swipeHintPhases.set(hintDocument, "right");
+    };
+    const advanceSwipeHint = () => {
+        if (!touchPreference.matches) return;
+        if (!dismissedRotateHints.has(hintDocument)) {
+            dismissRotateHint();
+            return;
+        }
+        const phase = swipeHintPhases.get(hintDocument) || "right";
+        swipeHintPhases.set(hintDocument, phase === "right" ? "left" : "done");
     };
     const cans = [];
     let assets, snapTween, spinTween, spinningCan, introTween;
@@ -184,7 +195,15 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
             rotateAvailable = showHint;
             rotateControl.dataset.available = String(showHint);
         }
-        if (!showHint) return;
+        const phase = swipeHintPhases.get(hintDocument);
+        const showSwipe = available && !heldCan && dismissedRotateHints.has(hintDocument);
+        for (const [button, direction] of [[rightHint, "right"], [leftHint, "left"]]) {
+            if (!button) continue;
+            const show = showSwipe && phase === direction;
+            if (button.disabled === show) button.disabled = !show;
+            if (button.dataset.available !== String(show)) button.dataset.available = String(show);
+        }
+        if (!showHint && !showSwipe) return;
         const center = cans[activeIndex]?.primary;
         if (!center) return;
         // Project the actual 3D center so the button follows the floating can.
@@ -193,6 +212,7 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
         rotateAnchor.project(camera);
         rotateControl.style.setProperty("--rotate-x", `${(rotateAnchor.x + 1) * 50}%`);
         rotateControl.style.setProperty("--rotate-y", `${(1 - rotateAnchor.y) * 50}%`);
+        hero?.style.setProperty("--swipe-y", `${(1 - rotateAnchor.y) * 50}%`);
     };
     const beginHeldRotation = () => {
         if (!canHoldRotate() || heldCan) return false;
@@ -216,7 +236,10 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
         rotateControl.setPointerCapture(event.pointerId);
     };
     const onRotateRelease = event => {
-        if (event.pointerId === heldPointer) stopHeldRotation();
+        if (event.pointerId === heldPointer) {
+            if (heldCan && event.type === "pointerup") dismissRotateHint();
+            stopHeldRotation();
+        }
     };
     const onRotateKeyDown = event => {
         if (![" ", "Enter"].includes(event.key)) return;
@@ -226,6 +249,7 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
     const onRotateKeyUp = event => {
         if (heldKey === event.key) {
             event.preventDefault();
+            if (heldCan) dismissRotateHint();
             stopHeldRotation();
         }
     };
@@ -238,8 +262,10 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
         const state = aboutState?.current;
         // Leaving Home consumes the initial tutorial even without a long press.
         // Ordinary drag/snap interruptions still allow it during the first visit.
-        if ((state?.preparing || state?.progress > 0) && !dismissedRotateHints.has(hintDocument)) {
-            dismissRotateHint();
+        if (state?.preparing || state?.progress > 0) {
+            if (!dismissedRotateHints.has(hintDocument)) dismissRotateHint();
+            swipeHintPhases.set(hintDocument, "done");
+            syncRotateControl();
         }
         if (!ready || (!inView && !(state?.progress > 0 || displayAboutProgress > 0))) return;
         const dt = Math.min(.05, (deltaMs || 16.7) / 1000);
@@ -568,6 +594,15 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
         });
     };
 
+    const onSwipeHint = direction => {
+        if (!canHoldRotate() || heldCan || swipeHintPhases.get(hintDocument) !== direction) return;
+        advanceSwipeHint();
+        snapTo(Math.round(track.position) + (direction === "right" ? 1 : -1));
+        syncRotateControl();
+    };
+    const onRightHint = () => onSwipeHint("right");
+    const onLeftHint = () => onSwipeHint("left");
+
     const hitsCenterCan = (event) => {
         const center = cans[activeIndex]?.primary;
         if (!center) return false;
@@ -670,6 +705,7 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
 
     const release = (event, canceled = false) => {
         if (event.pointerId === heldPointer) {
+            if (heldCan && !canceled) dismissRotateHint();
             stopHeldRotation();
             stage.style.cursor = "grab";
             return;
@@ -686,7 +722,10 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
         const target = previous.moved
             ? getSnap(track.position, previous.origin, velocity, canceled)
             : Math.round(track.position);
+        if (!canceled && previous.axis === "horizontal" && previous.moved &&
+            target !== Math.round(previous.origin)) advanceSwipeHint();
         snapTo(target, velocity);
+        syncRotateControl();
     };
 
     const onPointerUp = event => release(event);
@@ -699,7 +738,9 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
     const onKeyDown = event => {
         if (!ready || !introComplete || aboutState?.current?.preparing || aboutProgress() > 0 || drag || !["ArrowLeft", "ArrowRight"].includes(event.key)) return;
         event.preventDefault();
+        advanceSwipeHint();
         snapTo(Math.round(track.position) + (event.key === "ArrowRight" ? 1 : -1));
+        syncRotateControl();
     };
     const finishIntro = () => {
         if (disposed || introComplete) return;
@@ -786,6 +827,8 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
     });
     visibility.observe(stage);
 
+    rightHint?.addEventListener("click", onRightHint);
+    leftHint?.addEventListener("click", onLeftHint);
     rotateControl?.addEventListener("pointerdown", onRotateDown);
     rotateControl?.addEventListener("pointerup", onRotateRelease);
     rotateControl?.addEventListener("pointercancel", onRotateRelease);
@@ -839,6 +882,14 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
     return () => {
         disposed = true;
         stopHeldRotation();
+        for (const button of [rightHint, leftHint]) {
+            if (!button) continue;
+            button.disabled = true;
+            button.removeAttribute("data-available");
+        }
+        rightHint?.removeEventListener("click", onRightHint);
+        leftHint?.removeEventListener("click", onLeftHint);
+        hero?.style.removeProperty("--swipe-y");
         rotateControl?.removeAttribute("data-available");
         rotateControl?.removeAttribute("data-dismissed");
         rotateControl?.removeEventListener("pointerdown", onRotateDown);

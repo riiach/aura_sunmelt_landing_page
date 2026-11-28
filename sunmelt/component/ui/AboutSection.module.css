@@ -189,14 +189,14 @@
     }
     .actions { margin-top: clamp(14px, 3.7vw, 22px); gap: 8px; }
     .primaryButton { min-height: 40px; padding-inline: 15px; font-size: 12px; }
-    /* Full-width 5:4 ice grid; let short viewports scroll rather than
+    /* Padded 5:4 ice grid; let short viewports scroll rather than
        squeezing the artwork or distorting the square individual cubes. */
     .artworkSlot {
         display: flex;
         position: relative;
         flex: 1 0 auto;
         min-height: 0;
-        padding: 6px 0 0;
+        padding: 6px clamp(16px, 5.5vw, 32px) 0;
         align-items: center;
         justify-content: center;
     }

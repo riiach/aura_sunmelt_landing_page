@@ -27,6 +27,8 @@ interface ProductCarouselProps {
 const ProductCarousel = ({ onProductChange, onIntroPhase, onIntroProgress, aboutState, aboutInteractive }: ProductCarouselProps) => {
     const stageRef = useRef<HTMLDivElement>(null);
     const rotateRef = useRef<HTMLButtonElement>(null);
+    const rightHintRef = useRef<HTMLButtonElement>(null);
+    const leftHintRef = useRef<HTMLButtonElement>(null);
     const [ready, setReady] = useState(false);
     const [introPhase, setIntroPhase] = useState<IntroPhase>("lineup");
     const [error, setError] = useState("");
@@ -39,6 +41,8 @@ const ProductCarousel = ({ onProductChange, onIntroPhase, onIntroProgress, about
         return mountCarousel(stage, {
             onReady: () => setReady(true),
             rotateControl: rotateRef.current,
+            rightHint: rightHintRef.current,
+            leftHint: leftHintRef.current,
             onIntroProgress,
             aboutState,
             onError: (message: string) => {
@@ -80,6 +84,22 @@ const ProductCarousel = ({ onProductChange, onIntroPhase, onIntroProgress, about
                         <path d="M20 11a8 8 0 1 0-2.3 5.7M20 5v6h-6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
                     <span className={styles.rotateLabel}>Press to<br />rotate</span>
+                </span>
+            </button>
+            <button ref={rightHintRef} type="button" className={`${styles.swipeHint} ${styles.swipeHintRight}`}
+                    aria-label="Show next flavor" disabled>
+                <span className={styles.swipeDisc} aria-hidden="true">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                        <path d="m9 5 7 7-7 7" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                </span>
+            </button>
+            <button ref={leftHintRef} type="button" className={`${styles.swipeHint} ${styles.swipeHintLeft}`}
+                    aria-label="Show previous flavor" disabled>
+                <span className={styles.swipeDisc} aria-hidden="true">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                        <path d="m15 5-7 7 7 7" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
                 </span>
             </button>
             {!ready && !aboutInteractive && (
