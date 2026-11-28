@@ -52,13 +52,13 @@ test("reverse scroll limits speed and restores the hero smoothly", () => {
     let p = 1;
     const dt = 1 / 60;
     const first = advanceAboutProgress(p, 0, dt);
-    assert.ok(first > .94 && first < .98);
+    assert.ok(first > .98 && first < 1);
     for (let i = 0; i < 60; i++) {
         const next = advanceAboutProgress(p, 0, dt);
         assert.ok(next <= p && next >= 0);
         p = next;
     }
-    assert.ok(p < .01);
+    assert.ok(p > .2);
     for (let i = 0; i < 180; i++) p = advanceAboutProgress(p, 0, dt);
     assert.equal(p, 0);
 });
@@ -96,28 +96,4 @@ test("ingredients scroll is reversible and respects the viewport offset", () => 
     assert.equal(ingredientsRotationProgress(.08), 0);
     assert.equal(ingredientsRotationProgress(.86), 1);
     assert.ok(ingredientsRotationProgress(.45) > 0 && ingredientsRotationProgress(.45) < 1);
-});
-
-test("the middle checkpoint catches large forward and reverse scroll deltas", async () => {
-    const { checkpointSide, crossesAboutCheckpoint } = await import("./aboutMath.mjs");
-    assert.equal(checkpointSide(300), 1);
-    assert.equal(checkpointSide(-300), -1);
-    assert.equal(checkpointSide(24), 0);
-    assert.equal(checkpointSide(-24), 0);
-    assert.equal(crossesAboutCheckpoint(1, 300, 900), true);
-    assert.equal(crossesAboutCheckpoint(-1, -300, -900), true);
-    assert.equal(crossesAboutCheckpoint(-1, -300, -100), false);
-    assert.equal(crossesAboutCheckpoint(1, 300, 100), false);
-    assert.equal(crossesAboutCheckpoint(-1, -300, 900), false);
-    assert.equal(crossesAboutCheckpoint(1, 300, -900), false);
-    assert.equal(crossesAboutCheckpoint(-1, -1, -1), true);
-});
-
-test("touch fling restores speed while capping momentum in both directions", async () => {
-    const { touchFlingDistance } = await import("./aboutMath.mjs");
-    assert.equal(touchFlingDistance(.1, 800), 0);
-    assert.equal(touchFlingDistance(2, 800), 480);
-    assert.equal(touchFlingDistance(-2, 800), -480);
-    assert.equal(touchFlingDistance(10, 800), 960);
-    assert.equal(touchFlingDistance(-10, 800), -960);
 });

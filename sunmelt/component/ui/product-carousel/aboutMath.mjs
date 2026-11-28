@@ -41,7 +41,7 @@ export const advanceAboutProgress = (current, target, dt, immediate = false) => 
     if (immediate || next >= current) return next;
     const gap = current - next;
     if (gap < .001) return next;
-    const step = Math.min(3.2 * Math.max(0, dt), gap * (1 - Math.exp(-14 * Math.max(0, dt))));
+    const step = Math.min(.78 * Math.max(0, dt), gap * (1 - Math.exp(-4.5 * Math.max(0, dt))));
     return Math.max(next, current - step);
 };
 
@@ -64,16 +64,3 @@ export const ingredientsScrollProgress = (aboutTop, ingredientsTop, viewportTop 
     return distance > 0 ? clamp((viewportTop - aboutTop) / distance) : 0;
 };
 export const ingredientsRotationProgress = progress => ease(progress, .08, .86);
-
-// Rearm only after departing the middle checkpoint, on either side.
-// remaining = About top minus the visible viewport top, dy = scroll delta.
-export const checkpointSide = remaining => remaining > 24 ? 1 : remaining < -24 ? -1 : 0;
-export const crossesAboutCheckpoint = (side, remaining, dy) =>
-    side * dy > 0 && side * (remaining - dy) <= 1;
-
-// Project a short, capped momentum tail from the release velocity (px/ms).
-export const touchFlingDistance = (velocity, viewportHeight) => {
-    if (!Number.isFinite(velocity) || Math.abs(velocity) < .15) return 0;
-    const limit = Math.max(0, viewportHeight) * 1.2;
-    return Math.max(-limit, Math.min(limit, velocity * 240));
-};
