@@ -11,13 +11,13 @@ import styles from "./Header.module.css";
 const links = [
   { label: "Home", href: "/" },
   { label: "About", href: "#about" },
-  { label: "Sales", href: "" },
+  { label: "Stories", href: "#section-four" },
   { label: "Contact", href: "" },
 ];
 
 const Header = ({ transparent = false }: { transparent?: boolean }) => {
   const pathname = usePathname();
-  const [activeSection, setActiveSection] = useState<"home" | "about" | null>("home");
+  const [activeSection, setActiveSection] = useState<"home" | "about" | "stories" | null>("home");
   const [menuOpen, setMenuOpen] = useState(false);
   const menuButton = useRef<HTMLButtonElement>(null);
   const headerRef = useRef<HTMLDivElement>(null);
@@ -28,6 +28,7 @@ const Header = ({ transparent = false }: { transparent?: boolean }) => {
   useEffect(() => {
     const about = document.getElementById("about");
     const ingredients = document.getElementById("ingredients");
+    const stories = document.getElementById("section-four");
     if (!about) {
       setActiveSection("home");
       return;
@@ -44,15 +45,16 @@ const Header = ({ transparent = false }: { transparent?: boolean }) => {
       const rect = about.getBoundingClientRect();
       // Ingredients is sticky during the cover transition. The fourth
       // section's moving top is the actual visible boundary of About.
-      const aboutBottom = document.getElementById("section-four")?.getBoundingClientRect().top
+      const aboutBottom = stories?.getBoundingClientRect().top
         ?? ingredients?.getBoundingClientRect().bottom ?? rect.bottom;
-      // The fourth section is intentionally blank and has no navigation label yet.
-      setActiveSection(midpoint < rect.top ? "home" : midpoint < aboutBottom ? "about" : null);
+      const storiesBottom = stories?.getBoundingClientRect().bottom ?? aboutBottom;
+      setActiveSection(midpoint < rect.top ? "home" : midpoint < aboutBottom ? "about" : midpoint < storiesBottom ? "stories" : null);
     };
     const schedule = () => { if (!frame) frame = requestAnimationFrame(update); };
     const observer = new ResizeObserver(schedule);
     observer.observe(about);
     if (ingredients) observer.observe(ingredients);
+    if (stories) observer.observe(stories);
     window.addEventListener("scroll", schedule, { passive: true });
     window.addEventListener("resize", schedule, { passive: true });
     viewport?.addEventListener("scroll", schedule, { passive: true });
@@ -72,6 +74,7 @@ const Header = ({ transparent = false }: { transparent?: boolean }) => {
   const currentLink = (href: string): "location" | undefined => {
     if (href === "/") return pathname === "/" && activeSection === "home" ? "location" : undefined;
     if (href === "#about") return pathname === "/" && activeSection === "about" ? "location" : undefined;
+    if (href === "#section-four") return pathname === "/" && activeSection === "stories" ? "location" : undefined;
     return undefined;
   };
 
