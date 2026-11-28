@@ -41,12 +41,12 @@
     pointer-events: none;
 }
 .sparkleTop {
-    left: 3.5%;
-    top: calc(-1.14 * var(--sparkle-size));
+    left: 6%;
+    top: calc(-1.27 * var(--sparkle-size));
 }
 .sparkleBottom {
-    left: max(63.5%, 185px);
-    top: calc(-.12 * var(--sparkle-size));
+    left: max(65.5%, 185px);
+    top: calc(-.70 * var(--sparkle-size));
 }
 .title {
     margin: 0;
@@ -221,7 +221,8 @@
         margin-top: 28px;
         padding-inline: 4px;
     }
-    .sparkleBottom { left: min(78%, max(63.5%, 172px)); }
+    .sparkleTop { left: 3.5%; top: calc(-1.14 * var(--sparkle-size)); }
+    .sparkleBottom { left: min(78%, max(63.5%, 172px)); top: calc(-.12 * var(--sparkle-size)); }
     .title { font-size: clamp(29px, 7.8vw, 43px); }
     .description { margin-top: 10px; font-size: 12px; line-height: 1.5; }
     .actions { margin-top: 14px; gap: 8px; }
