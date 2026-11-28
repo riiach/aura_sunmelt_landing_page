@@ -8,7 +8,7 @@ import Footer from "../../layout/Footer";
 import ContactPanel from "../../layout/ContactPanel";
 import type { AboutSceneState, IntroPhase } from "./ProductCarousel";
 import AboutSection, { IngredientsSection } from "./AboutSection";
-import { aboutPhases, aboutScrollProgress, aboutNavigationEase, aboutViewportMetrics, MANGO_READY } from "./product-carousel/aboutMath.mjs";
+import { aboutPhases, aboutScrollProgress, mobileAboutScrollProgress, aboutNavigationEase, aboutViewportMetrics, MANGO_READY } from "./product-carousel/aboutMath.mjs";
 import styles from "./ProductCarousel.module.css";
 
 /* Temporarily disabled for the white-background preview.
@@ -57,6 +57,7 @@ const ProductHero = ({ header }: ProductHeroProps) => {
         const storiesSlot = root.querySelector<HTMLElement>("[data-stories-slot]");
         if (!about || !stories || !storiesPanel || !storiesSlot) return;
         const motion = window.matchMedia("(prefers-reduced-motion: reduce)");
+        const mobile = window.matchMedia("(max-width: 767px)");
         const state = aboutState.current;
         const html = document.documentElement;
         let scheduled = 0, navigationFrame = 0;
@@ -85,9 +86,13 @@ const ProductHero = ({ header }: ProductHeroProps) => {
                 window.innerHeight, html.clientHeight, visual?.height,
                 visual?.scale, visual?.offsetTop,
             );
+            // The phone's browser bars resize the visual viewport during a
+            // swipe. Keep the section geometry tied to the stable hero frame
+            // so the ice-grid destination does not jump mid-gesture.
+            const stablePhoneHeight = Math.max(1, frame.clientHeight);
             for (const [key, value] of [
-                ["--about-view-height", `${visibleHeight}px`],
-                ["--about-scroll-height", `${scrollHeight}px`],
+                ["--about-view-height", `${mobile.matches ? stablePhoneHeight : visibleHeight}px`],
+                ["--about-scroll-height", `${mobile.matches ? stablePhoneHeight : scrollHeight}px`],
             ]) {
                 if (root.style.getPropertyValue(key) !== value) root.style.setProperty(key, value);
             }
@@ -116,7 +121,7 @@ const ProductHero = ({ header }: ProductHeroProps) => {
                 return;
             }
             const started = performance.now();
-            const duration = 1450;
+            const duration = mobile.matches ? 1100 : 1450;
             const step = (now: number) => {
                 const progress = Math.min(1, (now - started) / duration);
                 // Read the live section position to account for responsive layout changes.
@@ -195,6 +200,15 @@ const ProductHero = ({ header }: ProductHeroProps) => {
             }
             const remaining = aboutRemaining();
             const raw = remaining <= 1 ? 1 : Math.max(0, Math.min(1, 1 - remaining / scrollRange()));
+            if (mobile.matches) {
+                // The phone owns its scroll position. All animation phases
+                // follow that position in both directions.
+                prepared = raw > 0;
+                entered = prepared;
+                state.returnToMango = false;
+                publish(motion.matches && raw > 0 ? 1 : mobileAboutScrollProgress(raw));
+                return;
+            }
             if (!prepared && raw > .001) {
                 beginPreparation();
                 if (locked) return;
@@ -217,7 +231,7 @@ const ProductHero = ({ header }: ProductHeroProps) => {
             if ((event.target as Element | null)?.closest?.('nav[aria-label="Mobile navigation"]')) return;
             if (slide || locked) { if (event.cancelable) event.preventDefault(); return; }
             cancelNavigation();
-            if (!prepared && event.deltaY > 0 && !state.failed) {
+            if (!mobile.matches && !prepared && event.deltaY > 0 && !state.failed) {
                 event.preventDefault();
                 beginPreparation();
             }
@@ -240,7 +254,7 @@ const ProductHero = ({ header }: ProductHeroProps) => {
             const dx = event.touches[0].clientX - touchX;
             if (slide || locked) { if (event.cancelable) event.preventDefault(); return; }
             if (Math.abs(dy) > 8 && Math.abs(dy) > Math.abs(dx)) cancelNavigation();
-            if (!prepared && !state.failed && dy > 8 && dy > Math.abs(dx)) {
+            if (!mobile.matches && !prepared && !state.failed && dy > 8 && dy > Math.abs(dx)) {
                 if (event.cancelable) event.preventDefault();
                 beginPreparation();
             }
@@ -275,7 +289,7 @@ const ProductHero = ({ header }: ProductHeroProps) => {
             }
             const started = performance.now();
             const step = (now: number) => {
-                const progress = Math.min(1, (now - started) / 1450);
+                const progress = Math.min(1, (now - started) / (mobile.matches ? 1100 : 1450));
                 window.scrollTo({
                     top: from + (Math.max(0, top()) - from) * aboutNavigationEase(progress),
                     behavior: "instant",
@@ -395,7 +409,7 @@ const ProductHero = ({ header }: ProductHeroProps) => {
                 directStoriesSlide(false, "about");
                 return;
             }
-            if (prepared || state.failed) {
+            if (mobile.matches || prepared || state.failed) {
                 prepared = true;
                 pendingSection = null;
                 scrollToSection(section);
@@ -427,7 +441,7 @@ const ProductHero = ({ header }: ProductHeroProps) => {
                 return;
             }
             syncViewport();
-            if (followSection && !navigationFrame && !locked && stillAtArrival) {
+            if (!mobile.matches && followSection && !navigationFrame && !locked && stillAtArrival) {
                 alignSection(followSection);
             } else schedule();
         };

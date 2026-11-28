@@ -77,3 +77,12 @@ export const advanceMobileLandingSpin = (current, target, dt, immediate = false)
 // eased can pose does. Do not keep chasing an offscreen About tile downward.
 export const reverseLandingTargetY = (centerY, sectionTop, viewportTop, reversing) =>
     reversing ? centerY - Math.max(0, sectionTop - viewportTop) : centerY;
+
+// Phones use one continuous native gesture, including the initial centering.
+// No scroll lock or independent rotation timer competes with touch momentum.
+export const mobileAboutScrollProgress = raw => {
+    const p = clamp(raw);
+    if (p <= .24) return MANGO_READY * p / .24;
+    if (p <= .43) return MANGO_READY + (.68 - MANGO_READY) * (p - .24) / .19;
+    return .68 + .32 * (p - .43) / .57;
+};

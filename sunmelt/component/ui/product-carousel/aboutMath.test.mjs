@@ -118,3 +118,17 @@ test("reverse landing does not follow an About tile downward after leaving its s
     assert.equal(reverseLandingTargetY(450, -100, 0, true), 450);
     assert.equal(reverseLandingTargetY(970, 420, 20, true), 570);
 });
+
+test("mobile phases stay continuous and tied to native scroll in both directions", async () => {
+    const { mobileAboutScrollProgress } = await import("./aboutMath.mjs");
+    assert.equal(mobileAboutScrollProgress(0), 0);
+    assert.equal(mobileAboutScrollProgress(.24), MANGO_READY);
+    assert.ok(Math.abs(mobileAboutScrollProgress(.43) - .68) < 1e-9);
+    assert.ok(Math.abs(mobileAboutScrollProgress(1) - 1) < 1e-9);
+    assert.equal(mobileAboutScrollProgress(-1), 0);
+    for (let i = 1; i <= 100; i++) {
+        const a = mobileAboutScrollProgress((i - 1) / 100);
+        const b = mobileAboutScrollProgress(i / 100);
+        assert.ok(b >= a && b - a < .03);
+    }
+});

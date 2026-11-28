@@ -59,7 +59,14 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
             const bottom = Math.min(viewportBottom, trackElement.getBoundingClientRect().bottom);
             extra = Math.max(0, Math.ceil(bottom - rect.bottom));
         }
-        if (hero) hero.style.overflow = extra > 0 ? "visible" : originalOverflow;
+        if (width < 768) {
+            // Allocate a stable buffer for the phone, rather than rebuilding
+            // the WebGL drawing buffer each time the browser toolbar moves.
+            const fullHeight = Math.min(height + 180, Math.max(height, window.screen.height));
+            extra = Math.ceil(fullHeight - height);
+        }
+        const overflow = landing && extra > 0 ? "visible" : originalOverflow;
+        if (hero && hero.style.overflow !== overflow) hero.style.overflow = overflow;
         sizeCanvas(width, height + extra);
         if (extra > 0) {
             landingCamera.copy(camera, false);
@@ -320,9 +327,11 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
         const requestedProgress = introComplete ? state?.progress || 0 : 0;
         displayAboutProgress = advanceAboutProgress(
             displayAboutProgress, requestedProgress, dt,
-            !introComplete || reduced() || Boolean(state?.preparing) || preparedNow || Boolean(state?.snapToProgress)
+            mobileLanding.matches || !introComplete || reduced() || Boolean(state?.preparing) || preparedNow || Boolean(state?.snapToProgress)
         );
-        const instantSpin = !mobileLanding.matches || reduced() || Boolean(state?.snapToProgress);
+        // Both translation and spin share the same scroll phase. On phones
+        // an independent timer used to leave the can rotating after landing.
+        const instantSpin = true;
         if (state?.snapToProgress) state.snapToProgress = false;
         const progress = displayAboutProgress;
         const reversing = requestedProgress < progress;
@@ -471,6 +480,9 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
         const { settle, travel, fade, land } = aboutPhases(progress);
         const lerp = THREE.MathUtils.lerp;
         track.position = lerp(aboutOrigin, aboutTarget, travel);
+        // Once fully centered, return to Mango rather than replaying a
+        // different initial selection on the way back up.
+        if (mobileLanding.matches && travel === 1) aboutOrigin = aboutTarget;
         parallaxX = parallaxY = 0;
         camera.position.set(0, cameraHeight, cameraDistance);
         camera.lookAt(0, 0, 0);
@@ -579,8 +591,8 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
         camera.updateProjectionMatrix();
         spacing = worldHeight * aspect / worldWidth;
         pixelsPerUnit = width / worldWidth;
-        renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, width < 640 ? 1.25 : 1.75));
-        sizeCanvas(width, height);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, width < 768 ? 1.0 : 1.75));
+        sizeCanvas(width, width < 768 ? Math.ceil(Math.min(height + 180, Math.max(height, window.screen.height))) : height);
         if (introComplete && aboutProgress() > 0) invalidate();
         else updateLayout();
     };
