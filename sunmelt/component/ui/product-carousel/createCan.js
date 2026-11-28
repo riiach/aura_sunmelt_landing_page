@@ -65,7 +65,7 @@ const capsule = (w, h) => {
     return s;
 };
 
-export const createCanAssets = async (renderer, base = "/textures") => {
+export const createCanAssets = async (renderer, base = `${process.env.NEXT_PUBLIC_BASE_PATH || ""}/textures`) => {
     const loader = new THREE.TextureLoader();
     const anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy());
     const paths = [...flavors.map(f => base + "/uv/" + f.id + ".webp"),

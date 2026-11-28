@@ -197,7 +197,7 @@ const ProductHero = ({ header }: ProductHeroProps) => {
                                  className={styles.imageBackground}
                                  style={{
                                      opacity: activeBackground === flavor ? 1 : 0,
-                                     backgroundImage: `url("/backgrounds/${flavor}.webp")`,
+                                     backgroundImage: `url("${process.env.NEXT_PUBLIC_BASE_PATH || ""}/backgrounds/${flavor}.webp")`,
                                  }}
                             />
                         ))}
