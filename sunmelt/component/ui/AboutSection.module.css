@@ -27,26 +27,9 @@
     gap: clamp(24px, 5vw, 72px);
 }
 .copy {
-    --sparkle-size: clamp(24px, 2.55vw, 38px);
     position: relative;
     z-index: 3;
     max-width: 570px;
-}
-.sparkle {
-    position: absolute;
-    display: block;
-    width: var(--sparkle-size);
-    height: var(--sparkle-size);
-    color: #000;
-    pointer-events: none;
-}
-.sparkleTop {
-    left: 2%;
-    top: calc(-2.35 * var(--sparkle-size));
-}
-.sparkleBottom {
-    left: max(65.5%, 185px);
-    top: calc(-.70 * var(--sparkle-size));
 }
 .title {
     margin: 0;
@@ -188,15 +171,12 @@
         align-items: stretch;
     }
     .copy {
-        --sparkle-size: clamp(18px, 5.4vw, 27px);
         flex: 0 0 auto;
         width: 100%;
         max-width: none;
         margin: 0;
         padding: clamp(54px, 16vw, 96px) clamp(16px, 5.5vw, 32px) clamp(22px, 7vw, 40px);
     }
-    .sparkleTop { left: 11%; top: clamp(20px, 6.5vw, 39px); }
-    .sparkleBottom { left: 71%; top: calc(-.58 * var(--sparkle-size)); }
     .title {
         font-size: clamp(28px, 8.5vw, 52px);
         text-wrap: wrap;
@@ -242,7 +222,6 @@
 }
 @media (max-width: 767px) and (max-height: 700px) {
     .copy { padding-top: clamp(46px, 14vw, 76px); padding-bottom: 18px; }
-    .sparkleTop { top: clamp(16px, 5vw, 30px); }
     .title { font-size: clamp(27px, 7.8vw, 43px); }
 }
 @media (prefers-reduced-motion: reduce) {
