@@ -18,9 +18,9 @@ const Sparkle = ({ className, twoDots = false }: { className: string; twoDots?: 
 );
 
 const AboutSection = ({ tileRef, interactive }: AboutSectionProps) => (
-    <section id="about" className={styles.section} aria-labelledby="about-title" inert={!interactive}>
-        <div className={styles.ribbon} aria-hidden="true"
-             style={{ "--about-ribbon": `url("${process.env.NEXT_PUBLIC_BASE_PATH || ""}/backgrounds/C36474C1-21B3-4870-B89D-90F5730E7CB6.png")` } as CSSProperties} />
+    <section id="about" className={styles.section} aria-labelledby="about-title" inert={!interactive}
+             style={{ "--about-ribbon": `url("${process.env.NEXT_PUBLIC_BASE_PATH || ""}/backgrounds/C36474C1-21B3-4870-B89D-90F5730E7CB6.png")` } as CSSProperties}>
+        <div className={styles.ribbon} aria-hidden="true" />
         <div className={styles.inner}>
             <div className={styles.copy}>
                 <Sparkle className={`${styles.sparkle} ${styles.sparkleTop}`} twoDots />
@@ -31,10 +31,12 @@ const AboutSection = ({ tileRef, interactive }: AboutSectionProps) => (
                     <Sparkle className={`${styles.sparkle} ${styles.sparkleBottom}`} />
                 </div>
             </div>
-            <div className={styles.artwork} ref={tileRef} aria-hidden="true">
-                <div className={styles.glow} />
-                <div className={styles.tiles}>
-                    {Array.from({ length: 25 }, (_, i) => <div key={i} className={styles.tile} />)}
+            <div className={styles.artworkSlot} aria-hidden="true">
+                <div className={styles.artwork} ref={tileRef} data-about-artwork>
+                    <div className={styles.glow} />
+                    <div className={styles.tiles}>
+                        {Array.from({ length: 25 }, (_, i) => <div key={i} className={styles.tile} />)}
+                    </div>
                 </div>
             </div>
         </div>

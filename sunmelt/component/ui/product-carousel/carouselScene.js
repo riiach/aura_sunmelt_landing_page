@@ -410,11 +410,10 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
             const bottom = tilePoint.clone().add(new THREE.Vector3(0, -.74, 0)).project(camera);
             const unitHeight = Math.abs(top.y - bottom.y) * rect.height / 2;
             const mobileAbout = window.matchMedia("(max-width: 767px)").matches;
-            // Match the larger full-width mobile ice grid without changing desktop.
-            landingScale = THREE.MathUtils.clamp(
-                tile.height * (mobileAbout ? .96 : .88) / Math.max(1, unitHeight),
-                .30, mobileAbout ? 2.2 : 1.45
-            );
+            // Mobile art can shrink to the remaining viewport space. Preserve
+            // the same can-to-grid ratio rather than imposing a minimum can size.
+            const relativeScale = tile.height * (mobileAbout ? .96 : .88) / Math.max(1, unitHeight);
+            landingScale = mobileAbout ? relativeScale : THREE.MathUtils.clamp(relativeScale, .30, 1.45);
         }
         cans.forEach(({index, primary, copy, primaryShadow, copyShadow}) => {
             const distance = wrap(index - track.position, count);
@@ -764,6 +763,11 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
     const onAboutScroll = () => {
         if (aboutProgress() > 0) invalidate();
     };
+    // Text wrapping, font loading and viewport changes can resize the ice
+    // independently of the hero canvas. Keep its live landing target in sync.
+    const aboutArtworkObserver = new ResizeObserver(onAboutScroll);
+    const aboutArtwork = trackElement?.querySelector("[data-about-artwork]");
+    if (aboutArtwork) aboutArtworkObserver.observe(aboutArtwork);
     // Short mobile viewports may scroll past the initial About landing point.
     // Re-project the can onto its real ice grid as the document continues moving.
     window.addEventListener("scroll", onAboutScroll, { passive: true });
@@ -857,6 +861,7 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
         });
         gsap.ticker.remove(render);
         observer.disconnect();
+        aboutArtworkObserver.disconnect();
         window.removeEventListener("scroll", onAboutScroll);
         window.visualViewport?.removeEventListener("resize", onAboutScroll);
         window.visualViewport?.removeEventListener("scroll", onAboutScroll);

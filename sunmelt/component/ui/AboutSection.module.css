@@ -87,6 +87,7 @@
     .primaryButton:hover { background: #333; transform: translateY(-1px); }
 }
 .primaryButton:focus-visible { outline: 2px solid #111; outline-offset: 3px; }
+.artworkSlot { display: contents; }
 .artwork {
     position: relative;
     width: min(100%, 560px, calc(var(--about-view-height, 100dvh) * .66));
@@ -182,56 +183,84 @@
     background: rgba(255,255,255,.48);
 }
 @media (max-width: 767px) {
-    /* Keep the original ribbon proportions instead of stretching its texture
-       through the full height of a portrait viewport. */
+    /* Separate the top ribbon from the lower ribbon. The original artwork
+       is 2:1, so each crop retains its original aspect ratio and grain. */
     .ribbon {
-        background-image: none;
-        --ribbon-fade-height: clamp(26px, 5vw, 36px);
+        inset: var(--header-height, 62px) 0 auto;
+        height: 19vw;
+        background-size: 100% auto;
+        background-position: center top;
+        --ribbon-fade-height: clamp(12px, 3vw, 22px);
     }
-    .ribbon::before,
-    .ribbon::after {
+    .inner {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        min-height: max(0px, calc(var(--about-view-height, 100dvh) - var(--header-height, 62px)));
+        padding: 0 0 clamp(12px, 3.5vw, 24px);
+        gap: 0;
+        align-items: stretch;
+    }
+    .copy {
+        --sparkle-size: clamp(18px, 5.4vw, 27px);
+        flex: 0 0 auto;
+        width: 100%;
+        max-width: none;
+        margin: 0;
+        padding: clamp(48px, 14vw, 86px) clamp(16px, 5.5vw, 32px) clamp(22px, 7vw, 40px);
+    }
+    .sparkleTop { left: 11%; top: clamp(20px, 6.5vw, 39px); }
+    .sparkleBottom { left: 71%; top: calc(-.58 * var(--sparkle-size)); }
+    .title {
+        font-size: clamp(28px, 8.5vw, 52px);
+        text-wrap: wrap;
+    }
+    .description {
+        max-width: none;
+        margin-top: clamp(10px, 3vw, 18px);
+        font-size: clamp(12px, 2.7vw, 17px);
+        line-height: 1.5;
+    }
+    .actions { margin-top: clamp(14px, 3.7vw, 22px); gap: 8px; }
+    .primaryButton { min-height: 40px; padding-inline: 15px; font-size: 12px; }
+    /* The slot receives the actual remaining space after intrinsic text
+       height. Size containment makes its cqh independent of the ice grid. */
+    .artworkSlot {
+        display: flex;
+        position: relative;
+        flex: 1 0 0px;
+        min-height: 170px;
+        padding: 6px clamp(12px, 5vw, 28px) 0;
+        align-items: center;
+        justify-content: center;
+        container-type: size;
+    }
+    .artworkSlot::before {
         content: "";
         position: absolute;
         inset-inline: 0;
+        top: -14vw;
+        height: 28vw;
+        z-index: 0;
         background-image: var(--about-ribbon);
         background-size: 100% auto;
-        background-repeat: no-repeat;
-    }
-    .ribbon::before {
-        top: 0;
-        height: 19vw;
-        background-position: center top;
-    }
-    .ribbon::after {
-        bottom: 0;
-        height: 28vw;
         background-position: center bottom;
+        background-repeat: no-repeat;
+        pointer-events: none;
     }
-    .inner {
-        grid-template-columns: minmax(0,1fr);
-        gap: 20px;
-        padding: 10px 16px 16px;
-        align-content: start;
-        align-items: start;
-        justify-items: start;
+    .artwork {
+        z-index: 1;
+        flex: 0 0 auto;
+        width: min(100%, 100cqh);
+        max-width: none;
+        aspect-ratio: 1;
     }
-    .copy {
-        --sparkle-size: 24px;
-        width: 100%;
-        margin-top: 28px;
-        padding-inline: 4px;
-    }
-    .sparkleTop { left: 3.5%; top: calc(-1.14 * var(--sparkle-size)); }
-    .sparkleBottom { left: min(78%, max(63.5%, 172px)); top: calc(-.12 * var(--sparkle-size)); }
-    .title { font-size: clamp(29px, 7.8vw, 43px); }
-    .description { margin-top: 10px; font-size: 12px; line-height: 1.5; }
-    .actions { margin-top: 14px; gap: 8px; }
-    .primaryButton { min-height: 44px; padding-inline: 15px; font-size: 12px; }
-    .artwork { width: 100%; max-width: none; }
+    .glow { inset: -12%; }
 }
 @media (max-width: 767px) and (max-height: 700px) {
-    .inner { gap: 14px; padding-block: 8px 12px; }
-    .title { font-size: clamp(27px, 7.2vw, 36px); }
+    .copy { padding-top: clamp(40px, 12vw, 64px); padding-bottom: 18px; }
+    .sparkleTop { top: clamp(16px, 5vw, 30px); }
+    .title { font-size: clamp(27px, 7.8vw, 43px); }
 }
 @media (prefers-reduced-motion: reduce) {
     .primaryButton { transition: none; }
