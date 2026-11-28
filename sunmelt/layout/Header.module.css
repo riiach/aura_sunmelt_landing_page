@@ -94,7 +94,7 @@
     padding-inline: clamp(10px, 1.15vw, 18px);
     color: inherit;
     font-size: 13px;
-    font-weight: 600;
+    font-weight: 500;
     letter-spacing: .01em;
     white-space: nowrap;
     text-decoration: none;
@@ -316,7 +316,7 @@
         min-height: 44px;
         padding-inline: 18px;
         font-size: 15px;
-        font-weight: 600;
+        font-weight: 500;
         color: inherit;
         text-decoration: none;
         box-sizing: border-box;
