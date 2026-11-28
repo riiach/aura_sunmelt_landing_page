@@ -45,14 +45,25 @@ const stories = [
 
 const StoriesSection = ({ className }: { className?: string }) => {
     const railRef = useRef<HTMLDivElement>(null);
+    const indicatorRef = useRef<HTMLDivElement>(null);
     const [edges, setEdges] = useState({ start: true, end: false });
 
     useEffect(() => {
         const rail = railRef.current;
         if (!rail) return;
         const update = () => {
-            const start = rail.scrollLeft <= 2;
-            const end = rail.scrollLeft + rail.clientWidth >= rail.scrollWidth - 2;
+            const maxScroll = Math.max(0, rail.scrollWidth - rail.clientWidth);
+            const position = Math.min(maxScroll, Math.max(0, rail.scrollLeft));
+            const start = position <= 2;
+            const end = maxScroll - position <= 2;
+            const indicator = indicatorRef.current;
+            if (indicator) {
+                const fraction = rail.scrollWidth > 0 ? Math.min(1, rail.clientWidth / rail.scrollWidth) : 1;
+                const progress = maxScroll > 0 ? position / maxScroll : 0;
+                indicator.style.setProperty("--indicator-width", `${fraction * 100}%`);
+                indicator.style.setProperty("--indicator-offset", `${progress * (1 - fraction) * 100}%`);
+                indicator.hidden = maxScroll <= 2;
+            }
             setEdges(previous => previous.start === start && previous.end === end ? previous : { start, end });
         };
         const observer = new ResizeObserver(update);
@@ -114,6 +125,9 @@ const StoriesSection = ({ className }: { className?: string }) => {
                         </div>
                     </article>
                 ))}
+            </div>
+            <div ref={indicatorRef} className={styles.indicator} aria-hidden="true">
+                <span className={styles.indicatorThumb} />
             </div>
         </section>
     );
