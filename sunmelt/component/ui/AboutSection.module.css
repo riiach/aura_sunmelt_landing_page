@@ -150,10 +150,28 @@
     background: linear-gradient(135deg, rgba(255,255,255,.11), transparent 42%, transparent 70%, rgba(255,255,255,.06));
     pointer-events: none;
 }
+/* Feather only the four outer edges. Mask each perimeter tile rather
+   than the grid wrapper, so backdrop-filter still samples the glow. */
+.tile:nth-child(-n+5) {
+    --edge-y: linear-gradient(to bottom, transparent 0%, #000 65%);
+}
+.tile:nth-child(n+21) {
+    --edge-y: linear-gradient(to top, transparent 0%, #000 65%);
+}
+.tile:nth-child(5n+1) {
+    --edge-x: linear-gradient(to right, transparent 0%, #000 65%);
+}
+.tile:nth-child(5n) {
+    --edge-x: linear-gradient(to left, transparent 0%, #000 65%);
+}
 .tile:nth-child(-n+5),
 .tile:nth-child(n+21),
 .tile:nth-child(5n),
 .tile:nth-child(5n+1) {
+    -webkit-mask-image: var(--edge-x, linear-gradient(#000, #000)), var(--edge-y, linear-gradient(#000, #000));
+    mask-image: var(--edge-x, linear-gradient(#000, #000)), var(--edge-y, linear-gradient(#000, #000));
+    -webkit-mask-composite: source-in;
+    mask-composite: intersect;
     background: linear-gradient(145deg, rgba(255,255,255,.48), rgba(255,255,255,.25) 55%, rgba(255,255,255,.44));
 }
 .tile:nth-child(1), .tile:nth-child(5), .tile:nth-child(21), .tile:nth-child(25) {
@@ -212,6 +230,11 @@
     .tiles { grid-template-rows: repeat(4, minmax(0, 1fr)); }
     .tile:nth-child(n+21) { display: none; }
     .tile:nth-child(n+16):nth-child(-n+20) {
+        --edge-y: linear-gradient(to top, transparent 0%, #000 65%);
+        -webkit-mask-image: var(--edge-x, linear-gradient(#000, #000)), var(--edge-y);
+        mask-image: var(--edge-x, linear-gradient(#000, #000)), var(--edge-y);
+        -webkit-mask-composite: source-in;
+        mask-composite: intersect;
         background: linear-gradient(145deg, rgba(255,255,255,.48), rgba(255,255,255,.25) 55%, rgba(255,255,255,.44));
     }
     .tile:nth-child(16), .tile:nth-child(20) { background: rgba(255,255,255,.48); }
