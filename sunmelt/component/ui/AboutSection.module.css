@@ -150,34 +150,34 @@
     min-width: 0;
     border-radius: 23%;
     background:
-        radial-gradient(ellipse at 24% 18%, rgba(255,255,255,.76), transparent 67%),
-        linear-gradient(155deg, rgba(255,255,255,.56), rgba(255,255,255,.23) 48%, rgba(255,255,255,.57));
-    -webkit-backdrop-filter: blur(13px) saturate(120%);
-    backdrop-filter: blur(13px) saturate(120%);
-    border: 1px solid rgba(255,255,255,.87);
+        radial-gradient(ellipse at 24% 18%, rgba(255,255,255,.34), transparent 72%),
+        linear-gradient(155deg, rgba(255,255,255,.36), rgba(255,255,255,.19) 48%, rgba(255,255,255,.34));
+    -webkit-backdrop-filter: blur(13px) saturate(110%);
+    backdrop-filter: blur(13px) saturate(110%);
+    border: 1px solid rgba(255,255,255,.48);
     box-shadow:
-        inset 0 0 14px rgba(255,255,255,.74),
-        inset 0 2px 3px rgba(255,255,255,.88),
-        inset 0 -2px 4px rgba(255,255,255,.57),
-        0 7px 15px -6px rgba(64,47,26,.15),
-        0 2px 7px rgba(66,58,49,.045);
+        inset 0 0 12px rgba(255,255,255,.30),
+        inset 0 1px 3px rgba(255,255,255,.38),
+        inset 0 -2px 5px rgba(255,255,255,.24),
+        0 5px 12px -6px rgba(64,47,26,.10),
+        0 2px 7px rgba(66,58,49,.025);
 }
 .tile::after {
     content: "";
     position: absolute;
     inset: 1px;
     border-radius: inherit;
-    background: linear-gradient(135deg, rgba(255,255,255,.30), transparent 38%, transparent 65%, rgba(255,255,255,.17));
+    background: linear-gradient(135deg, rgba(255,255,255,.11), transparent 42%, transparent 70%, rgba(255,255,255,.06));
     pointer-events: none;
 }
 .tile:nth-child(-n+5),
 .tile:nth-child(n+21),
 .tile:nth-child(5n),
 .tile:nth-child(5n+1) {
-    background: linear-gradient(145deg, rgba(255,255,255,.78), rgba(255,255,255,.36) 55%, rgba(255,255,255,.72));
+    background: linear-gradient(145deg, rgba(255,255,255,.48), rgba(255,255,255,.25) 55%, rgba(255,255,255,.44));
 }
 .tile:nth-child(1), .tile:nth-child(5), .tile:nth-child(21), .tile:nth-child(25) {
-    background: rgba(255,255,255,.82);
+    background: rgba(255,255,255,.48);
 }
 @media (max-width: 767px) {
     /* Keep the original ribbon proportions instead of stretching its texture
