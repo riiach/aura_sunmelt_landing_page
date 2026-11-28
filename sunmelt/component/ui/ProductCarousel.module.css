@@ -211,11 +211,11 @@
     height: 100%;
     border: none;
     border-radius: 50%;
-    background: linear-gradient(145deg, rgba(255,255,255,.76), rgba(226,228,232,.45));
+    background: linear-gradient(145deg, rgba(255,255,255,.38), rgba(226,228,232,.23));
     -webkit-backdrop-filter: blur(14px) saturate(130%);
     backdrop-filter: blur(14px) saturate(130%);
     box-shadow: 0 3px 14px rgba(37,27,25,.055);
-    color: #68615f;
+    color: #fff;
     pointer-events: none;
 }
 .swipeHint:focus-visible { outline: 2px solid #fff; outline-offset: 2px; border-radius: 50%; }
