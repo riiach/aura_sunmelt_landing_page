@@ -13,7 +13,8 @@ export const aboutPhases = progress => ({
     travel: ease(progress, .18, .46),
     fade: ease(progress, MANGO_READY, .68),
     land: ease(progress, .68, 1),
-    reveal: ease(progress, .68, 1),
+    // Delay About content until the outgoing cans are mostly transparent.
+    reveal: ease(progress, .60, .90),
 });
 
 export const nearestFlavorPosition = (position, index, count) =>

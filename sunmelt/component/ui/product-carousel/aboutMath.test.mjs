@@ -40,6 +40,14 @@ test("fade finishes before the rotating landing starts", () => {
     assert.equal(aboutPhases(.68).land, 0);
 });
 
+test("About content fades in later than the outgoing cans", () => {
+    assert.equal(aboutPhases(.60).reveal, 0);
+    assert.ok(aboutPhases(.60).fade > .65);
+    assert.ok(aboutPhases(.68).reveal > 0 && aboutPhases(.68).reveal < .5);
+    assert.ok(Math.abs(aboutPhases(.75).reveal - .5) < 1e-9);
+    assert.equal(aboutPhases(.90).reveal, 1);
+});
+
 test("reverse scroll limits speed and restores the hero smoothly", () => {
     let p = 1;
     const dt = 1 / 60;

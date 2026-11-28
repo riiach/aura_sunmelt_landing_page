@@ -9,7 +9,7 @@
     align-items: start;
     color: #251b19;
     background-color: #fff;
-    /* Driven by the same rendered fade phase as the outgoing hero cans. */
+    /* Driven by the delayed reveal phase of the scroll animation. */
     opacity: var(--about-content-fade, 0);
     pointer-events: none;
 }

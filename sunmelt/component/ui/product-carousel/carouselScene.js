@@ -260,9 +260,9 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
             !introComplete || reduced() || Boolean(state?.preparing) || preparedNow
         );
         const progress = displayAboutProgress;
-        // Crossfade the complete About section against the outgoing cans.
+        // Reveal About slightly after the outgoing cans begin fading.
         // Use rendered (not raw scroll) progress so reverse scrolling stays synced.
-        const contentFade = aboutPhases(progress).fade;
+        const contentFade = aboutPhases(progress).reveal;
         if (!state?.failed && contentFade !== lastContentFade) {
             trackElement?.style.setProperty("--about-content-fade", String(contentFade));
             lastContentFade = contentFade;
