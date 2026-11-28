@@ -10,8 +10,10 @@ interface AboutSectionProps {
 
 const Sparkle = ({ className }: { className: string }) => (
     <svg className={className} viewBox="0 0 38 38" fill="currentColor" aria-hidden="true" focusable="false">
-        <path d="M16 4 C16.8 17 18 18.2 32 20 C18 21.2 16.8 23 16 36 C15.2 23 14 21.2 0 20 C14 18.2 15.2 17 16 4 Z" />
-        <circle cx="34" cy="3" r="2.8" />
+        {/* Match the can label's slim, softly tapered four-arm mark and two dots. */}
+        <path d="M12.8 5.5 C14.1 5.3 14.6 7.1 14.6 9.3 L15.2 18.3 L24.7 19.1 C27 19.3 28.2 19.8 28.1 20.8 C28 21.8 26.5 22.2 24.2 22.1 L15.1 21.9 L14.3 32.4 C14.1 34.6 13.5 35.5 12.6 35.4 C11.6 35.3 11.4 34 11.5 31.7 L11.8 21.8 L3.3 21.3 C1.1 21.2 .4 20.6 .6 19.7 C.7 18.9 2 18.5 4.1 18.6 L11.9 18.7 L11.5 9.1 C11.4 6.9 11.8 5.7 12.8 5.5 Z" />
+        <ellipse cx="30.4" cy="13.2" rx="2.25" ry="2.05" transform="rotate(-18 30.4 13.2)" />
+        <circle cx="36" cy="6.8" r="1.35" />
     </svg>
 );
 
