@@ -262,11 +262,12 @@
 .ingredientsFrost {
     position: absolute;
     z-index: 0;
-    inset: 0;
+    inset: 0 0 auto;
+    height: max(var(--about-scroll-height, 100dvh), var(--about-view-height, 100dvh));
     pointer-events: none;
     overflow: hidden;
-    /* Center the oversized circular halo at the bottom of the can.
-       The section clips the lower half, leaving an upward-facing semicircle. */
+    /* Keep both frosted semicircles anchored to the original one-screen
+       composition, independent of the extended section's height. */
     --frost-radius: max(68vw, calc(var(--about-view-height, 100dvh) * .90));
     --frost-inner-radius: calc(var(--frost-radius) * .56);
     background:
