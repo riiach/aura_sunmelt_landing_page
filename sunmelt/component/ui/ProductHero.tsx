@@ -5,7 +5,7 @@ import type { ReactNode } from "react";
 import ProductCarousel from "./ProductCarousel";
 import type { AboutSceneState, IntroPhase } from "./ProductCarousel";
 import AboutSection, { IngredientsSection } from "./AboutSection";
-import { aboutPhases, aboutScrollProgress, aboutNavigationEase, aboutViewportMetrics, checkpointSide, crossesAboutCheckpoint, MANGO_READY } from "./product-carousel/aboutMath.mjs";
+import { aboutPhases, aboutScrollProgress, aboutNavigationEase, aboutViewportMetrics, checkpointSide, crossesAboutCheckpoint, touchFlingDistance, MANGO_READY } from "./product-carousel/aboutMath.mjs";
 import styles from "./ProductCarousel.module.css";
 
 /* Temporarily disabled for the white-background preview.
@@ -64,6 +64,11 @@ const ProductHero = ({ header }: ProductHeroProps) => {
         let lastWheelAt = -Infinity, stopAt = -Infinity;
         let checkpointStyles: { htmlOverflow: string; htmlOverscroll: string; bodyOverscroll: string; gutter: string } | null = null;
         let freshCheckpointTouch = false, controlledTouch = false, touchLastY = 0;
+        let touchVelocity = 0, touchLastAt = 0, flingFrame = 0;
+        const cancelFling = () => {
+            if (flingFrame) cancelAnimationFrame(flingFrame);
+            flingFrame = 0;
+        };
         const unlockCheckpoint = () => {
             if (!checkpointStyles) return;
             const saved = checkpointStyles;
@@ -91,6 +96,7 @@ const ProductHero = ({ header }: ProductHeroProps) => {
         const holdAtAbout = () => {
             if (aboutStop !== "armed" || locked) return;
             aboutStop = "holding";
+            cancelFling();
             stopAt = performance.now();
             checkpointStyles = {
                 htmlOverflow: html.style.overflowY,
@@ -123,6 +129,33 @@ const ProductHero = ({ header }: ProductHeroProps) => {
             holdAtAbout();
             return true;
         };
+        // Restore momentum to manually controlled touch scrolling without
+        // allowing a fling to cross the middle checkpoint.
+        const scrollByControlled = (dy: number) => {
+            if (locked || aboutStop === "holding" || !dy) return false;
+            if (advanceTowardAbout(dy)) return false;
+            const before = window.scrollY;
+            window.scrollBy({ top: dy, behavior: "instant" });
+            schedule();
+            return Math.abs(window.scrollY - before) > .25;
+        };
+        const startFling = (velocity: number) => {
+            cancelFling();
+            const distance = touchFlingDistance(velocity, window.innerHeight);
+            if (!distance || motion.matches || locked || aboutStop === "holding") return;
+            const start = performance.now();
+            const duration = 360;
+            let previous = 0;
+            const frame = (now: number) => {
+                flingFrame = 0;
+                const p = Math.min(1, (now - start) / duration);
+                const offset = distance * (1 - (1 - p) ** 3);
+                const moved = scrollByControlled(offset - previous);
+                previous = offset;
+                if (moved && p < 1) flingFrame = requestAnimationFrame(frame);
+            };
+            flingFrame = requestAnimationFrame(frame);
+        };
         const syncViewport = () => {
             const { visibleHeight, scrollHeight } = aboutViewportMetrics(
                 window.innerHeight, html.clientHeight, visual?.height,
@@ -142,6 +175,7 @@ const ProductHero = ({ header }: ProductHeroProps) => {
             schedule();
         };
         const cancelNavigation = () => {
+            cancelFling();
             if (navigationFrame) cancelAnimationFrame(navigationFrame);
             navigationFrame = 0;
             followAbout = false;
@@ -159,7 +193,7 @@ const ProductHero = ({ header }: ProductHeroProps) => {
                 return;
             }
             const started = performance.now();
-            const duration = 1450;
+            const duration = 850;
             const step = (now: number) => {
                 const progress = Math.min(1, (now - started) / duration);
                 // Read the live section position to account for responsive layout changes.
@@ -289,15 +323,17 @@ const ProductHero = ({ header }: ProductHeroProps) => {
                 // Own both directions through the About track. Native momentum
                 // must never be allowed to cross the middle checkpoint.
                 event.preventDefault();
-                if (!advanceTowardAbout(dy)) window.scrollBy({ top: dy, behavior: "instant" });
-                schedule();
+                scrollByControlled(dy * 1.25);
             }
         };
         const onTouchStart = (event: TouchEvent) => {
             if (event.touches.length !== 1) return;
             touchX = event.touches[0].clientX;
             touchY = event.touches[0].clientY;
+            cancelFling();
             touchLastY = touchY;
+            touchLastAt = performance.now();
+            touchVelocity = 0;
             freshCheckpointTouch = aboutStop === "holding";
             controlledTouch = false;
         };
@@ -329,18 +365,27 @@ const ProductHero = ({ header }: ProductHeroProps) => {
             }
             if (controlledTouch || (prepared && vertical && event.cancelable)) {
                 if (event.cancelable) event.preventDefault();
-                const delta = touchLastY - currentY;
+                const now = performance.now();
+                const delta = (touchLastY - currentY) * 1.35;
+                const elapsed = Math.max(8, now - touchLastAt);
+                touchVelocity = touchVelocity * .25 + (delta / elapsed) * .75;
                 controlledTouch = true;
                 touchLastY = currentY;
-                if (!advanceTowardAbout(delta)) window.scrollBy({ top: delta, behavior: "instant" });
-                schedule();
+                touchLastAt = now;
+                scrollByControlled(delta);
             } else {
                 touchLastY = currentY;
+                touchLastAt = performance.now();
             }
         };
-        const endTouch = () => {
+        const endTouch = (event: TouchEvent) => {
+            const shouldFling = event.type === "touchend" && controlledTouch &&
+                performance.now() - touchLastAt < 100;
+            const velocity = touchVelocity;
             freshCheckpointTouch = false;
             controlledTouch = false;
+            touchVelocity = 0;
+            if (shouldFling) startFling(velocity);
         };
         const scrollToHome = () => {
             releaseAboutStop();
@@ -376,7 +421,7 @@ const ProductHero = ({ header }: ProductHeroProps) => {
             }
             const started = performance.now();
             const step = (now: number) => {
-                const progress = Math.min(1, (now - started) / 1450);
+                const progress = Math.min(1, (now - started) / 850);
                 window.scrollTo({
                     top: from + (Math.max(0, top()) - from) * aboutNavigationEase(progress),
                     behavior: "instant",
