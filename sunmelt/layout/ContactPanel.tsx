@@ -14,7 +14,7 @@ interface ContactPanelProps {
 
 const ContactPanel = ({ open, onClose }: ContactPanelProps) => {
     const dialogRef = useRef<HTMLDialogElement>(null);
-    const closeRef = useRef<HTMLButtonElement>(null);
+    const titleRef = useRef<HTMLHeadingElement>(null);
     const [status, setStatus] = useState("");
     const [sending, setSending] = useState(false);
     const endpoint = process.env.NEXT_PUBLIC_CONTACT_FORM_ENDPOINT;
@@ -28,7 +28,8 @@ const ContactPanel = ({ open, onClose }: ContactPanelProps) => {
             const wasOpen = dialog.open;
             if (!wasOpen) dialog.showModal();
             const from = wasOpen ? getComputedStyle(dialog).transform : "translateY(100%)";
-            closeRef.current?.focus({ preventScroll: true });
+            // Focus the heading, not the Close control, when opening the dialog.
+            if (!wasOpen) titleRef.current?.focus({ preventScroll: true });
             if (!reduced && typeof dialog.animate === "function") {
                 animation = dialog.animate(
                     [{ transform: from }, { transform: "translateY(0)" }],
@@ -95,7 +96,7 @@ const ContactPanel = ({ open, onClose }: ContactPanelProps) => {
                         <span className={footer.cross} aria-hidden="true">×</span>
                         <span className={footer.wordmark}>sunmelt</span>
                     </div>
-                    <button ref={closeRef} type="button" onClick={onClose} className={styles.close} aria-label="Close contact">
+                    <button type="button" onClick={onClose} className={styles.close} aria-label="Close contact">
                         <span>Close</span>
                         <svg viewBox="0 0 24 24" width="19" height="19" fill="none" aria-hidden="true">
                             <path d="M6 6l12 12M18 6L6 18" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
@@ -104,7 +105,7 @@ const ContactPanel = ({ open, onClose }: ContactPanelProps) => {
                 </div>
                 <div className={styles.content}>
                     <div className={styles.intro}>
-                        <h2 id="contact-title">Get in touch.</h2>
+                        <h2 ref={titleRef} tabIndex={-1} id="contact-title">Get in touch.</h2>
                         <p>Have a question about Sunmelt, or interested in working with us? We’d love to hear from you.</p>
                     </div>
                     <form className={styles.form} onSubmit={submit}>

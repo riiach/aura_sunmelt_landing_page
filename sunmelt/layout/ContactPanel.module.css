@@ -77,3 +77,8 @@
     .fields { grid-template-columns: 1fr; gap: 20px; }
     .form { gap: 20px; }
 }
+
+/* Initial dialog focus is on the title; keyboard controls retain focus rings. */
+.panel:focus, .intro h2:focus { outline: none; }
+.close, .submit { -webkit-tap-highlight-color: transparent; }
+.close:focus:not(:focus-visible), .submit:focus:not(:focus-visible) { outline: none; }

@@ -6,7 +6,7 @@ import styles from "./ArticlePanel.module.css";
 
 export default function ArticlePanel({ story, open, onClose }: { story: Story | null; open: boolean; onClose: () => void }) {
     const ref = useRef<HTMLDialogElement>(null);
-    const backRef = useRef<HTMLButtonElement>(null);
+    const titleRef = useRef<HTMLHeadingElement>(null);
     const [shareStatus, setShareStatus] = useState("");
     useEffect(() => {
         const dialog = ref.current;
@@ -17,7 +17,8 @@ export default function ArticlePanel({ story, open, onClose }: { story: Story | 
             if (!dialog.open) {
                 dialog.showModal();
                 dialog.scrollTop = 0;
-                backRef.current?.focus({ preventScroll: true });
+                // Keep initial focus within the reader without outlining Go back.
+                titleRef.current?.focus({ preventScroll: true });
             }
             if (!reduced) animation = dialog.animate(
                 [{ transform: "translateY(100%)" }, { transform: "translateY(0)" }],
@@ -59,7 +60,7 @@ export default function ArticlePanel({ story, open, onClose }: { story: Story | 
             onClose={() => setShareStatus("")}>
             {story && <article className={styles.article}>
                 <div className={styles.toolbar}>
-                    <button ref={backRef} type="button" className={styles.action} onClick={onClose}>
+                    <button type="button" className={styles.action} onClick={onClose}>
                         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m15 5-7 7 7 7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg> Go back
                     </button>
                     <button type="button" className={styles.action} onClick={share}>
@@ -67,7 +68,7 @@ export default function ArticlePanel({ story, open, onClose }: { story: Story | 
                     </button>
                 </div>
                 {shareStatus && <p className={styles.shareStatus} role="status">{shareStatus}</p>}
-                <h1 id="article-title">{story.title}</h1>
+                <h1 ref={titleRef} tabIndex={-1} id="article-title">{story.title}</h1>
                 <div className={styles.meta}>{story.category} · Sunmelt{story.draft && " · Preview"}</div>
                 <div className={styles.cover} role="img" aria-label="Illustrative editorial photograph"
                     style={{ backgroundImage: `url("${storyImage(story)}"), url("${process.env.NEXT_PUBLIC_BASE_PATH || ""}/backgrounds/${story.fallback}.webp")` }} />
