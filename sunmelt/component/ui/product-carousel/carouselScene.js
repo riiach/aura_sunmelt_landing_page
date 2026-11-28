@@ -438,7 +438,7 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
             const unitHeight = Math.abs(top.y - bottom.y) * rect.height / 2;
             // Keep the tilted can inside the square desktop grid or 5:4 mobile
             // grid, allowing margin for the projected rim and tilted silhouette.
-            const relativeScale = tile.height * (mobileAbout ? .74 : .80) / Math.max(1, unitHeight);
+            const relativeScale = tile.height * (mobileAbout ? .85 : .90) / Math.max(1, unitHeight);
             landingScale = mobileAbout ? relativeScale : Math.min(relativeScale, 1.65);
         }
         cans.forEach(({index, primary, copy, primaryShadow, copyShadow}) => {
