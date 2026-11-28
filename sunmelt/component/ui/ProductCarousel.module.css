@@ -235,6 +235,15 @@
 }
 @media (max-width: 767px) {
     .aboutTrack { --header-height: 62px; }
+    /* Feather the flute bevels below the mobile header, just like the
+       lower edge. Keep the flavor gradient and the can artwork intact. */
+    .backdrop::after {
+        --glass-top-fade: linear-gradient(to bottom, transparent 0%, rgba(0,0,0,.28) 6%, rgba(0,0,0,.86) 14%, #000 21%);
+        -webkit-mask-image: var(--glass-envelope), var(--glass-top-fade);
+        mask-image: var(--glass-envelope), var(--glass-top-fade);
+        -webkit-mask-composite: source-in;
+        mask-composite: intersect;
+    }
 }
 @media (max-width: 639px) {
     .aboutTrack { --stage-height: max(480px, calc(100svh - var(--header-height))); }
