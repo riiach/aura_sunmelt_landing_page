@@ -166,8 +166,10 @@
     .rotateControl[data-available="true"][data-holding="true"] .rotateDisc {
         animation: none;
         background: rgba(255,255,255,.88);
-        color: #292929;
         transform: scale(.92);
+    }
+    .rotateControl[data-holding="true"] .rotateLabel {
+        visibility: hidden;
     }
     /* Keep capture alive during the first hold even after the artwork fades. */
     .rotateControl[data-dismissed="true"] {
