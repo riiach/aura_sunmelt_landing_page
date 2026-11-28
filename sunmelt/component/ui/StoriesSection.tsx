@@ -90,7 +90,7 @@ const StoriesSection = ({ className }: { className?: string }) => {
                 </div>
             </div>
             <div id="stories-rail" ref={railRef} className={styles.rail}
-                tabIndex={0} role="region" aria-label="Sunmelt editorial stories">
+                tabIndex={-1} role="region" aria-label="Sunmelt editorial stories">
                 {stories.map(story => (
                     <a key={story.slug} className={styles.story}
                         href={`?story=${story.slug}`}

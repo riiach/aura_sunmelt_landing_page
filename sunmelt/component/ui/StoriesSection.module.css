@@ -41,7 +41,10 @@
 }
 .arrow:disabled { opacity: .22; cursor: default; }
 .arrow:not(:disabled):hover { background: #f3f3f3; }
-.arrow:focus-visible, .rail:focus-visible { outline: 2px solid #251b19; outline-offset: -2px; }
+.arrow:focus-visible { outline: 2px solid #251b19; outline-offset: -2px; }
+/* Safari/Chrome may restore focus to the scroller after dialog.close().
+   Keep keyboard focus indicators on the actionable cards and arrows only. */
+.rail:focus { outline: none; }
 .rail {
     display: flex;
     align-items: stretch;
@@ -54,6 +57,9 @@
     padding-inline: var(--story-inset);
     scrollbar-width: none;
     -webkit-overflow-scrolling: touch;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-tap-highlight-color: transparent;
 }
 .rail::-webkit-scrollbar { display: none; }
 
@@ -100,6 +106,7 @@
     color: #fff;
     text-decoration: none;
     cursor: pointer;
+    -webkit-touch-callout: none;
 }
 .story:focus-visible { outline: 2px solid #251b19; outline-offset: -3px; }
 .story::before {
