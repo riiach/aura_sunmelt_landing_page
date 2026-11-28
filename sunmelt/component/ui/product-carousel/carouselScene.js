@@ -3,7 +3,7 @@ import { gsap } from "gsap";
 import { createCanAssets, flavors, frontRotation } from "./createCan";
 import { wrap, mod, getLayout, getSnap, rightTilt, isSelected, introPoseAt, introSpreadAt } from "./carouselMath.mjs";
 import { createStudio, createContactShadows } from "./studio";
-import { aboutPhases, nearestFlavorPosition, preparationDuration, preparationProgress, MANGO_READY, advanceAboutProgress } from "./aboutMath.mjs";
+import { aboutPhases, nearestFlavorPosition, preparationDuration, preparationProgress, MANGO_READY, advanceAboutProgress, ingredientsScrollProgress, ingredientsRotationProgress } from "./aboutMath.mjs";
 
 // Keep the hint dismissed for this document, even if the scene is remounted.
 // A reload creates a new document and starts with a fresh hint.
@@ -132,7 +132,7 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
     let aboutOrigin = null, aboutTarget = null, lastAboutProgress = -1;
     let prepTime = 0, prepDuration = null;
     let displayAboutProgress = 0;
-    let lastContentFade = -1;
+    let lastContentFade = -1, lastIngredientsProgress = -1;
     const fadeMaterials = new Map();
     const setCanOpacity = (can, opacity) => {
         let entries = fadeMaterials.get(can);
@@ -165,6 +165,14 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
     const tilePoint = new THREE.Vector3();
     const tilePlane = new THREE.Plane(new THREE.Vector3(0, 0, 1), -.65);
     const aboutProgress = () => Math.max(displayAboutProgress, aboutState?.current?.progress || 0);
+    const ingredientsProgress = () => {
+        const first = aboutState?.current?.target?.closest("section");
+        const next = aboutState?.current?.ingredientsTarget?.closest("section");
+        if (!first || !next) return 0;
+        const visual = window.visualViewport;
+        const viewportTop = visual && Math.abs(visual.scale - 1) < .01 ? visual.offsetTop : 0;
+        return ingredientsScrollProgress(first.getBoundingClientRect().top, next.getBoundingClientRect().top, viewportTop);
+    };
     const reduced = () => motionPreference.matches;
     const damp = (from, to, dt) => reduced() ? to : THREE.MathUtils.damp(from, to, 10, dt);
 
@@ -295,9 +303,11 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
         }
         if (progress > 0 && mangoIndex >= 0) {
             syncRotateControl();
-            if (aboutOrigin === null || progress !== lastAboutProgress || dirty || aboutState?.current?.returnToMango) {
-                updateAboutLayout(progress);
+            const nextIngredientsProgress = ingredientsProgress();
+            if (aboutOrigin === null || progress !== lastAboutProgress || nextIngredientsProgress !== lastIngredientsProgress || dirty || aboutState?.current?.returnToMango) {
+                updateAboutLayout(progress, nextIngredientsProgress);
                 lastAboutProgress = progress;
+                lastIngredientsProgress = nextIngredientsProgress;
                 dirty = false;
                 renderScene(aboutPhases(progress).land > 0);
             }
@@ -398,7 +408,7 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
     };
 
     // Keep the original procedural mango can and its shared materials.
-    const updateAboutLayout = progress => {
+    const updateAboutLayout = (progress, ingredientProgress = 0) => {
         if (aboutOrigin === null) {
             cancelSnap();
             stopSpin(true);
@@ -423,14 +433,21 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
         camera.lookAt(0, 0, 0);
         camera.updateMatrixWorld();
         const tile = aboutState?.current?.target?.getBoundingClientRect();
+        const ingredientTile = aboutState?.current?.ingredientsTarget?.getBoundingClientRect();
+        const ingredientBlend = ingredientTile ? ingredientProgress : 0;
+        const ingredientTurn = ingredientsRotationProgress(ingredientBlend);
         const rect = stage.getBoundingClientRect();
         let landingScale = 1.05;
         tilePoint.set(1.3, -.08, .65);
         if (tile && rect.width > 0 && rect.height > 0) {
             const mobileAbout = window.matchMedia("(max-width: 767px)").matches;
+            const centerX = tile.left + tile.width * .5;
+            const centerY = tile.top + tile.height * .5;
+            const nextX = ingredientTile ? ingredientTile.left + ingredientTile.width * .5 : centerX;
+            const nextY = ingredientTile ? ingredientTile.top + ingredientTile.height * .5 : centerY;
             targetRay.setFromCamera(new THREE.Vector2(
-                (tile.left + tile.width * .5 - rect.left) / rect.width * 2 - 1,
-                1 - (tile.top + tile.height * .50 - rect.top) / rect.height * 2
+                (lerp(centerX, nextX, ingredientBlend) - rect.left) / rect.width * 2 - 1,
+                1 - (lerp(centerY, nextY, ingredientBlend) - rect.top) / rect.height * 2
             ), camera);
             targetRay.ray.intersectPlane(tilePlane, tilePoint);
             const top = tilePoint.clone().add(new THREE.Vector3(0, .74, 0)).project(camera);
@@ -439,7 +456,9 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
             // Keep the tilted can inside the square desktop grid or 5:4 mobile
             // grid, allowing margin for the projected rim and tilted silhouette.
             const relativeScale = tile.height * (mobileAbout ? .85 : .90) / Math.max(1, unitHeight);
-            landingScale = mobileAbout ? relativeScale : Math.min(relativeScale, 1.65);
+            const gridScale = mobileAbout ? relativeScale : Math.min(relativeScale, 1.65);
+            const ingredientScale = ingredientTile ? ingredientTile.height * .95 / Math.max(1, unitHeight) : gridScale;
+            landingScale = lerp(gridScale, ingredientScale, ingredientBlend);
         }
         cans.forEach(({index, primary, copy, primaryShadow, copyShadow}) => {
             const distance = wrap(index - track.position, count);
@@ -468,8 +487,11 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
                         lerp(-.11, tilePoint.y, land) - Math.sin(Math.PI * land) * .24,
                         lerp(0, tilePoint.z, land));
                     can.scale.setScalar(lerp(.86, landingScale, land));
-                    tilt.rotation.set(-.12 * land, 0, -.43 * land);
-                    can.userData.spin.rotation.y = frontRotation - Math.PI * 2 * land - .15 * land;
+                    tilt.rotation.set(-.12 * land * (1 - ingredientTurn), 0, -.43 * land * (1 - ingredientTurn));
+                    // The original label's ingredients panel is centered at U ≈ .865.
+                    // Continue the existing rotation toward that panel, then stop.
+                    const labelAngle = lerp(.15, Math.PI * 2 * (.865 - .5), ingredientTurn);
+                    can.userData.spin.rotation.y = frontRotation - Math.PI * 2 * land - labelAngle * land;
                     can.visible = true;
                     shadow.visible = false;
                 }
@@ -809,6 +831,8 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
     const aboutArtworkObserver = new ResizeObserver(onAboutScroll);
     const aboutArtwork = trackElement?.querySelector("[data-about-artwork]");
     if (aboutArtwork) aboutArtworkObserver.observe(aboutArtwork);
+    const ingredientsArtwork = trackElement?.querySelector("[data-ingredients-artwork]");
+    if (ingredientsArtwork) aboutArtworkObserver.observe(ingredientsArtwork);
     // Short mobile viewports may scroll past the initial About landing point.
     // Re-project the can onto its real ice grid as the document continues moving.
     window.addEventListener("scroll", onAboutScroll, { passive: true });

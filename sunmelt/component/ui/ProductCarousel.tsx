@@ -10,6 +10,7 @@ export type IntroPhase = "lineup" | "spread" | "reveal" | "active";
 export interface AboutSceneState {
     progress: number;
     target: HTMLDivElement | null;
+    ingredientsTarget: HTMLDivElement | null;
     returnToMango: boolean;
     preparing: boolean;
     failed: boolean;

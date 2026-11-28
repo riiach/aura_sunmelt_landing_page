@@ -57,3 +57,10 @@ export const aboutViewportMetrics = (innerHeight, clientHeight, visualHeight, sc
         scrollHeight: Math.ceil(Math.max(layoutHeight, visibleHeight + (useVisual ? Math.max(0, offsetTop) : 0))),
     };
 };
+
+// Second About transition uses the live section offsets so it reverses naturally.
+export const ingredientsScrollProgress = (aboutTop, ingredientsTop, viewportTop = 0) => {
+    const distance = ingredientsTop - aboutTop;
+    return distance > 0 ? clamp((viewportTop - aboutTop) / distance) : 0;
+};
+export const ingredientsRotationProgress = progress => ease(progress, .08, .86);

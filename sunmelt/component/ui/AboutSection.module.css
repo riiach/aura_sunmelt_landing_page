@@ -152,29 +152,29 @@
 }
 /* Feather only the four outer edges. Mask each perimeter tile rather
    than the grid wrapper, so backdrop-filter still samples the glow. */
-.tile:nth-child(-n+5) {
+.tiles > .tile:nth-child(-n+5) {
     --edge-y: linear-gradient(to bottom, transparent 0%, #000 65%);
 }
-.tile:nth-child(n+21) {
+.tiles > .tile:nth-child(n+21) {
     --edge-y: linear-gradient(to top, transparent 0%, #000 65%);
 }
-.tile:nth-child(5n+1) {
+.tiles > .tile:nth-child(5n+1) {
     --edge-x: linear-gradient(to right, transparent 0%, #000 65%);
 }
-.tile:nth-child(5n) {
+.tiles > .tile:nth-child(5n) {
     --edge-x: linear-gradient(to left, transparent 0%, #000 65%);
 }
-.tile:nth-child(-n+5),
-.tile:nth-child(n+21),
-.tile:nth-child(5n),
-.tile:nth-child(5n+1) {
+.tiles > .tile:nth-child(-n+5),
+.tiles > .tile:nth-child(n+21),
+.tiles > .tile:nth-child(5n),
+.tiles > .tile:nth-child(5n+1) {
     -webkit-mask-image: var(--edge-x, linear-gradient(#000, #000)), var(--edge-y, linear-gradient(#000, #000));
     mask-image: var(--edge-x, linear-gradient(#000, #000)), var(--edge-y, linear-gradient(#000, #000));
     -webkit-mask-composite: source-in;
     mask-composite: intersect;
     background: linear-gradient(145deg, rgba(255,255,255,.48), rgba(255,255,255,.25) 55%, rgba(255,255,255,.44));
 }
-.tile:nth-child(1), .tile:nth-child(5), .tile:nth-child(21), .tile:nth-child(25) {
+.tiles > .tile:nth-child(1), .tiles > .tile:nth-child(5), .tiles > .tile:nth-child(21), .tiles > .tile:nth-child(25) {
     background: rgba(255,255,255,.48);
 }
 @media (max-width: 767px) {
@@ -228,8 +228,8 @@
         aspect-ratio: 5 / 4;
     }
     .tiles { grid-template-rows: repeat(4, minmax(0, 1fr)); }
-    .tile:nth-child(n+21) { display: none; }
-    .tile:nth-child(n+16):nth-child(-n+20) {
+    .tiles > .tile:nth-child(n+21) { display: none; }
+    .tiles > .tile:nth-child(n+16):nth-child(-n+20) {
         --edge-y: linear-gradient(to top, transparent 0%, #000 65%);
         -webkit-mask-image: var(--edge-x, linear-gradient(#000, #000)), var(--edge-y);
         mask-image: var(--edge-x, linear-gradient(#000, #000)), var(--edge-y);
@@ -237,7 +237,7 @@
         mask-composite: intersect;
         background: linear-gradient(145deg, rgba(255,255,255,.48), rgba(255,255,255,.25) 55%, rgba(255,255,255,.44));
     }
-    .tile:nth-child(16), .tile:nth-child(20) { background: rgba(255,255,255,.48); }
+    .tiles > .tile:nth-child(16), .tiles > .tile:nth-child(20) { background: rgba(255,255,255,.48); }
     .glow { inset: -12%; }
 }
 @media (max-width: 767px) and (max-height: 700px) {
@@ -247,4 +247,104 @@
 }
 @media (prefers-reduced-motion: reduce) {
     .primaryButton { transition: none; }
+}
+
+/* About, part two: a cropped, ingredient-facing can with cool radiant frost. */
+.ingredientsSection {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    background: #fff;
+    color: #251b19;
+    padding-top: var(--header-height, 68px);
+    min-height: max(var(--about-scroll-height, 100dvh), var(--about-view-height, 100dvh));
+}
+.ingredientsFrost {
+    position: absolute;
+    z-index: 0;
+    inset: 0;
+    pointer-events: none;
+    background:
+        radial-gradient(ellipse 38% 52% at 50% 99%, rgba(190,225,248,.62), rgba(209,234,250,.38) 38%, rgba(229,243,252,.17) 68%, transparent 100%),
+        radial-gradient(ellipse 66% 77% at 50% 111%, rgba(208,232,249,.24), transparent 75%);
+}
+.ingredientsFrost::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    bottom: -60%;
+    width: min(120vw, 1700px);
+    aspect-ratio: 1;
+    transform: translateX(-50%);
+    border-radius: 50%;
+    background: radial-gradient(circle,
+        transparent 31%, rgba(199,230,250,.20) 38%, rgba(235,246,253,.13) 44%, transparent 51%,
+        rgba(210,234,250,.12) 57%, transparent 68%);
+    filter: blur(9px);
+}
+.scatteredIce {
+    position: absolute;
+    inset: var(--header-height, 68px) 0 0;
+    z-index: 1;
+    pointer-events: none;
+}
+.scatteredCube {
+    position: absolute;
+    left: var(--cube-x);
+    top: var(--cube-y);
+    width: clamp(42px, 7.3vw, var(--cube-size));
+    aspect-ratio: 1;
+    transform: translate(-50%, -50%) rotate(var(--cube-angle));
+    /* A cool tint is the only change to the shared Glass Cube surface. */
+    background-color: rgba(213,235,250,.34);
+    opacity: .77;
+}
+.ingredientsInner {
+    position: relative;
+    z-index: 2;
+    width: min(100%, 1440px);
+    margin-inline: auto;
+    min-height: max(0px, calc(var(--about-view-height, 100dvh) - var(--header-height, 68px)));
+    display: grid;
+    grid-template-rows: auto minmax(210px, 1fr);
+    justify-items: center;
+    padding: clamp(38px, 11vh, 112px) 24px 0;
+}
+.ingredientsCopy {
+    width: min(100%, 750px);
+    text-align: center;
+}
+.ingredientsCopy .description {
+    max-width: 620px;
+    margin-inline: auto;
+}
+.ingredientsCopy .actions { justify-content: center; }
+.ingredientsStage {
+    position: relative;
+    width: 100%;
+    margin-top: clamp(18px, 3vh, 36px);
+}
+.ingredientsCanTarget {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: min(72vw, 620px);
+    /* Intentionally extend below the section: only the upper label and
+       ingredients area are revealed, as in the composition reference. */
+    height: clamp(360px, calc(var(--about-view-height, 100dvh) * .94), 920px);
+}
+@media (max-width: 767px) {
+    .ingredientsInner {
+        padding: clamp(36px, 9vh, 64px) clamp(16px, 5.5vw, 32px) 0;
+        grid-template-rows: auto minmax(180px, 1fr);
+    }
+    .ingredientsCopy { width: 100%; }
+    .ingredientsStage { margin-top: 24px; }
+    .ingredientsCanTarget {
+        width: 100%;
+        height: min(calc(var(--about-view-height, 100dvh) * .90), 145vw);
+    }
+    .scatteredCube { width: clamp(32px, 12vw, 58px); opacity: .48; }
+    .scatteredIce { mask-image: linear-gradient(to bottom, transparent 10%, #000 45%); }
 }

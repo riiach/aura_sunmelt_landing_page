@@ -1,6 +1,6 @@
 "use client";
 
-import type { RefObject } from "react";
+import type { CSSProperties, RefObject } from "react";
 import styles from "./AboutSection.module.css";
 
 interface AboutSectionProps {
@@ -36,6 +36,36 @@ const AboutSection = ({ tileRef, interactive }: AboutSectionProps) => (
                         {Array.from({ length: 25 }, (_, i) => <div key={i} className={styles.tile} />)}
                     </div>
                 </div>
+            </div>
+        </div>
+    </section>
+);
+
+// Reuse the second section's actual glass tile treatment, not an image.
+const scatteredIce = [
+    [6, 23, 92, -13], [-2, 45, 105, -9], [13, 48, 80, -19], [7, 66, 74, 11], [16, 82, 100, -7],
+    [93, 18, 105, -8], [86, 37, 90, 11], [96, 48, 94, -10], [80, 58, 93, -15], [88, 77, 108, 8],
+];
+
+export const IngredientsSection = ({ tileRef, interactive }: AboutSectionProps) => (
+    <section id="ingredients" className={styles.ingredientsSection} aria-labelledby="ingredients-title" inert={!interactive}>
+        <div className={styles.ingredientsFrost} aria-hidden="true" />
+        <div className={styles.scatteredIce} aria-hidden="true">
+            {scatteredIce.map(([x, y, size, angle], i) => (
+                <div key={i} className={`${styles.tile} ${styles.scatteredCube}`}
+                    style={{ "--cube-x": `${x}%`, "--cube-y": `${y}%`, "--cube-size": `${size}px`, "--cube-angle": `${angle}deg` } as CSSProperties} />
+            ))}
+        </div>
+        <div className={styles.ingredientsInner}>
+            <div className={styles.ingredientsCopy}>
+                <h2 id="ingredients-title" className={styles.title}>A little sunshine.<br />In every ingredient.</h2>
+                <p className={styles.description}>Sparkling water, real mango purée, yuzu and calendula extracts, cane sugar, live probiotic cultures, and natural flavors.</p>
+                <div className={styles.actions}>
+                    <a className={styles.primaryButton} href="#home">Explore Flavors</a>
+                </div>
+            </div>
+            <div className={styles.ingredientsStage} aria-hidden="true">
+                <div className={styles.ingredientsCanTarget} ref={tileRef} data-ingredients-artwork />
             </div>
         </div>
     </section>

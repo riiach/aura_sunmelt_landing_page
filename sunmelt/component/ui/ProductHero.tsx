@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import ProductCarousel from "./ProductCarousel";
 import type { AboutSceneState, IntroPhase } from "./ProductCarousel";
-import AboutSection from "./AboutSection";
+import AboutSection, { IngredientsSection } from "./AboutSection";
 import { aboutPhases, aboutScrollProgress, aboutNavigationEase, aboutViewportMetrics, MANGO_READY } from "./product-carousel/aboutMath.mjs";
 import styles from "./ProductCarousel.module.css";
 
@@ -38,7 +38,8 @@ const ProductHero = ({ header }: ProductHeroProps) => {
     const frameRef = useRef<HTMLDivElement>(null);
     const trackRef = useRef<HTMLDivElement>(null);
     const tileRef = useRef<HTMLDivElement>(null);
-    const aboutState = useRef<AboutSceneState>({ progress: 0, target: null, returnToMango: false, preparing: false, failed: false });
+    const ingredientsRef = useRef<HTMLDivElement>(null);
+    const aboutState = useRef<AboutSceneState>({ progress: 0, target: null, ingredientsTarget: null, returnToMango: false, preparing: false, failed: false });
     const [aboutInteractive, setAboutInteractive] = useState(false);
     useEffect(() => {
         const root = trackRef.current, frame = frameRef.current;
@@ -125,6 +126,7 @@ const ProductHero = ({ header }: ProductHeroProps) => {
             const phases = aboutPhases(progress);
             state.progress = progress;
             state.target = tileRef.current;
+            state.ingredientsTarget = ingredientsRef.current;
             root.style.setProperty("--about-land", String(phases.land));
             // Keep About readable even when WebGL cannot render the transition.
             if (state.failed) root.style.setProperty("--about-content-fade", String(phases.reveal));
@@ -164,6 +166,7 @@ const ProductHero = ({ header }: ProductHeroProps) => {
         const update = () => {
             scheduled = 0;
             state.target = tileRef.current;
+            state.ingredientsTarget = ingredientsRef.current;
             if (locked) {
                 if (Math.abs(root.getBoundingClientRect().top) > 1) pinToHero();
                 return;
@@ -292,6 +295,8 @@ const ProductHero = ({ header }: ProductHeroProps) => {
         observer.observe(root);
         observer.observe(frame);
         observer.observe(about);
+        const ingredients = root.querySelector<HTMLElement>("#ingredients");
+        if (ingredients) observer.observe(ingredients);
         window.addEventListener("scroll", schedule, { passive: true });
         window.addEventListener("resize", onViewportChange, { passive: true });
         visual?.addEventListener("resize", onViewportChange, { passive: true });
@@ -350,6 +355,7 @@ const ProductHero = ({ header }: ProductHeroProps) => {
                     </div>
                 </div>
                 <AboutSection tileRef={tileRef} interactive={aboutInteractive} />
+                <IngredientsSection tileRef={ingredientsRef} interactive={aboutInteractive} />
             </main>
             <ProductCarousel
                 onProductChange={setActiveProduct}
