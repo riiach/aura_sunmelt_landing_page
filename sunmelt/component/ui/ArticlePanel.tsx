@@ -1,20 +1,29 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { lockPageScroll } from "./lockPageScroll";
 import { storyImage, type Story } from "./stories";
 import styles from "./ArticlePanel.module.css";
 
 export default function ArticlePanel({ story, open, onClose }: { story: Story | null; open: boolean; onClose: () => void }) {
     const ref = useRef<HTMLDialogElement>(null);
     const titleRef = useRef<HTMLHeadingElement>(null);
+    const releaseScroll = useRef<(() => void) | null>(null);
+    useEffect(() => () => { releaseScroll.current?.(); releaseScroll.current = null; }, []);
     const [shareStatus, setShareStatus] = useState("");
     useEffect(() => {
         const dialog = ref.current;
         if (!dialog) return;
         const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
         let animation: Animation | undefined;
+        const closeDialog = () => {
+            dialog.close();
+            releaseScroll.current?.();
+            releaseScroll.current = null;
+        };
         if (open && story) {
             if (!dialog.open) {
+                releaseScroll.current ??= lockPageScroll();
                 dialog.showModal();
                 dialog.scrollTop = 0;
                 // Keep initial focus within the reader without outlining Go back.
@@ -25,11 +34,11 @@ export default function ArticlePanel({ story, open, onClose }: { story: Story | 
                 { duration: 600, easing: "cubic-bezier(.22,1,.36,1)" }
             );
         } else if (dialog.open) {
-            if (reduced) dialog.close();
+            if (reduced || typeof dialog.animate !== "function") closeDialog();
             else {
                 animation = dialog.animate([{ transform: "translateY(0)" }, { transform: "translateY(100%)" }],
                     { duration: 420, easing: "cubic-bezier(.4,0,.8,1)", fill: "forwards" });
-                animation.onfinish = () => { dialog.close(); animation?.cancel(); };
+                animation.onfinish = () => { closeDialog(); animation?.cancel(); };
             }
         }
         return () => {

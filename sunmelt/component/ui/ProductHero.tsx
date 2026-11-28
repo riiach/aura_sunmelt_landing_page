@@ -382,6 +382,8 @@ const ProductHero = ({ header }: ProductHeroProps) => {
                 finishSlide?.();
                 cancelNavigation();
                 pendingSection = null;
+                if (locked) unlock();
+                state.preparing = false;
                 setContactOpen(true);
                 return;
             }
@@ -430,7 +432,7 @@ const ProductHero = ({ header }: ProductHeroProps) => {
             schedule();
         };
         const onViewportChange = () => {
-            if (slide) return;
+            if (slide || overlayVisible()) return;
             const stillAtArrival = alignedScrollY !== null &&
                 Math.abs(window.scrollY - alignedScrollY) <= 4;
             // Do not recalculate the section dimensions during out-of-bounds

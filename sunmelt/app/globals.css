@@ -42,3 +42,12 @@
     cursor: pointer;
   }
 }
+
+/* Scroll containment for full-screen Contact and article dialogs. */
+html[data-modal-scroll-lock], html[data-modal-scroll-lock] body {
+  overflow: hidden !important;
+  overscroll-behavior: none;
+  scroll-behavior: auto !important;
+}
+html[data-modal-scroll-lock] { scrollbar-gutter: stable; }
+html[data-modal-scroll-lock] dialog[open] { overscroll-behavior: contain; }
