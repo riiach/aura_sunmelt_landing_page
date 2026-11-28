@@ -279,10 +279,11 @@ const ProductHero = ({ header }: ProductHeroProps) => {
             };
             navigationFrame = requestAnimationFrame(step);
         };
-        // Direct Home / Stories navigation uses the actual stories panel as a
+        // Direct Stories navigation uses the actual stories panel as a
         // sliding cover. Its slot preserves the document height while fixed.
-        // Never scroll through About or run the can preparation in this path.
-        const directStoriesSlide = (opening: boolean) => {
+        // On return, place the destination and its can behind the cover
+        // before revealing it, rather than passing through Ingredients.
+        const directStoriesSlide = (opening: boolean, returnTo: "home" | "about" = "home") => {
             finishSlide?.();
             cancelNavigation();
             pendingSection = null;
@@ -298,15 +299,17 @@ const ProductHero = ({ header }: ProductHeroProps) => {
             root.dataset.storiesSlide = "true";
             storiesPanel.style.transform = `translate3d(0,${startY}px,0)`;
 
-            const placeHome = () => {
-                prepared = false;
-                entered = false;
+            const placeDestination = () => {
+                const returningToAbout = returnTo === "about";
+                prepared = returningToAbout;
+                entered = returningToAbout;
                 state.returnToMango = false;
                 state.snapToProgress = true;
-                publish(0);
-                pinToHero();
+                publish(returningToAbout ? 1 : 0);
+                if (returningToAbout) alignSection(about);
+                else pinToHero();
             };
-            if (!opening) placeHome();
+            if (!opening) placeDestination();
 
             const finish = () => {
                 const animation = slide;
@@ -327,7 +330,10 @@ const ProductHero = ({ header }: ProductHeroProps) => {
                     state.snapToProgress = true;
                     publish(1);
                     alignSection(stories);
-                } else placeHome();
+                } else {
+                    placeDestination();
+                    if (returnTo === "about") followSection = about;
+                }
                 syncViewport();
                 schedule();
             };
@@ -362,6 +368,10 @@ const ProductHero = ({ header }: ProductHeroProps) => {
             const midpoint = visualTop() + (visual?.height || window.innerHeight) / 2;
             if (section === stories && about.getBoundingClientRect().top > midpoint) {
                 directStoriesSlide(true);
+                return;
+            }
+            if (section === about && stories.getBoundingClientRect().top <= midpoint) {
+                directStoriesSlide(false, "about");
                 return;
             }
             if (prepared || state.failed) {
