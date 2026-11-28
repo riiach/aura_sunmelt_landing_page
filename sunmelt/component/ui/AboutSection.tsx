@@ -18,7 +18,7 @@ const Sparkle = ({ className }: { className: string }) => (
 const AboutSection = ({ tileRef, interactive }: AboutSectionProps) => (
     <section id="about" className={styles.section} aria-labelledby="about-title" inert={!interactive}>
         <div className={styles.ribbon} aria-hidden="true"
-             style={{ "--about-ribbon": `url("${process.env.NEXT_PUBLIC_BASE_PATH || ""}/backgrounds/about-ribbon.png")` } as CSSProperties} />
+             style={{ "--about-ribbon": `url("${process.env.NEXT_PUBLIC_BASE_PATH || ""}/backgrounds/C36474C1-21B3-4870-B89D-90F5730E7CB6.png")` } as CSSProperties} />
         <div className={styles.inner}>
             <div className={styles.copy}>
                 <Sparkle className={`${styles.sparkle} ${styles.sparkleTop}`} />

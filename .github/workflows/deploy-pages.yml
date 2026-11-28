@@ -47,6 +47,7 @@ jobs:
           test -f out/index.html
           test -f out/textures/uv/mango.webp
           test -f out/backgrounds/mango.webp
+          test -f out/backgrounds/C36474C1-21B3-4870-B89D-90F5730E7CB6.png
           test -d out/_next/static
           touch out/.nojekyll
       - name: Upload Pages artifact
