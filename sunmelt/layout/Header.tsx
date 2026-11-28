@@ -107,14 +107,14 @@ const Header = ({ transparent = false }: { transparent?: boolean }) => {
               <Link key={label} href={href} className={styles.navLink}
                     data-about-link={href === "#about" ? "" : undefined}
                     data-home-link={href === "/" ? "" : undefined}
-                    scroll={href !== "#about"}
+                    scroll={href !== "#about" && href !== "/"}
                     aria-current={currentLink(href)}>
                 <span className={styles.linkLabel}>{label}</span>
               </Link>
             ))}
           </div>
 
-          <Link href="/" className={styles.brand} aria-label="Aura x Sunmelt home" data-home-link
+          <Link href="/" className={styles.brand} aria-label="Aura x Sunmelt home" data-home-link scroll={false}
                 onClick={() => setMenuOpen(false)}>
             <span className={styles.logoCrop}>
               <Image
@@ -181,7 +181,7 @@ const Header = ({ transparent = false }: { transparent?: boolean }) => {
                     <Link key={label} href={href}
                           data-about-link={href === "#about" ? "" : undefined}
                           data-home-link={href === "/" ? "" : undefined}
-                          scroll={href !== "#about"}
+                          scroll={href !== "#about" && href !== "/"}
                           className={label === "Contact" ? `${styles.mobileLink} ${styles.mobileContact}` : styles.mobileLink}
                           aria-current={currentLink(href)}
                           onClick={() => setMenuOpen(false)}>

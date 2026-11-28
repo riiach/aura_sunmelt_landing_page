@@ -212,13 +212,54 @@ const ProductHero = ({ header }: ProductHeroProps) => {
                 beginPreparation();
             }
         };
+        const scrollToHome = () => {
+            cancelNavigation();
+            jumpToAbout = false;
+            if (locked || state.preparing) {
+                unlock();
+                state.preparing = false;
+            }
+            // Retain the scroll-driven reverse transition, including a click
+            // that interrupts preparation before the first scroll frame.
+            if (prepared || state.progress > 0) {
+                prepared = true;
+                entered = true;
+            }
+            const from = window.scrollY;
+            const destination = Math.max(0, top());
+            const finish = () => {
+                navigationFrame = 0;
+                window.scrollTo({ top: Math.max(0, top()), behavior: "instant" });
+                entered = false;
+                prepared = false;
+                state.returnToMango = true;
+                publish(0);
+                schedule();
+            };
+            if (motion.matches || Math.abs(from - destination) <= 1) {
+                finish();
+                return;
+            }
+            const started = performance.now();
+            const step = (now: number) => {
+                const progress = Math.min(1, (now - started) / 1450);
+                window.scrollTo({
+                    top: from + (Math.max(0, top()) - from) * aboutNavigationEase(progress),
+                    behavior: "instant",
+                });
+                schedule();
+                if (progress < 1) navigationFrame = requestAnimationFrame(step);
+                else finish();
+            };
+            navigationFrame = requestAnimationFrame(step);
+        };
         const onAboutLink = (event: MouseEvent) => {
             if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
             const anchor = (event.target as Element | null)?.closest?.("a[data-about-link]");
             if (!anchor) {
                 if ((event.target as Element | null)?.closest?.('a[href="#home"], a[data-home-link]')) {
-                    cancelNavigation();
-                    jumpToAbout = false;
+                    event.preventDefault();
+                    scrollToHome();
                 }
                 return;
             }
