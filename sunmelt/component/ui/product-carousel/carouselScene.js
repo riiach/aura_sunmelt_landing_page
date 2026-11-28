@@ -121,6 +121,7 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
     let aboutOrigin = null, aboutTarget = null, lastAboutProgress = -1;
     let prepTime = 0, prepDuration = null;
     let displayAboutProgress = 0;
+    let lastContentFade = -1;
     const fadeMaterials = new Map();
     const setCanOpacity = (can, opacity) => {
         let entries = fadeMaterials.get(can);
@@ -259,6 +260,13 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
             !introComplete || reduced() || Boolean(state?.preparing) || preparedNow
         );
         const progress = displayAboutProgress;
+        // Crossfade the complete About section against the outgoing cans.
+        // Use rendered (not raw scroll) progress so reverse scrolling stays synced.
+        const contentFade = aboutPhases(progress).fade;
+        if (!state?.failed && contentFade !== lastContentFade) {
+            trackElement?.style.setProperty("--about-content-fade", String(contentFade));
+            lastContentFade = contentFade;
+        }
         if (progress > 0 && mangoIndex >= 0) {
             syncRotateControl();
             if (aboutOrigin === null || progress !== lastAboutProgress || dirty || aboutState?.current?.returnToMango) {
@@ -853,6 +861,7 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
         window.visualViewport?.removeEventListener("resize", onAboutScroll);
         window.visualViewport?.removeEventListener("scroll", onAboutScroll);
         if (hero) hero.style.overflow = originalOverflow;
+        if (!aboutState?.current?.failed) trackElement?.style.removeProperty("--about-content-fade");
         visibility.disconnect();
         stage.removeEventListener("contextmenu", onStageContextMenu);
         stage.removeEventListener("pointerdown", onPointerDown);

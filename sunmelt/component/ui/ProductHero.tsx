@@ -126,6 +126,8 @@ const ProductHero = ({ header }: ProductHeroProps) => {
             state.progress = progress;
             state.target = tileRef.current;
             root.style.setProperty("--about-land", String(phases.land));
+            // Keep About readable even when WebGL cannot render the transition.
+            if (state.failed) root.style.setProperty("--about-content-fade", String(phases.fade));
             const interactive = progress >= .985;
             root.dataset.aboutActive = String(interactive);
             setAboutInteractive(interactive);

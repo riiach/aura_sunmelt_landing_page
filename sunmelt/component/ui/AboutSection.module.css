@@ -9,6 +9,8 @@
     align-items: start;
     color: #251b19;
     background-color: #fff;
+    /* Driven by the same rendered fade phase as the outgoing hero cans. */
+    opacity: var(--about-content-fade, 0);
     pointer-events: none;
 }
 .section:not([inert]) { pointer-events: auto; }
