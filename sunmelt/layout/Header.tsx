@@ -17,10 +17,56 @@ const links = [
 
 const Header = ({ transparent = false }: { transparent?: boolean }) => {
   const pathname = usePathname();
+  const [activeSection, setActiveSection] = useState<"home" | "about">("home");
   const [menuOpen, setMenuOpen] = useState(false);
   const menuButton = useRef<HTMLButtonElement>(null);
   const headerRef = useRef<HTMLDivElement>(null);
   const reduceMotion = useReducedMotion();
+
+  // Follow the visible section instead of the URL, which stays on "/" while
+  // the carousel performs its scroll-driven About transition.
+  useEffect(() => {
+    const about = document.getElementById("about");
+    if (!about) {
+      setActiveSection("home");
+      return;
+    }
+
+    const viewport = window.visualViewport;
+    let frame = 0;
+    const update = () => {
+      frame = 0;
+      const normalScale = viewport && Math.abs(viewport.scale - 1) < .01;
+      const viewportTop = normalScale ? viewport.offsetTop : 0;
+      const height = normalScale ? viewport.height : window.innerHeight;
+      const midpoint = viewportTop + height / 2;
+      const rect = about.getBoundingClientRect();
+      setActiveSection(rect.top <= midpoint && rect.bottom > midpoint ? "about" : "home");
+    };
+    const schedule = () => { if (!frame) frame = requestAnimationFrame(update); };
+    const observer = new ResizeObserver(schedule);
+    observer.observe(about);
+    window.addEventListener("scroll", schedule, { passive: true });
+    window.addEventListener("resize", schedule, { passive: true });
+    viewport?.addEventListener("scroll", schedule, { passive: true });
+    viewport?.addEventListener("resize", schedule, { passive: true });
+    schedule();
+
+    return () => {
+      cancelAnimationFrame(frame);
+      observer.disconnect();
+      window.removeEventListener("scroll", schedule);
+      window.removeEventListener("resize", schedule);
+      viewport?.removeEventListener("scroll", schedule);
+      viewport?.removeEventListener("resize", schedule);
+    };
+  }, [pathname]);
+
+  const currentLink = (href: string): "location" | undefined => {
+    if (href === "/") return pathname === "/" && activeSection === "home" ? "location" : undefined;
+    if (href === "#about") return pathname === "/" && activeSection === "about" ? "location" : undefined;
+    return undefined;
+  };
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -62,7 +108,7 @@ const Header = ({ transparent = false }: { transparent?: boolean }) => {
                     data-about-link={href === "#about" ? "" : undefined}
                     data-home-link={href === "/" ? "" : undefined}
                     scroll={href !== "#about"}
-                    aria-current={href && pathname === href ? "page" : undefined}>
+                    aria-current={currentLink(href)}>
                 <span className={styles.linkLabel}>{label}</span>
               </Link>
             ))}
@@ -137,7 +183,7 @@ const Header = ({ transparent = false }: { transparent?: boolean }) => {
                           data-home-link={href === "/" ? "" : undefined}
                           scroll={href !== "#about"}
                           className={label === "Contact" ? `${styles.mobileLink} ${styles.mobileContact}` : styles.mobileLink}
-                          aria-current={href && pathname === href ? "page" : undefined}
+                          aria-current={currentLink(href)}
                           onClick={() => setMenuOpen(false)}>
                       {label === "Contact" ? (
                         <span className={styles.flipWindow}>

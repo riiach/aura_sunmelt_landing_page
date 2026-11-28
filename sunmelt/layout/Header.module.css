@@ -155,7 +155,7 @@
     background: var(--nav-hover);
 }
 
-.navLink[aria-current="page"]::before {
+.navLink[aria-current="location"]::before {
     opacity: 1;
     background: var(--nav-selected);
     box-shadow: var(--nav-selected-shadow);
@@ -341,6 +341,7 @@
         }
     }
 
+    .mobileLink:not(.mobileContact)[aria-current="location"],
     .mobileLink:not(.mobileContact):active,
     .mobileLink:not(.mobileContact):focus-visible {
         color: #787878;
