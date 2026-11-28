@@ -16,15 +16,15 @@
 .section:not([inert]) { pointer-events: auto; }
 .inner {
     position: relative;
-    width: min(100%, 1560px);
+    width: min(100%, 1440px);
     margin-inline: auto;
     padding: clamp(24px, 5vw, 76px);
     display: grid;
-    grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     min-height: max(0px, calc(var(--about-view-height, 100dvh) - var(--header-height, 68px)));
     align-content: center;
     align-items: center;
-    gap: clamp(24px, 4vw, 60px);
+    gap: clamp(24px, 5vw, 72px);
 }
 .copy {
     --sparkle-size: clamp(24px, 2.55vw, 38px);
@@ -90,7 +90,9 @@
 .artworkSlot { display: contents; }
 .artwork {
     position: relative;
-    width: min(100%, 760px, max(0px, calc(var(--about-view-height, 100dvh) - var(--header-height, 68px) - 2 * clamp(24px, 5vw, 76px))));
+    /* Keep the square artwork within the same column allocation as the copy,
+       with a compact viewport-relative cap for desktop and iPad. */
+    width: min(100%, 440px, calc(var(--about-view-height, 100dvh) * .54));
     aspect-ratio: 1;
     justify-self: center;
 }
