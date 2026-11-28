@@ -97,3 +97,14 @@ test("ingredients scroll is reversible and respects the viewport offset", () => 
     assert.equal(ingredientsRotationProgress(.86), 1);
     assert.ok(ingredientsRotationProgress(.45) > 0 && ingredientsRotationProgress(.45) < 1);
 });
+
+test("mobile landing spin is rate limited even when scroll jumps to the destination", async () => {
+    const { advanceMobileLandingSpin } = await import("./aboutMath.mjs");
+    let spin = 0;
+    for (let i = 0; i < 30; i++) spin = advanceMobileLandingSpin(spin, 1, 1 / 60);
+    assert.ok(Math.abs(spin - .55) < 1e-9);
+    for (let i = 0; i < 30; i++) spin = advanceMobileLandingSpin(spin, 1, 1 / 60);
+    assert.equal(spin, 1);
+    assert.equal(advanceMobileLandingSpin(.8, .4, 1 / 60), .4);
+    assert.equal(advanceMobileLandingSpin(0, 1, 1 / 60, true), 1);
+});

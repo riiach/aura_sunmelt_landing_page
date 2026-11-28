@@ -3,7 +3,7 @@ import { gsap } from "gsap";
 import { createCanAssets, flavors, frontRotation } from "./createCan";
 import { wrap, mod, getLayout, getSnap, rightTilt, isSelected, introPoseAt, introSpreadAt } from "./carouselMath.mjs";
 import { createStudio, createContactShadows } from "./studio";
-import { aboutPhases, nearestFlavorPosition, preparationDuration, preparationProgress, MANGO_READY, advanceAboutProgress, ingredientsScrollProgress, ingredientsRotationProgress } from "./aboutMath.mjs";
+import { aboutPhases, nearestFlavorPosition, preparationDuration, preparationProgress, MANGO_READY, advanceAboutProgress, ingredientsScrollProgress, ingredientsRotationProgress, advanceMobileLandingSpin } from "./aboutMath.mjs";
 
 // Keep the hint dismissed for this document, even if the scene is remounted.
 // A reload creates a new document and starts with a fresh hint.
@@ -131,6 +131,8 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
     let aboutOrigin = null, aboutTarget = null, lastAboutProgress = -1;
     let prepTime = 0, prepDuration = null;
     let displayAboutProgress = 0;
+    let landingSpin = 0;
+    const mobileLanding = window.matchMedia("(max-width: 767px)");
     let lastContentFade = -1, lastIngredientsProgress = -1;
     const fadeMaterials = new Map();
     const setCanOpacity = (can, opacity) => {
@@ -299,8 +301,13 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
             displayAboutProgress, requestedProgress, dt,
             !introComplete || reduced() || Boolean(state?.preparing) || preparedNow || Boolean(state?.snapToProgress)
         );
+        const instantSpin = !mobileLanding.matches || reduced() || Boolean(state?.snapToProgress);
         if (state?.snapToProgress) state.snapToProgress = false;
         const progress = displayAboutProgress;
+        const targetSpin = aboutPhases(progress).land;
+        const nextSpin = advanceMobileLandingSpin(landingSpin, targetSpin, dt, instantSpin);
+        const spinChanged = nextSpin !== landingSpin;
+        landingSpin = nextSpin;
         // Reveal About slightly after the outgoing cans begin fading.
         // Use rendered (not raw scroll) progress so reverse scrolling stays synced.
         const contentFade = aboutPhases(progress).reveal;
@@ -311,7 +318,7 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
         if (progress > 0 && mangoIndex >= 0) {
             syncRotateControl();
             const nextIngredientsProgress = ingredientsProgress();
-            if (aboutOrigin === null || progress !== lastAboutProgress || nextIngredientsProgress !== lastIngredientsProgress || dirty || aboutState?.current?.returnToMango) {
+            if (aboutOrigin === null || progress !== lastAboutProgress || nextIngredientsProgress !== lastIngredientsProgress || spinChanged || dirty || aboutState?.current?.returnToMango) {
                 updateAboutLayout(progress, nextIngredientsProgress);
                 lastAboutProgress = progress;
                 lastIngredientsProgress = nextIngredientsProgress;
@@ -508,7 +515,9 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
                     // The original label's ingredients panel is centered at U ≈ .865.
                     // Continue the existing rotation toward that panel, then stop.
                     const labelAngle = lerp(.15, Math.PI * 2 * (.865 - .5), ingredientTurn);
-                    can.userData.spin.rotation.y = frontRotation - Math.PI * 2 * land - labelAngle * land;
+                    // Rate-limit the first full turn on phones, without slowing the
+                    // subsequent ingredients-label alignment or translation.
+                    can.userData.spin.rotation.y = frontRotation - (Math.PI * 2 + .15) * landingSpin - (labelAngle - .15) * land;
                     can.visible = true;
                     shadow.visible = false;
                 }

@@ -64,3 +64,11 @@ export const ingredientsScrollProgress = (aboutTop, ingredientsTop, viewportTop 
     return distance > 0 ? clamp((viewportTop - aboutTop) / distance) : 0;
 };
 export const ingredientsRotationProgress = progress => ease(progress, .08, .86);
+
+// On phones, limit only the forward landing spin. The scroll-driven position
+// and reverse motion remain unchanged. A full turn takes at least ~.9s.
+export const advanceMobileLandingSpin = (current, target, dt, immediate = false) => {
+    const next = clamp(target);
+    if (immediate || next <= current) return next;
+    return Math.min(next, current + 1.1 * Math.max(0, dt));
+};
