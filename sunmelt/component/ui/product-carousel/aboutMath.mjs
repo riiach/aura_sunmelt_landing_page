@@ -43,3 +43,16 @@ export const advanceAboutProgress = (current, target, dt, immediate = false) => 
     const step = Math.min(.78 * Math.max(0, dt), gap * (1 - Math.exp(-4.5 * Math.max(0, dt))));
     return Math.max(next, current - step);
 };
+
+// The layout viewport can remain taller than the visible area in iPadOS.
+// Reserve enough document height to reach the section, but center its content
+// in the currently visible viewport. Ignore pinch zoom when sizing the layout.
+export const aboutViewportMetrics = (innerHeight, clientHeight, visualHeight, scale = 1, offsetTop = 0) => {
+    const layoutHeight = Math.max(1, innerHeight, clientHeight);
+    const useVisual = Number.isFinite(visualHeight) && visualHeight > 0 && Math.abs(scale - 1) < .01;
+    const visibleHeight = Math.max(1, Math.round(useVisual ? visualHeight : innerHeight || clientHeight));
+    return {
+        visibleHeight,
+        scrollHeight: Math.ceil(Math.max(layoutHeight, visibleHeight + (useVisual ? Math.max(0, offsetTop) : 0))),
+    };
+};

@@ -1,12 +1,12 @@
 .section {
     position: relative;
     isolation: isolate;
-    /* Reserve enough scrollable height even after mobile browser chrome collapses. */
-    min-height: max(var(--screen-height, 100svh), 100lvh);
+    /* Scroll reach uses the layout viewport; content uses the visible viewport. */
+    min-height: max(var(--about-scroll-height, 100dvh), var(--about-view-height, 100dvh));
     padding-top: var(--header-height, 68px);
     overflow: hidden;
     display: grid;
-    align-items: center;
+    align-items: start;
     color: #251b19;
     background-color: #fff;
     pointer-events: none;
@@ -19,6 +19,8 @@
     padding: clamp(24px, 5vw, 76px);
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    min-height: max(0px, calc(var(--about-view-height, 100dvh) - var(--header-height, 68px)));
+    align-content: center;
     align-items: center;
     gap: clamp(24px, 5vw, 72px);
 }
@@ -85,7 +87,7 @@
 .primaryButton:focus-visible { outline: 2px solid #111; outline-offset: 3px; }
 .artwork {
     position: relative;
-    width: min(100%, 560px, 66svh);
+    width: min(100%, 560px, calc(var(--about-view-height, 100dvh) * .66));
     aspect-ratio: 1;
     justify-self: center;
 }

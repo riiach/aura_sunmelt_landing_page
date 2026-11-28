@@ -6,6 +6,8 @@
     isolation: isolate;
     display: grid;
     grid-template-columns: minmax(0, 1fr);
+    flex-shrink: 0;
+    overflow-anchor: none;
     width: 100%;
     background: #fff;
 }
@@ -21,10 +23,9 @@
     background: #fff;
 }
 .headerReveal {
-    grid-area: 1 / 1;
-    position: sticky;
+    position: fixed;
     top: 0;
-    align-self: start;
+    inset-inline: 0;
     z-index: 30;
     opacity: 1;
 }

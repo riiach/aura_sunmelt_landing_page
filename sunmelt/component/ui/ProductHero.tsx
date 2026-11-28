@@ -5,7 +5,7 @@ import type { ReactNode } from "react";
 import ProductCarousel from "./ProductCarousel";
 import type { AboutSceneState, IntroPhase } from "./ProductCarousel";
 import AboutSection from "./AboutSection";
-import { aboutPhases, aboutScrollProgress, aboutNavigationEase, MANGO_READY } from "./product-carousel/aboutMath.mjs";
+import { aboutPhases, aboutScrollProgress, aboutNavigationEase, aboutViewportMetrics, MANGO_READY } from "./product-carousel/aboutMath.mjs";
 import styles from "./ProductCarousel.module.css";
 
 /* Temporarily disabled for the white-background preview.
@@ -49,24 +49,49 @@ const ProductHero = ({ header }: ProductHeroProps) => {
         const state = aboutState.current;
         const html = document.documentElement;
         let scheduled = 0, navigationFrame = 0;
+        let followAbout = false;
+        const visual = window.visualViewport;
         let locked = false, prepared = false, entered = false, jumpToAbout = false;
         let priorOverflow = "", priorGutter = "";
         let safetyTimer: ReturnType<typeof setTimeout> | undefined;
         let touchX = 0, touchY = 0;
         const top = () => window.scrollY + root.getBoundingClientRect().top;
         const aboutTop = () => window.scrollY + about.getBoundingClientRect().top;
+        const visualTop = () => visual && Math.abs(visual.scale - 1) < .01 ? visual.offsetTop : 0;
+        const aboutRemaining = () => about.getBoundingClientRect().top - visualTop();
+        const aboutDestination = () => Math.max(0, aboutTop() - visualTop());
         const scrollRange = () => Math.max(1, aboutTop() - top());
         const pinToHero = () => window.scrollTo({ top: top(), behavior: "instant" });
+        const syncViewport = () => {
+            const { visibleHeight, scrollHeight } = aboutViewportMetrics(
+                window.innerHeight, html.clientHeight, visual?.height,
+                visual?.scale, visual?.offsetTop,
+            );
+            for (const [key, value] of [
+                ["--about-view-height", `${visibleHeight}px`],
+                ["--about-scroll-height", `${scrollHeight}px`],
+            ]) {
+                if (root.style.getPropertyValue(key) !== value) root.style.setProperty(key, value);
+            }
+        };
+        const alignAbout = () => {
+            if (Math.abs(aboutRemaining()) > 1) {
+                window.scrollTo({ top: aboutDestination(), behavior: "instant" });
+            }
+            schedule();
+        };
         const cancelNavigation = () => {
             if (navigationFrame) cancelAnimationFrame(navigationFrame);
             navigationFrame = 0;
+            followAbout = false;
         };
         const scrollToAbout = () => {
             cancelNavigation();
+            followAbout = true;
+            syncViewport();
             const from = window.scrollY;
-            if (motion.matches || Math.abs(aboutTop() - from) <= 1) {
-                window.scrollTo({ top: aboutTop(), behavior: "instant" });
-                schedule();
+            if (motion.matches || Math.abs(aboutRemaining()) <= 1) {
+                alignAbout();
                 return;
             }
             const started = performance.now();
@@ -74,7 +99,7 @@ const ProductHero = ({ header }: ProductHeroProps) => {
             const step = (now: number) => {
                 const progress = Math.min(1, (now - started) / duration);
                 // Read the live section position to account for responsive layout changes.
-                const target = aboutTop();
+                const target = aboutDestination();
                 window.scrollTo({
                     top: from + (target - from) * aboutNavigationEase(progress),
                     behavior: "instant",
@@ -83,8 +108,7 @@ const ProductHero = ({ header }: ProductHeroProps) => {
                 if (progress < 1) navigationFrame = requestAnimationFrame(step);
                 else {
                     navigationFrame = 0;
-                    window.scrollTo({ top: aboutTop(), behavior: "instant" });
-                    schedule();
+                    alignAbout();
                 }
             };
             navigationFrame = requestAnimationFrame(step);
@@ -142,8 +166,8 @@ const ProductHero = ({ header }: ProductHeroProps) => {
                 if (Math.abs(root.getBoundingClientRect().top) > 1) pinToHero();
                 return;
             }
-            const remaining = about.getBoundingClientRect().top;
-            const raw = remaining <= 1 ? 1 : Math.max(0, Math.min(1, -root.getBoundingClientRect().top / scrollRange()));
+            const remaining = aboutRemaining();
+            const raw = remaining <= 1 ? 1 : Math.max(0, Math.min(1, 1 - remaining / scrollRange()));
             if (!prepared && raw > .001) {
                 beginPreparation();
                 if (locked) return;
@@ -207,11 +231,30 @@ const ProductHero = ({ header }: ProductHeroProps) => {
             jumpToAbout = true;
             beginPreparation();
         };
-        const observer = new ResizeObserver(schedule);
+        // iPad browser chrome changes the visible height independently of layout.
+        // Re-align a menu-selected About section after that change, but never
+        // fight a deliberate wheel/touch/keyboard scroll back toward Home.
+        const onViewportChange = () => {
+            syncViewport();
+            if (followAbout && !navigationFrame && !locked) alignAbout();
+            else schedule();
+        };
+        const onScrollKey = (event: KeyboardEvent) => {
+            if (["ArrowUp", "ArrowDown", "PageUp", "PageDown", "Home", "End", " "].includes(event.key)
+                && !(event.target as Element | null)?.closest?.("button, input, textarea, select, [contenteditable]")) {
+                cancelNavigation();
+            }
+        };
+        const observer = new ResizeObserver(onViewportChange);
         observer.observe(root);
         observer.observe(frame);
+        observer.observe(about);
         window.addEventListener("scroll", schedule, { passive: true });
-        window.addEventListener("resize", schedule, { passive: true });
+        window.addEventListener("resize", onViewportChange, { passive: true });
+        visual?.addEventListener("resize", onViewportChange, { passive: true });
+        visual?.addEventListener("scroll", onViewportChange, { passive: true });
+        window.addEventListener("keydown", onScrollKey);
+        syncViewport();
         window.addEventListener("wheel", onWheel, { passive: false });
         window.addEventListener("touchstart", onTouchStart, { passive: true });
         window.addEventListener("touchmove", onTouchMove, { passive: false });
@@ -232,7 +275,10 @@ const ProductHero = ({ header }: ProductHeroProps) => {
             cancelNavigation();
             observer.disconnect();
             window.removeEventListener("scroll", schedule);
-            window.removeEventListener("resize", schedule);
+            window.removeEventListener("resize", onViewportChange);
+            visual?.removeEventListener("resize", onViewportChange);
+            visual?.removeEventListener("scroll", onViewportChange);
+            window.removeEventListener("keydown", onScrollKey);
             window.removeEventListener("wheel", onWheel);
             window.removeEventListener("touchstart", onTouchStart);
             window.removeEventListener("touchmove", onTouchMove);

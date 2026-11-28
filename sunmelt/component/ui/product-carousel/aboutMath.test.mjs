@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { aboutPhases, nearestFlavorPosition, preparationDuration, preparationProgress, aboutScrollProgress, aboutNavigationEase, MANGO_READY, advanceAboutProgress } from "./aboutMath.mjs";
+import { aboutPhases, nearestFlavorPosition, preparationDuration, preparationProgress, aboutScrollProgress, aboutNavigationEase, aboutViewportMetrics, MANGO_READY, advanceAboutProgress } from "./aboutMath.mjs";
 
 test("the four phases follow the requested order", () => {
     assert.deepEqual(aboutPhases(0), {settle:0,travel:0,fade:0,land:0,reveal:0});
@@ -68,4 +68,12 @@ test("menu navigation eases from the exact start to the exact destination", () =
     assert.ok(aboutNavigationEase(.75) > .75);
     assert.equal(aboutNavigationEase(1), 1);
     assert.equal(aboutNavigationEase(2), 1);
+});
+
+
+test("iPad About sizing separates the visible viewport from scroll reach", () => {
+    assert.deepEqual(aboutViewportMetrics(820, 900, 760, 1, 0), {visibleHeight:760, scrollHeight:900});
+    assert.deepEqual(aboutViewportMetrics(820, 900, 820, 1, 0), {visibleHeight:820, scrollHeight:900});
+    assert.deepEqual(aboutViewportMetrics(820, 900, 410, 2, 100), {visibleHeight:820, scrollHeight:900});
+    assert.deepEqual(aboutViewportMetrics(768, 768), {visibleHeight:768, scrollHeight:768});
 });
