@@ -1,5 +1,9 @@
 .aboutTrack {
     --header-height: 68px;
+    --rotate-size: 72px;
+    --arrow-button-size: 44px;
+    --arrow-button-padding: 3px;
+    --arrow-disc-size: calc(var(--arrow-button-size) - 2 * var(--arrow-button-padding));
     --stage-height: max(540px, calc(100svh - var(--header-height)));
     --screen-height: calc(var(--header-height) + var(--stage-height));
     position: relative;
@@ -144,8 +148,8 @@
     left: var(--rotate-x, 50%);
     top: var(--rotate-y, 48%);
     transform: translate(-50%, -50%);
-    width: 72px;
-    height: 72px;
+    width: var(--rotate-size);
+    height: var(--rotate-size);
     padding: 0;
     border: 0;
     background: transparent;
@@ -171,7 +175,13 @@
     background: rgba(255,255,255,.38);
     color: #fff;
     pointer-events: none;
-    transition: background-color 160ms ease, transform 160ms ease, color 160ms ease;
+    transform: scale(1);
+    transform-origin: center;
+    transition: background-color 280ms ease, transform 320ms cubic-bezier(.22,1,.36,1), color 280ms ease;
+}
+.rotateDisc > svg, .rotateLabel {
+    opacity: 1;
+    transition: opacity 180ms ease;
 }
 .swipeHint {
     display: block;
@@ -179,9 +189,9 @@
     z-index: 3;
     top: var(--swipe-y, 48%);
     transform: translateY(-50%);
-    width: 44px;
-    height: 44px;
-    padding: 3px;
+    width: var(--arrow-button-size);
+    height: var(--arrow-button-size);
+    padding: var(--arrow-button-padding);
     border: 0;
     background: transparent;
     color: #fff;
@@ -237,17 +247,18 @@
         opacity: 1;
         pointer-events: auto;
     }
-    .rotateControl[data-available="true"][data-holding="true"] .rotateDisc {
-        animation: none;
+    .rotateControl[data-available="true"][data-holding="true"] .rotateDisc,
+    .rotateControl[data-available="true"]:active .rotateDisc {
         background: rgba(255,255,255,.88);
-        transform: scale(.92);
+        /* Match the visible arrow disc (38px), not its 44px hit area. */
+        transform: scale(.5277777778);
     }
     /* Keep the disc and pointer capture while hiding both prompt elements. */
     .rotateControl[data-holding="true"] .rotateLabel,
     .rotateControl[data-holding="true"] .rotateDisc > svg,
     .rotateControl:active .rotateLabel,
     .rotateControl:active .rotateDisc > svg {
-        visibility: hidden;
+        opacity: 0;
     }
     /* Keep capture alive during the first hold even after the artwork fades. */
     .rotateControl[data-dismissed="true"] {
@@ -258,11 +269,11 @@
 }
 @media (any-hover: hover) {
     .rotateControl[data-available="true"]:hover .rotateDisc {
-        transform: scale(.68);
+        transform: scale(.5277777778);
     }
     .rotateControl:hover .rotateLabel,
     .rotateControl:hover .rotateDisc > svg {
-        visibility: hidden;
+        opacity: 0;
     }
 }
 .rotateControl:focus-visible { outline: 2px solid #fff; outline-offset: 4px; border-radius: 50%; }
@@ -283,5 +294,5 @@
     .aboutTrack { --stage-height: max(480px, calc(100svh - var(--header-height))); }
 }
 @media (prefers-reduced-motion: reduce) {
-    .gradient, .imageBackground, .rotateControl, .rotateDisc, .swipeHint { transition: none; }
+    .gradient, .imageBackground, .rotateControl, .rotateDisc, .rotateDisc > svg, .rotateLabel, .swipeHint { transition: none; }
 }
