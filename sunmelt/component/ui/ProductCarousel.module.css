@@ -161,9 +161,6 @@
         opacity: 1;
         pointer-events: auto;
     }
-    .rotateControl[data-available="true"] .rotateDisc {
-        animation: rotateHintPulse 1.35s ease-in-out infinite;
-    }
     .rotateControl[data-available="true"][data-holding="true"] .rotateDisc {
         animation: none;
         background: rgba(255,255,255,.88);
@@ -190,10 +187,6 @@
     }
 }
 .rotateControl:focus-visible { outline: 2px solid #fff; outline-offset: 4px; border-radius: 50%; }
-@keyframes rotateHintPulse {
-    0%, 100% { transform: scale(.90); opacity: .78; }
-    50% { transform: scale(1.12); opacity: 1; }
-}
 .status {
     position: absolute;
     inset: 0;
@@ -212,5 +205,4 @@
 }
 @media (prefers-reduced-motion: reduce) {
     .gradient, .imageBackground, .rotateControl, .rotateDisc { transition: none; }
-    .rotateControl[data-available="true"] .rotateDisc { animation: none; }
 }
