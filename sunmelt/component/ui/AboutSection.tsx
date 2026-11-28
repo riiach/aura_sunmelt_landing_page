@@ -63,8 +63,8 @@ export const IngredientsSection = ({ tileRef, interactive }: AboutSectionProps) 
         </div>
         <div className={styles.ingredientsInner}>
             <div className={styles.ingredientsCopy}>
-                <h2 id="ingredients-title" className={styles.title}>A little sunshine.<br />In every ingredient.</h2>
-                <p className={styles.description}>Sparkling water, real mango purée, yuzu and calendula extracts, cane sugar, live probiotic cultures, and natural flavors.</p>
+                <h2 id="ingredients-title" className={styles.title}>Rooted in nature.<br />Grown organically.</h2>
+                <p className={styles.description}>From tropical mango orchards and yuzu groves to calendula fields and sugarcane farms, we choose only organically grown produce.</p>
                 <div className={styles.actions}>
                     <a className={styles.primaryButton} href="#home">Explore Flavors</a>
                 </div>
