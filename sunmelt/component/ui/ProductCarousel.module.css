@@ -169,7 +169,11 @@
         background: rgba(255,255,255,.88);
         transform: scale(.92);
     }
-    .rotateControl[data-holding="true"] .rotateLabel {
+    /* Keep the disc and pointer capture while hiding both prompt elements. */
+    .rotateControl[data-holding="true"] .rotateLabel,
+    .rotateControl[data-holding="true"] .rotateDisc > svg,
+    .rotateControl:active .rotateLabel,
+    .rotateControl:active .rotateDisc > svg {
         visibility: hidden;
     }
     /* Keep capture alive during the first hold even after the artwork fades. */
@@ -178,6 +182,12 @@
         pointer-events: none;
     }
     .stage { -webkit-touch-callout: none; -webkit-user-select: none; }
+}
+@media (any-hover: hover) {
+    .rotateControl:hover .rotateLabel,
+    .rotateControl:hover .rotateDisc > svg {
+        visibility: hidden;
+    }
 }
 .rotateControl:focus-visible { outline: 2px solid #fff; outline-offset: 4px; border-radius: 50%; }
 @keyframes rotateHintPulse {

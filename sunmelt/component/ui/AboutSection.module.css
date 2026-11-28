@@ -183,13 +183,14 @@
     background: rgba(255,255,255,.48);
 }
 @media (max-width: 767px) {
-    /* Separate the top ribbon from the lower ribbon. The original artwork
-       is 2:1, so each crop retains its original aspect ratio and grain. */
+    /* The mobile reference has a wide, three-color upper ribbon and a
+       separate full-width two-color wave between the copy and ice grid.
+       Crop the original transparent artwork independently for each layer. */
     .ribbon {
         inset: var(--header-height, 62px) 0 auto;
-        height: 19vw;
-        background-size: 100% auto;
-        background-position: center top;
+        height: 38vw;
+        background-size: 195% auto;
+        background-position: left top;
         --ribbon-fade-height: clamp(12px, 3vw, 22px);
     }
     .inner {
@@ -207,7 +208,7 @@
         width: 100%;
         max-width: none;
         margin: 0;
-        padding: clamp(48px, 14vw, 86px) clamp(16px, 5.5vw, 32px) clamp(22px, 7vw, 40px);
+        padding: clamp(54px, 16vw, 96px) clamp(16px, 5.5vw, 32px) clamp(22px, 7vw, 40px);
     }
     .sparkleTop { left: 11%; top: clamp(20px, 6.5vw, 39px); }
     .sparkleBottom { left: 71%; top: calc(-.58 * var(--sparkle-size)); }
@@ -239,11 +240,11 @@
         content: "";
         position: absolute;
         inset-inline: 0;
-        top: -14vw;
-        height: 28vw;
+        top: -25vw;
+        height: 40vw;
         z-index: 0;
         background-image: var(--about-ribbon);
-        background-size: 100% auto;
+        background-size: 100% 76vw;
         background-position: center bottom;
         background-repeat: no-repeat;
         pointer-events: none;
@@ -258,7 +259,7 @@
     .glow { inset: -12%; }
 }
 @media (max-width: 767px) and (max-height: 700px) {
-    .copy { padding-top: clamp(40px, 12vw, 64px); padding-bottom: 18px; }
+    .copy { padding-top: clamp(46px, 14vw, 76px); padding-bottom: 18px; }
     .sparkleTop { top: clamp(16px, 5vw, 30px); }
     .title { font-size: clamp(27px, 7.8vw, 43px); }
 }
