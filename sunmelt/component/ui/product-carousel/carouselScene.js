@@ -5,6 +5,10 @@ import { wrap, mod, getLayout, getSnap, rightTilt, isSelected, introPoseAt, intr
 import { createStudio, createContactShadows } from "./studio";
 import { aboutPhases, nearestFlavorPosition, preparationDuration, preparationProgress, MANGO_READY, advanceAboutProgress } from "./aboutMath.mjs";
 
+// Keep the hint dismissed for this document, even if the scene is remounted.
+// A reload creates a new document and starts with a fresh hint.
+const dismissedRotateHints = new WeakSet();
+
 export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase, onIntroProgress, aboutState, rotateControl }) => {
     let renderer;
     try {
@@ -48,15 +52,17 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
     const touchPreference = window.matchMedia("(hover: none) and (pointer: coarse)");
     const rotateAnchor = new THREE.Vector3();
     let heldCan = null, heldPointer = null, heldKey = null;
-    let rotateAvailable = false, hintDismissed = false;
+    const hintDocument = stage.ownerDocument;
+    let rotateAvailable = false;
+    if (dismissedRotateHints.has(hintDocument)) rotateControl?.setAttribute("data-dismissed", "true");
+    else rotateControl?.removeAttribute("data-dismissed");
     let holdStartedAt = 0, heldCapture = null, pendingHold = null;
     const clearPendingHold = () => {
         if (pendingHold !== null) window.clearTimeout(pendingHold);
         pendingHold = null;
     };
     const dismissRotateHint = () => {
-        if (hintDismissed) return;
-        hintDismissed = true;
+        dismissedRotateHints.add(hintDocument);
         rotateControl?.setAttribute("data-dismissed", "true");
     };
     const cans = [];
@@ -130,7 +136,7 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
         if (!rotateControl) return;
         const available = canHoldRotate();
         if (!available && heldCan) stopHeldRotation();
-        const showHint = available && (!hintDismissed || heldCapture === rotateControl || heldKey !== null);
+        const showHint = available && (!dismissedRotateHints.has(hintDocument) || heldCapture === rotateControl || heldKey !== null);
         if (showHint !== rotateAvailable) {
             rotateAvailable = showHint;
             rotateControl.dataset.available = String(showHint);
@@ -185,9 +191,15 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
     const onRotateVisibility = () => { if (document.hidden) stopHeldRotation(); };
     const onRotatePreference = () => { stopHeldRotation(); syncRotateControl(); };
     const render = (_time, deltaMs) => {
-        if (disposed || !ready || !inView) return;
-        const dt = Math.min(.05, (deltaMs || 16.7) / 1000);
+        if (disposed) return;
         const state = aboutState?.current;
+        // Leaving Home consumes the initial tutorial even without a long press.
+        // Ordinary drag/snap interruptions still allow it during the first visit.
+        if ((state?.preparing || state?.progress > 0) && !dismissedRotateHints.has(hintDocument)) {
+            dismissRotateHint();
+        }
+        if (!ready || !inView) return;
+        const dt = Math.min(.05, (deltaMs || 16.7) / 1000);
         let preparedNow = false;
         if (introComplete && state?.preparing && mangoIndex >= 0) {
             if (!prepDuration) {
