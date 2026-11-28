@@ -297,8 +297,9 @@ export const mountCarousel = (stage, { onReady, onError, onChange, onIntroPhase,
         const requestedProgress = introComplete ? state?.progress || 0 : 0;
         displayAboutProgress = advanceAboutProgress(
             displayAboutProgress, requestedProgress, dt,
-            !introComplete || reduced() || Boolean(state?.preparing) || preparedNow
+            !introComplete || reduced() || Boolean(state?.preparing) || preparedNow || Boolean(state?.snapToProgress)
         );
+        if (state?.snapToProgress) state.snapToProgress = false;
         const progress = displayAboutProgress;
         // Reveal About slightly after the outgoing cans begin fading.
         // Use rendered (not raw scroll) progress so reverse scrolling stays synced.

@@ -31,6 +31,16 @@
     min-height: max(var(--about-scroll-height, 100dvh), var(--about-view-height, 100dvh));
     background: #fff;
 }
+.storiesPanel { position: relative; z-index: 3; background: #fff; }
+.aboutTrack[data-stories-slide="true"] .storiesPanel {
+    position: fixed;
+    top: 0;
+    left: var(--stories-slide-left, 0px);
+    width: var(--stories-slide-width, 100%);
+    z-index: 20;
+    will-change: transform;
+    pointer-events: none;
+}
 .headerReveal {
     position: fixed;
     top: 0;

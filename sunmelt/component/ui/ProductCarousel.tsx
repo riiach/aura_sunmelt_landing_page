@@ -13,6 +13,7 @@ export interface AboutSceneState {
     ingredientsTarget: HTMLDivElement | null;
     returnToMango: boolean;
     preparing: boolean;
+    snapToProgress?: boolean;
     failed: boolean;
     onPrepared?: () => void;
 }

@@ -47,7 +47,10 @@ const ProductHero = ({ header }: ProductHeroProps) => {
         const root = trackRef.current, frame = frameRef.current;
         if (!root || !frame) return;
         const about = root.querySelector<HTMLElement>("#about");
-        if (!about) return;
+        const stories = root.querySelector<HTMLElement>("#section-four");
+        const storiesPanel = root.querySelector<HTMLElement>("[data-stories-panel]");
+        const storiesSlot = root.querySelector<HTMLElement>("[data-stories-slot]");
+        if (!about || !stories || !storiesPanel || !storiesSlot) return;
         const motion = window.matchMedia("(prefers-reduced-motion: reduce)");
         const state = aboutState.current;
         const html = document.documentElement;
@@ -60,6 +63,8 @@ const ProductHero = ({ header }: ProductHeroProps) => {
         let priorOverflow = "", priorGutter = "";
         let safetyTimer: ReturnType<typeof setTimeout> | undefined;
         let touchX = 0, touchY = 0;
+        let slide: Animation | null = null;
+        let finishSlide: (() => void) | null = null;
         const top = () => window.scrollY + root.getBoundingClientRect().top;
         const aboutTop = () => window.scrollY + about.getBoundingClientRect().top;
         const visualTop = () => visual && Math.abs(visual.scale - 1) < .01 ? visual.offsetTop : 0;
@@ -177,6 +182,7 @@ const ProductHero = ({ header }: ProductHeroProps) => {
             scheduled = 0;
             state.target = tileRef.current;
             state.ingredientsTarget = ingredientsRef.current;
+            if (slide) return;
             if (locked) {
                 if (Math.abs(root.getBoundingClientRect().top) > 1) pinToHero();
                 return;
@@ -202,7 +208,7 @@ const ProductHero = ({ header }: ProductHeroProps) => {
         const onWheel = (event: WheelEvent) => {
             if (event.ctrlKey || Math.abs(event.deltaX) > Math.abs(event.deltaY)) return;
             if ((event.target as Element | null)?.closest?.('nav[aria-label="Mobile navigation"]')) return;
-            if (locked) { event.preventDefault(); return; }
+            if (slide || locked) { if (event.cancelable) event.preventDefault(); return; }
             cancelNavigation();
             if (!prepared && event.deltaY > 0 && !state.failed) {
                 event.preventDefault();
@@ -215,7 +221,7 @@ const ProductHero = ({ header }: ProductHeroProps) => {
             touchY = event.touches[0].clientY;
             // A new touch relinquishes the previous menu alignment immediately,
             // including native gestures whose touchmove events Safari coalesces.
-            if (!locked) cancelNavigation();
+            if (!slide && !locked) cancelNavigation();
         };
         const onTouchMove = (event: TouchEvent) => {
             if (event.touches.length !== 1) return;
@@ -223,7 +229,7 @@ const ProductHero = ({ header }: ProductHeroProps) => {
             if ((event.target as Element | null)?.closest?.('nav[aria-label="Mobile navigation"]')) return;
             const dy = touchY - event.touches[0].clientY;
             const dx = event.touches[0].clientX - touchX;
-            if (locked) { if (event.cancelable) event.preventDefault(); return; }
+            if (slide || locked) { if (event.cancelable) event.preventDefault(); return; }
             if (Math.abs(dy) > 8 && Math.abs(dy) > Math.abs(dx)) cancelNavigation();
             if (!prepared && !state.failed && dy > 8 && dy > Math.abs(dx)) {
                 if (event.cancelable) event.preventDefault();
@@ -271,20 +277,91 @@ const ProductHero = ({ header }: ProductHeroProps) => {
             };
             navigationFrame = requestAnimationFrame(step);
         };
+        // Direct Home / Stories navigation uses the actual stories panel as a
+        // sliding cover. Its slot preserves the document height while fixed.
+        // Never scroll through About or run the can preparation in this path.
+        const directStoriesSlide = (opening: boolean) => {
+            finishSlide?.();
+            cancelNavigation();
+            pendingSection = null;
+            if (locked) unlock();
+            state.preparing = false;
+            const panelRect = storiesPanel.getBoundingClientRect();
+            const viewportHeight = Math.max(window.innerHeight, html.clientHeight);
+            const startY = opening ? viewportHeight : panelRect.top;
+            const endY = opening ? visualTop() : viewportHeight;
+            storiesSlot.style.height = `${panelRect.height}px`;
+            storiesPanel.style.setProperty("--stories-slide-width", `${panelRect.width}px`);
+            storiesPanel.style.setProperty("--stories-slide-left", `${panelRect.left}px`);
+            root.dataset.storiesSlide = "true";
+            storiesPanel.style.transform = `translate3d(0,${startY}px,0)`;
+
+            const placeHome = () => {
+                prepared = false;
+                entered = false;
+                state.returnToMango = false;
+                state.snapToProgress = true;
+                publish(0);
+                pinToHero();
+            };
+            if (!opening) placeHome();
+
+            const finish = () => {
+                const animation = slide;
+                slide = null;
+                finishSlide = null;
+                if (animation) {
+                    animation.onfinish = null;
+                    animation.cancel();
+                }
+                root.removeAttribute("data-stories-slide");
+                storiesPanel.style.removeProperty("--stories-slide-width");
+                storiesPanel.style.removeProperty("--stories-slide-left");
+                storiesPanel.style.removeProperty("transform");
+                storiesSlot.style.removeProperty("height");
+                if (opening) {
+                    prepared = true;
+                    entered = true;
+                    state.snapToProgress = true;
+                    publish(1);
+                    alignSection(stories);
+                } else placeHome();
+                syncViewport();
+                schedule();
+            };
+            finishSlide = finish;
+            if (motion.matches || typeof storiesPanel.animate !== "function") {
+                finish();
+                return;
+            }
+            slide = storiesPanel.animate([
+                { transform: `translate3d(0,${startY}px,0)` },
+                { transform: `translate3d(0,${endY}px,0)` },
+            ], { duration: 650, easing: "cubic-bezier(.22,1,.36,1)", fill: "forwards" });
+            slide.onfinish = finish;
+        };
         const onAboutLink = (event: MouseEvent) => {
             if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+            finishSlide?.();
             const anchor = (event.target as Element | null)?.closest?.('a[data-about-link], a[href="#section-four"]');
             if (!anchor) {
                 if ((event.target as Element | null)?.closest?.('a[href="#home"], a[data-home-link]')) {
                     event.preventDefault();
-                    scrollToHome();
+                    const midpoint = visualTop() + (visual?.height || window.innerHeight) / 2;
+                    if (stories.getBoundingClientRect().top <= midpoint) directStoriesSlide(false);
+                    else scrollToHome();
                 }
                 return;
             }
             const section = anchor.getAttribute("href") === "#section-four"
-                ? root.querySelector<HTMLElement>("#section-four") : about;
+                ? stories : about;
             if (!section) return;
             event.preventDefault();
+            const midpoint = visualTop() + (visual?.height || window.innerHeight) / 2;
+            if (section === stories && about.getBoundingClientRect().top > midpoint) {
+                directStoriesSlide(true);
+                return;
+            }
             if (prepared || state.failed) {
                 prepared = true;
                 pendingSection = null;
@@ -306,6 +383,7 @@ const ProductHero = ({ header }: ProductHeroProps) => {
             schedule();
         };
         const onViewportChange = () => {
+            if (slide) return;
             const stillAtArrival = alignedScrollY !== null &&
                 Math.abs(window.scrollY - alignedScrollY) <= 4;
             // Do not recalculate the section dimensions during out-of-bounds
@@ -323,6 +401,7 @@ const ProductHero = ({ header }: ProductHeroProps) => {
         const onScrollKey = (event: KeyboardEvent) => {
             if (["ArrowUp", "ArrowDown", "PageUp", "PageDown", "Home", "End", " "].includes(event.key)
                 && !(event.target as Element | null)?.closest?.("button, input, textarea, select, [contenteditable]")) {
+                if (slide) { event.preventDefault(); return; }
                 cancelNavigation();
             }
         };
@@ -351,6 +430,17 @@ const ProductHero = ({ header }: ProductHeroProps) => {
         }
         update();
         return () => {
+            if (slide) {
+                slide.onfinish = null;
+                slide.cancel();
+                slide = null;
+            }
+            finishSlide = null;
+            root.removeAttribute("data-stories-slide");
+            storiesPanel.style.removeProperty("transform");
+            storiesPanel.style.removeProperty("--stories-slide-width");
+            storiesPanel.style.removeProperty("--stories-slide-left");
+            storiesSlot.style.removeProperty("height");
             unlock();
             state.preparing = false;
             state.onPrepared = undefined;
@@ -391,8 +481,12 @@ const ProductHero = ({ header }: ProductHeroProps) => {
                 </div>
                 <AboutSection tileRef={tileRef} interactive={aboutInteractive} />
                 <IngredientsSection tileRef={ingredientsRef} interactive={aboutInteractive} />
-                <StoriesSection className={styles.emptySection} />
-                <Footer />
+                <div data-stories-slot>
+                    <div data-stories-panel className={styles.storiesPanel}>
+                        <StoriesSection className={styles.emptySection} />
+                        <Footer />
+                    </div>
+                </div>
             </main>
             <ProductCarousel
                 onProductChange={setActiveProduct}
